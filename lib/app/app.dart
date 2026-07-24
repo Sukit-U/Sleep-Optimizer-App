@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/services/storage_service.dart';
 import '../core/theme/app_theme.dart';
+import '../core/providers/theme_provider.dart';
 import 'router.dart';
 
-final ValueNotifier<ThemeMode> appThemeMode = ValueNotifier(ThemeMode.dark);
 StorageService? appStorage;
 
 class SleepOptimizerApp extends StatelessWidget {
@@ -12,14 +13,13 @@ class SleepOptimizerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: appThemeMode,
-      builder: (context, mode, child) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
         return MaterialApp(
           title: 'Sleep Optimizer',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode: mode,
+          themeMode: themeProvider.themeMode,
           initialRoute: AppRoutes.home,
           onGenerateRoute: AppRouter.generateRoute,
         );
