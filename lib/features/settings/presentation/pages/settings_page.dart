@@ -1,54 +1,117 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:snoozemate/core/presentation/widgets/app_bar.dart';
+import 'package:snoozemate/core/theme/app_colors.dart';
+import 'package:snoozemate/core/theme/app_spacing.dart';
+import 'package:snoozemate/core/theme/app_typography.dart';
 
 import '../../../../app/app.dart';
+import '../../../../core/providers/theme_provider.dart';
 import '../../data/repositories/settings_repository.dart';
 
+/// SettingsPage – UI styled to match design system while preserving
+/// all backend logic (theme provider, firestore, app storage).
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ValueListenableBuilder<ThemeMode>(
-          valueListenable: appThemeMode,
-          builder: (context, mode, child) {
-            final isDarkMode = mode == ThemeMode.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
-            return ListView(
-              children: [
-                Card(
-                  child: SwitchListTile(
-                    title: const Text('Dark mode'),
-                    subtitle: const Text('Use the app’s dark-first visual style.'),
-                    value: isDarkMode,
-                    onChanged: (_) async {
-                      final nextMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
-                      appThemeMode.value = nextMode;
-                      await FirestoreSettingsRepository().saveSettings(
-                        {
-                          'userId': 'local-user',
-                          'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
-                        },
-                      );
-                      await appStorage?.saveTheme(nextMode == ThemeMode.light ? 'light' : 'dark');
-                    },
-                  ),
+    return Scaffold(
+      appBar: const AppBarWidget(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.px,
+            vertical: AppSpacing.py,
+          ),
+          child: ListView(
+            children: [
+              // Screen Title
+              Text(
+                'Settings',
+                style: AppTypography.h1.copyWith(color: AppColors.foreground),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Dark Mode Card
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
+                  boxShadow: [AppSpacing.cardShadow],
                 ),
-                const SizedBox(height: 12),
-                const Card(
-                  child: ListTile(
-                    title: Text('About'),
-                    subtitle: Text(
-                      'Sleep Optimizer helps students improve sleep habits through a planner, SQI, and personalized guidance.',
+                child: Row(
+                  children: [
+                    Icon(
+                      isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                      color: AppColors.primary,
+                      size: AppSpacing.iconXl,
                     ),
-                  ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Dark mode',
+                            style: AppTypography.h3.copyWith(color: AppColors.foreground),
+                          ),
+                          Text(
+                            'Use the app\'s dark-first visual style.',
+                            style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: isDarkMode,
+                      onChanged: (_) async {
+                        final nextMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+                        themeProvider.setTheme(nextMode);
+                        await FirestoreSettingsRepository().saveSettings(
+                          {
+                            'userId': 'local-user',
+                            'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
+                          },
+                        );
+                        await appStorage?.saveTheme(nextMode == ThemeMode.light ? 'light' : 'dark');
+                      },
+                      activeColor: AppColors.primary,
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // About Card
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
+                  boxShadow: [AppSpacing.cardShadow],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'About',
+                      style: AppTypography.h3.copyWith(color: AppColors.foreground),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Sleep Optimizer helps students improve sleep habits through a planner, SQI, and personalized guidance.',
+                      style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

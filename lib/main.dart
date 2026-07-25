@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'app/app.dart';
 import 'core/services/storage_service.dart';
@@ -11,11 +12,13 @@ late ValueNotifier<ThemeMode> appThemeMode;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase before any Firebase services are used
+  await Firebase.initializeApp();
+
   appStorage = await StorageService.create();
   appThemeMode = ValueNotifier<ThemeMode>(
     appStorage.loadTheme() == 'light' ? ThemeMode.light : ThemeMode.dark,
   );
-
   final themeProvider = ThemeProvider(storageService: appStorage);
 
   runApp(

@@ -6,6 +6,7 @@ import '../features/recommendation/presentation/pages/recommendation_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/sleep_planner/presentation/pages/sleep_planner_page.dart';
 import '../features/sleep_quality/presentation/pages/sleep_quality_page.dart';
+import '../features/splash/presentation/pages/splash_page.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -16,6 +17,7 @@ class AppRoutes {
   static const recommendation = '/recommendation';
   static const history = '/history';
   static const settings = '/settings';
+  static const splash = '/splash';
 }
 
 class AppRouter {
@@ -31,10 +33,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RecommendationPage());
       case AppRoutes.history:
         return MaterialPageRoute(builder: (_) => const HistoryPage());
-      case AppRoutes.settings:
-        return MaterialPageRoute(builder: (_) => const SettingsPage());
-      default:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        case AppRoutes.settings:
+          return MaterialPageRoute(builder: (_) => const SettingsPage());
+        case AppRoutes.splash:
+          return MaterialPageRoute(builder: (_) => const SplashPage());
+        default:
+          return MaterialPageRoute(builder: (_) => const HomePage());
     }
   }
 }
