@@ -27,13 +27,6 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   // Lovable design color tokens (oklch → closest sRGB)
   // These are now replaced by AppColors
-  // static const _background = Color(0xFF252830); // oklch(0.18 0.008 260)
-  // static const _foreground = Color(0xFFF7F8FA); // oklch(0.97 0.005 260)
-  // static const _primary = Color(0xFF7BA4F4); // oklch(0.7 0.16 245) – periwinkle blue
-  // static const _primaryFg = Color(0xFF1A1D28); // oklch(0.16 0.02 260)
-  // static const _accent = Color(0xFFBF7FD6); // oklch(0.68 0.18 300) – muted purple
-  // static const _mutedFg = Color(0xFFADB0BC); // oklch(0.74 0.02 260)
-
 
   Future<void> _enter() async {
     final prefs = await SharedPreferences.getInstance();
@@ -63,7 +56,7 @@ class _SplashPageState extends State<SplashPage> {
             left: size.width * 0.5 - 160,
             child: _AmbientOrb(
               size: AppSpacing.huge * 8, // 320
-              color: AppColors.accent.withOpacity(0.60 * 0.6),
+              color: AppColors.accent.withValues(alpha: 0.60 * 0.6),
             ),
           ),
           // ── Ambient orb 2: blue at bottom-right ──
@@ -72,7 +65,7 @@ class _SplashPageState extends State<SplashPage> {
             right: -AppSpacing.huge * 2.4, // -96
             child: _AmbientOrb(
               size: AppSpacing.huge * 9.6, // 384
-              color: AppColors.primary.withOpacity(0.60 * 0.4),
+              color: AppColors.primary.withValues(alpha: 0.60 * 0.4),
             ),
           ),
 
@@ -134,13 +127,13 @@ class _SplashPageState extends State<SplashPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary.withOpacity(0.30),
-                    AppColors.accent.withOpacity(0.30),
+                    AppColors.primary.withValues(alpha: 0.30),
+                    AppColors.accent.withValues(alpha: 0.30),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.50),
+                    color: AppColors.primary.withValues(alpha: 0.50),
                     blurRadius: 60,
                     offset: Offset(0, AppSpacing.xxl - 8), // 20
                     spreadRadius: -AppSpacing.xxl + 4, // -20
@@ -234,7 +227,7 @@ class _SplashPageState extends State<SplashPage> {
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.60),
+                    color: AppColors.primary.withValues(alpha: 0.60),
                     blurRadius: 30,
                     spreadRadius: -AppSpacing.md, // -12
                     offset: Offset(0, AppSpacing.defaultSpacing - 6), // 10
@@ -314,11 +307,8 @@ class _FeatureRow extends StatelessWidget {
 
   // Lovable design tokens (inline so widget is self-contained)
   // These are now replaced by AppColors
-  // static const _surface = Color(0xFF2E3038);
-  // static const _border = Color(0xFF454850);
   // static const _fgMain = Color(0xFFF7F8FA);
   // static const _mutedFg = Color(0xFFADB0BC);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -327,9 +317,9 @@ class _FeatureRow extends StatelessWidget {
         padding: EdgeInsets.all(AppSpacing.defaultSpacing),
         decoration: BoxDecoration(
           // card-surface: surface 92% opacity, border, radius-2xl (24px), backdrop-blur-ish
-          color: AppColors.surface.withOpacity(0.92),
+          color: AppColors.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-          border: Border.all(color: AppColors.border.withOpacity(0.80), width: 1),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.80), width: 1),
         ),
         child: Row(
           children: [
@@ -339,7 +329,7 @@ class _FeatureRow extends StatelessWidget {
               height: AppSpacing.iconMdContainer,
               decoration: BoxDecoration(
                 // bg-background/40 equivalent
-                color: AppColors.background.withOpacity(0.40),
+                color: AppColors.background.withValues(alpha: 0.40),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               ),
               child: Icon(feature.icon, size: AppSpacing.iconMd - 2, color: feature.iconColor), // 18

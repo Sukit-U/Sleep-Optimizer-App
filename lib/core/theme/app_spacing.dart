@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// App spacing and sizing constants based on CompleteScreenSpecifications design system
 /// Uses 8-point grid system with 1rem = 16px base
 class AppSpacing {

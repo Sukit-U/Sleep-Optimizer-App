@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Settings;
 import 'models/sqi_models.dart';
 import 'presentation/pages/sqi_result_page.dart';
@@ -15,7 +14,6 @@ class SQIScreen extends StatefulWidget {
 
 class _SQIScreenState extends State<SQIScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
 
   // Questionnaire responses
@@ -332,16 +330,20 @@ class _SQIScreenState extends State<SQIScreen> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ...List.generate(questions.length - 1, (index) {
-              return RadioListTile<int>(
-                title: Text(questions[index + 1]), // Options start from index 1
-                value: index + 1, // Values start from 1 (0 is reserved for unselected)
-                groupValue: selectedValue,
-                onChanged: (value) {
-                  onChanged(value!);
-                },
-              );
-            }),
+            RadioGroup<int>(
+              groupValue: selectedValue,
+              onChanged: (value) {
+                onChanged(value!);
+              },
+              child: Column(
+                children: List.generate(questions.length - 1, (index) {
+                  return RadioListTile<int>(
+                    title: Text(questions[index + 1]), // Options start from index 1
+                    value: index + 1, // Values start from 1 (0 is reserved for unselected)
+                  );
+                }),
+              ),
+            ),
           ],
         ),
       ),
@@ -442,7 +444,7 @@ class SQIResultScreen extends StatelessWidget {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
@@ -495,15 +497,3 @@ class SQIResultScreen extends StatelessWidget {
   }
 }
 
-extension on SQIRecord {
-  SQIRecord copyWith({String? recordId}) {
-    return SQIRecord(
-      recordId: recordId ?? this.recordId,
-      userId: this.userId,
-      sqiScore: this.sqiScore,
-      sleepQualityLevel: this.sleepQualityLevel,
-      questionnaireResponses: this.questionnaireResponses,
-      createdAt: this.createdAt,
-    );
-  }
-}

@@ -57,12 +57,12 @@ class _HomePageState extends State<HomePage> {
           Positioned(
             top: -MediaQuery.of(context).size.height * 0.1,
             left: MediaQuery.of(context).size.width * 0.1,
-            child: _buildOrb(AppSpacing.huge * 8, AppColors.accent.withOpacity(0.35)), // 300
+            child: _buildOrb(AppSpacing.huge * 8, AppColors.accent.withValues(alpha: 0.35)), // 300
           ),
           Positioned(
             bottom: MediaQuery.of(context).size.height * 0.2,
             right: -50,
-            child: _buildOrb(AppSpacing.huge * 6.25, AppColors.primary.withOpacity(0.35)), // 250
+            child: _buildOrb(AppSpacing.huge * 6.25, AppColors.primary.withValues(alpha: 0.35)), // 250
           ),
 
           SafeArea(child: HomeBody(context: context)),
@@ -101,15 +101,15 @@ class _HomePageState extends State<HomePage> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm), // 8
               decoration: BoxDecoration(
-                color: AppColors.surface.withOpacity(0.85),
+                color: AppColors.surface.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull), // 9999
                 border: Border.all(
-                  color: AppColors.border.withOpacity(0.5),
+                  color: AppColors.border.withValues(alpha: 0.5),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadow.withOpacity(0.45), // Colors.black45
+                    color: AppColors.shadow.withValues(alpha: 0.45), // Colors.black45
                     blurRadius: AppSpacing.lg, // 20
                     offset: Offset(0, AppSpacing.defaultSpacing - 6), // 10
                   ),

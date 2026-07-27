@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Model for SQI records
 class SQIRecord {
   final String recordId;

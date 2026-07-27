@@ -24,7 +24,7 @@ class SuggestedBedtimesPage extends StatelessWidget {
 
 class _BedtimeCard extends StatelessWidget {
   final int index;
-  const _BedtimeCard({Key? key, required this.index}) : super(key: key);
+  const _BedtimeCard({required this.index});
 
   @override
   Widget build(BuildContext context) {

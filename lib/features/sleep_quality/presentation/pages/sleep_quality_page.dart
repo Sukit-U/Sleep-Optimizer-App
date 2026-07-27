@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../app/app.dart';
 import '../../../../shared/widgets/section_title.dart';
 import '../../data/repositories/sqi_repository.dart';
-import '../../domain/entities/sqi_result.dart';
 import '../../domain/usecases/calculate_sqi.dart';
 import '../../../recommendation/presentation/pages/recommendation_page.dart';
 

@@ -50,22 +50,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _firestoreService.updateSettings(settings);
 
       // Update the theme provider
-      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-      themeProvider.setTheme(theme == 'light' ? ThemeMode.light : ThemeMode.dark);
+      if (mounted) {
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+        themeProvider.setTheme(theme == 'light' ? ThemeMode.light : ThemeMode.dark);
+      }
 
       setState(() {
         _currentTheme = theme;
       });
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Theme updated successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Theme updated successfully')),
+        );
+      }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update theme: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update theme: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -93,17 +97,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
-                          RadioListTile<String>(
-                            title: const Text('Dark'),
-                            value: 'dark',
+                          RadioGroup<String>(
                             groupValue: _currentTheme,
                             onChanged: (value) => _saveTheme(value!),
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Light'),
-                            value: 'light',
-                            groupValue: _currentTheme,
-                            onChanged: (value) => _saveTheme(value!),
+                            child: Column(
+                              children: [
+                                RadioListTile<String>(
+                                  title: const Text('Dark'),
+                                  value: 'dark',
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Light'),
+                                  value: 'light',
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

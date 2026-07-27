@@ -43,7 +43,7 @@ class SettingsPage extends StatelessWidget {
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
                   boxShadow: [BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: AppSpacing.cardShadow,
                     offset: const Offset(0, 2),
                   )],
@@ -84,7 +84,7 @@ class SettingsPage extends StatelessWidget {
                         );
                         await appStorage?.saveTheme(nextMode == ThemeMode.light ? 'light' : 'dark');
                       },
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -98,7 +98,7 @@ class SettingsPage extends StatelessWidget {
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
                   boxShadow: [BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: AppSpacing.cardShadow,
                     offset: const Offset(0, 2),
                   )],

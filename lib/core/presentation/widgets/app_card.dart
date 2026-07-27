@@ -7,11 +7,11 @@ import '../../theme/app_colors.dart';
 class AppCard extends StatelessWidget {
   final Widget child;
   final double padding;
-  BorderRadius? borderRadius;
-  Color backgroundColor;
-  double elevation;
+  final BorderRadius? borderRadius;
+  final Color backgroundColor;
+  final double elevation;
 
-  AppCard({
+  const AppCard({
     super.key,
     required this.child,
     this.padding = AppSpacing.md,

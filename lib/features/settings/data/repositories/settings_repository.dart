@@ -10,7 +10,9 @@ class FirestoreSettingsRepository implements SettingsRepository {
   FirestoreSettingsRepository({
     FirebaseService? firebaseService,
     StorageService? storageService,
-  })  : _firebaseService = firebaseService ?? FirebaseService(),
+  })  // ignore: prefer_initializing_formals
+      : _firebaseService = firebaseService ?? FirebaseService(),
+        // ignore: prefer_initializing_formals
         _storageService = storageService;
 
   final FirebaseService _firebaseService;

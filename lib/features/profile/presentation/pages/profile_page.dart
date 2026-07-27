@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
-import 'package:snoozemate/core/presentation/widgets/app_card.dart';
 
 /// Simple profile screen placeholder matching design specifications.
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {

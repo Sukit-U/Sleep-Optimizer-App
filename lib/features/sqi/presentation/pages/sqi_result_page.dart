@@ -44,12 +44,12 @@ class SQIResultPage extends StatelessWidget {
           Positioned(
             top: -AppSpacing.huge * 2,
             right: -AppSpacing.huge * 2,
-            child: _buildOrb(AppSpacing.huge * 8, AppColors.accent.withOpacity(0.35)),
+            child: _buildOrb(AppSpacing.huge * 8, AppColors.accent.withValues(alpha: 0.35)),
           ),
           Positioned(
             bottom: -AppSpacing.huge * 3,
             left: -AppSpacing.huge * 2,
-            child: _buildOrb(AppSpacing.huge * 6, AppColors.primary.withOpacity(0.35)),
+            child: _buildOrb(AppSpacing.huge * 6, AppColors.primary.withValues(alpha: 0.35)),
           ),
 
           // Main content
@@ -128,9 +128,9 @@ class SQIResultPage extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.92),
+        color: AppColors.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-        border: Border.all(color: AppColors.border.withOpacity(0.8)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
       ),
       child: Column(
         children: [
@@ -156,8 +156,8 @@ class SQIResultPage extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      scoreColor.withOpacity(0.2),
-                      scoreColor.withOpacity(0.1),
+                      scoreColor.withValues(alpha: 0.2),
+                      scoreColor.withValues(alpha: 0.1),
                     ],
                     stops: const [0.3, 1.0],
                   ),
@@ -231,22 +231,22 @@ class SQIResultPage extends StatelessWidget {
 
     switch (recommendation.priority) {
       case 'Critical':
-        cardColor = AppColors.destructive.withOpacity(0.1);
+        cardColor = AppColors.destructive.withValues(alpha: 0.1);
         textColor = AppColors.destructive;
         iconColor = AppColors.destructive;
         break;
       case 'High':
-        cardColor = AppColors.warning.withOpacity(0.1);
+        cardColor = AppColors.warning.withValues(alpha: 0.1);
         textColor = AppColors.warning;
         iconColor = AppColors.warning;
         break;
       case 'Medium':
-        cardColor = AppColors.info.withOpacity(0.1);
+        cardColor = AppColors.info.withValues(alpha: 0.1);
         textColor = AppColors.info;
         iconColor = AppColors.info;
         break;
       case 'Low':
-        cardColor = AppColors.success.withOpacity(0.1);
+        cardColor = AppColors.success.withValues(alpha: 0.1);
         textColor = AppColors.success;
         iconColor = AppColors.success;
         break;
@@ -263,7 +263,7 @@ class SQIResultPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-          border: Border.all(color: textColor.withOpacity(0.3)),
+          border: Border.all(color: textColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +291,7 @@ class SQIResultPage extends StatelessWidget {
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: textColor.withOpacity(0.2),
+                    color: textColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                   ),
                   child: Text(

@@ -97,7 +97,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     ),
                                     ...plan.suggestedBedtimes.map((bedtime) {
                                       return Text(bedtime);
-                                    }).toList(),
+                                    }),
                                   ],
                                 ),
                               ),
@@ -152,7 +152,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                                 Text('  ${recommendation.description}'),
                                               ],
                                             );
-                                          }).toList(),
+                                          }),
                                         ],
                                       ],
                                     ),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// A reusable AppBar widget that follows the project's design system.
 /// It uses the primary color from the current theme and displays the app title.
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
-  const AppBarWidget({Key? key}) : super(key: key);
+  const AppBarWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

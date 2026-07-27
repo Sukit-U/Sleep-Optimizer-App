@@ -101,7 +101,7 @@ class AppTheme {
       // Navigation Bar (Material 3) - this is for larger screens, we'll focus on BottomNavigationBar for mobile
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.background,
-        indicatorColor: AppColors.primary.withOpacity(0.15),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
         elevation: 0,
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -283,7 +283,7 @@ switchTheme: SwitchThemeData(
   }),
   trackColor: WidgetStateProperty.resolveWith((states) {
     if (states.contains(WidgetState.selected)) {
-      return AppColors.primary.withOpacity(0.5);
+      return AppColors.primary.withValues(alpha: 0.5);
     }
     return AppColors.muted;
   }),

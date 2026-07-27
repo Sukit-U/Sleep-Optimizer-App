@@ -143,7 +143,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       case AppButtonVariant.outlined:
         return Colors.transparent;
       case AppButtonVariant.ghost:
-        return AppColors.muted.withOpacity(0.5);
+        return AppColors.muted.withValues(alpha: 0.5);
       case AppButtonVariant.icon:
         return AppColors.card;
     }

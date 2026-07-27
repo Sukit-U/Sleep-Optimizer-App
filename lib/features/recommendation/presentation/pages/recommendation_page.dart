@@ -154,7 +154,7 @@ padding: const EdgeInsets.symmetric(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
           boxShadow: [BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: AppSpacing.cardShadow,
             offset: const Offset(0, 2),
           )],
@@ -262,7 +262,7 @@ padding: const EdgeInsets.symmetric(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
@@ -342,7 +342,7 @@ padding: const EdgeInsets.symmetric(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
@@ -407,7 +407,7 @@ padding: const EdgeInsets.symmetric(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
@@ -473,22 +473,6 @@ padding: const EdgeInsets.symmetric(
     );
   }
 
-  /// Get color based on quality level
-  Color _getQualityColor(String level) {
-    switch (level.toLowerCase()) {
-      case 'excellent':
-        return AppColors.success;
-      case 'good':
-        return AppColors.primary;
-      case 'fair':
-        return AppColors.warning;
-      case 'poor':
-      case 'very poor':
-        return AppColors.destructive;
-      default:
-        return AppColors.primary;
-    }
-  }
 
   /// Get color based on score
   Color _getScoreColor(int score) {

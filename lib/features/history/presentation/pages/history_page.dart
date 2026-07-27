@@ -6,7 +6,7 @@ import 'package:snoozemate/core/theme/app_typography.dart';
 /// History screen – UI implementation matching Lovable design.
 /// Shows both SQI records and Sleep plans with tabbed navigation.
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({Key? key}) : super(key: key);
+  const HistoryPage({super.key});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -160,7 +160,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return ListView.separated(
       itemCount: _sqiRecords.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final record = _sqiRecords[index];
         return _buildSQIItem(record);
@@ -175,7 +175,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Row(
         children: [
@@ -258,7 +258,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return ListView.separated(
       itemCount: _sleepPlans.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final plan = _sleepPlans[index];
         return _buildPlanItem(plan);
@@ -273,7 +273,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Row(
         children: [
@@ -344,7 +344,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

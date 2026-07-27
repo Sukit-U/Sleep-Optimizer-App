@@ -30,7 +30,7 @@ class HomeCard extends StatelessWidget {
           color: AppColors.card,
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
+          boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
