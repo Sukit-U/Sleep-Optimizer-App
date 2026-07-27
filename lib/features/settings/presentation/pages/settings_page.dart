@@ -42,7 +42,11 @@ class SettingsPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [AppSpacing.cardShadow],
+                  boxShadow: [BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: AppSpacing.cardShadow,
+                    offset: const Offset(0, 2),
+                  )],
                 ),
                 child: Row(
                   children: [
@@ -93,7 +97,11 @@ class SettingsPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [AppSpacing.cardShadow],
+                  boxShadow: [BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: AppSpacing.cardShadow,
+                    offset: const Offset(0, 2),
+                  )],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

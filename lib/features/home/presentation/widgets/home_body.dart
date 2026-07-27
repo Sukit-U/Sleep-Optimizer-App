@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
-import 'package:snoozemate/core/theme/app_typography.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// HomeBody - Main dashboard following Lovable UI structure
-/// Primary reference: sleep-wise-plan/src/routes/home.tsx
 class HomeBody extends StatelessWidget {
   const HomeBody({super.key, required this.context});
 
@@ -21,31 +19,22 @@ class HomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.px,
-          vertical: AppSpacing.py,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with greeting, name, moon emoji, and settings chip
-            _buildHeader(),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Tonight's suggestion card with gradient background
-            _buildTonightsSuggestionCard(context),
-            const SizedBox(height: AppSpacing.md),
-
-            // 2-column grid with Sleep Planner and Sleep Quality
-            _buildFeatureGrid(context),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Latest score section
-            _buildLatestScoreSection(context),
-          ],
-        ),
+    // We add padding-bottom 100 to ensure content isn't hidden behind the floating navbar
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildCreateProfileBanner(), // Conditional placeholder
+          const SizedBox(height: 20),
+          _buildTonightsSuggestionCard(),
+          const SizedBox(height: 20),
+          _buildFeatureGrid(),
+          const SizedBox(height: 24),
+          _buildLatestScoreSection(),
+        ],
       ),
     );
   }
@@ -55,104 +44,197 @@ class HomeBody extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         // Greeting with name and moon emoji
-         Column(
-           crossAxisAlignment: CrossAxisAlignment.start,
-           children: [
-             Text(
-               '${_greet()},',
-               style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
-             ),
-             Row(
-               children: [
-                 Text(
-                   'Welcome',
-                   style: AppTypography.h1.copyWith(color: AppColors.foreground),
-                 ),
-                 const SizedBox(width: 4),
-                 const Text('🌙', style: TextStyle(fontSize: 28)),
-               ],
-             ),
-           ],
-         ),
-        // Settings icon
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).pushNamed(AppRoutes.settings);
-          },
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Icon(
-              Icons.settings,
-              size: AppSpacing.iconMd,
-              color: AppColors.foreground,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${_greet()},', // Uses the dynamic greeting
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppColors.mutedForeground,
+              ),
             ),
-          ),
+            Row(
+              children: [
+                Text(
+                  'Welcome',
+                  style: GoogleFonts.sora(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.foreground,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text('🌙', style: TextStyle(fontSize: 24)),
+              ],
+            ),
+          ],
+        ),
+        // Settings Chip linking to Settings page
+        GestureDetector(
+onTap: () {
+  Navigator.of(context).pushNamed(AppRoutes.settings);
+},
+child: Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  decoration: BoxDecoration(
+    color: AppColors.accent.withValues(alpha: 0.20),
+    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+    border: Border.all(
+      color: AppColors.accent.withValues(alpha: 0.40),
+      width: 1,
+    ),
+  ),
+  child: Text(
+    'Set profile',
+    style: GoogleFonts.inter(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: AppColors.foreground,
+    ),
+  ),
+),
         ),
       ],
     );
   }
 
-  Widget _buildTonightsSuggestionCard(BuildContext context) {
+  Widget _buildCreateProfileBanner() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.40)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Create your profile',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Personalize your recommendations.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 18,
+                  color: AppColors.foreground,
+                ),
+              ],
+            ),
+      ),
+    );
+  }
+
+  Widget _buildTonightsSuggestionCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: AppSpacing.radius3xl,
-        border: Border.all(color: AppColors.border),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.accent.withValues(alpha: 0.35),
-            AppColors.primary.withValues(alpha: 0.2),
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sparkles icon and label
-          Row(
-            children: [
-              Icon(Icons.auto_awesome, size: AppSpacing.iconSm, color: AppColors.mutedForeground),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                "Tonight's suggestion",
-                style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+      padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.92), // matching the Lovable styling
+              borderRadius: BorderRadius.circular(AppSpacing.radius3xl),
+              border: Border.all(color: AppColors.border),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.35),
+                  AppColors.primary.withValues(alpha: 0.20),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Suggestion text
-          Text(
-            'Plan tonight',
-            style: AppTypography.displayMedium.copyWith(color: AppColors.foreground),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Tell us when you need to wake up.',
-            style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Open Sleep Planner button
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.auto_awesome,
+                      size: 14,
+                      color: AppColors.mutedForeground,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Tonight's suggestion",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Plan tonight',
+                  style: GoogleFonts.sora(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.foreground,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tell us when you need to wake up.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.mutedForeground,
+                  ),
+                ),
+          const SizedBox(height: 20),
           GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.primary,
-                borderRadius: AppSpacing.radiusXl,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.60),
+                    blurRadius: 30,
+                    spreadRadius: -12,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Open Sleep Planner',
-                    style: AppTypography.button.copyWith(color: AppColors.primaryForeground),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryForeground,
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(Icons.arrow_forward, size: AppSpacing.iconMd, color: AppColors.primaryForeground),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: AppColors.primaryForeground,
+                  ),
                 ],
               ),
             ),
@@ -162,67 +244,74 @@ class HomeBody extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureGrid(BuildContext context) {
+  Widget _buildFeatureGrid() {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sleep Planner card
         Expanded(
           child: _FeatureCard(
             icon: Icons.nightlight_round,
             iconColor: AppColors.primary,
             title: 'Sleep Planner',
             description: 'Find your best bedtime',
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
-        // Sleep Quality card
+        const SizedBox(width: 12),
         Expanded(
           child: _FeatureCard(
-            icon: Icons.checklist,
+            icon: Icons.checklist_rtl_rounded,
             iconColor: AppColors.accent,
             title: 'Sleep Quality',
             description: 'Take the assessment',
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLatestScoreSection(BuildContext context) {
+  Widget _buildLatestScoreSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header with "View history" link
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Latest score',
-              style: AppTypography.h3.copyWith(color: AppColors.foreground),
+              style: GoogleFonts.sora(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.foreground,
+              ),
             ),
             GestureDetector(
               onTap: () => Navigator.of(context).pushNamed(AppRoutes.history),
               child: Text(
                 'View history',
-                style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.mutedForeground,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        // Score card placeholder (no data state)
+        const SizedBox(height: 12),
+        // Empty state card
         GestureDetector(
           onTap: () => Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: AppSpacing.radiusLg,
-              border: Border.all(color: AppColors.border),
+              color: AppColors.surface.withValues(alpha: 0.92), // matching surface-card
+              borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.8),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,11 +319,18 @@ class HomeBody extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Take your first assessment — under 3 minutes.',
-                    style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.mutedForeground,
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Icon(Icons.arrow_forward, size: AppSpacing.iconMd, color: AppColors.mutedForeground),
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: AppColors.foreground,
+                ),
               ],
             ),
           ),
@@ -244,7 +340,6 @@ class HomeBody extends StatelessWidget {
   }
 }
 
-/// _FeatureCard - Internal card widget for the 2-column feature grid
 class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -265,28 +360,35 @@ class _FeatureCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: AppSpacing.radiusLg,
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: AppSpacing.iconLg, color: iconColor),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              title,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.foreground),
+        padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.92), // card-surface styling
+              borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              description,
-              style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: 24, color: iconColor),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.foreground,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.mutedForeground,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
       ),
     );
   }

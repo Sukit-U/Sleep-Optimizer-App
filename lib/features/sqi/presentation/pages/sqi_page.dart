@@ -119,7 +119,7 @@ class _SQIPageState extends State<SQIPage> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.mutedBackground,
-                      borderRadius: AppSpacing.radiusSm,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
@@ -127,7 +127,7 @@ class _SQIPageState extends State<SQIPage> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: AppSpacing.radiusSm,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                         ),
                       ),
                     ),
@@ -175,7 +175,7 @@ class _SQIPageState extends State<SQIPage> {
                         border: Border.all(
                           color: isSelected ? AppColors.primary : AppColors.border,
                         ),
-                        borderRadius: AppSpacing.radiusLg,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                       ),
                       child: Row(
                         children: [

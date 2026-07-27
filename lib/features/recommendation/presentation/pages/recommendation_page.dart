@@ -28,10 +28,10 @@ class _RecommendationPageState extends State<RecommendationPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.px,
-            vertical: AppSpacing.py,
-          ),
+padding: const EdgeInsets.symmetric(
+  horizontal: AppSpacing.spacingXs,
+  vertical: AppSpacing.spacingXs,
+),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -146,15 +146,19 @@ class _RecommendationPageState extends State<RecommendationPage> {
   /// SQI Score display with circular gradient
   Widget _buildSQIScoreDisplay(SqiResult result) {
     final scoreColor = _getScoreColor(result.score);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
-      ),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
+          boxShadow: [BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: AppSpacing.cardShadow,
+            offset: const Offset(0, 2),
+          )],
+        ),
       child: Column(
         children: [
           // Circular progress indicator with score
@@ -210,7 +214,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
+              vertical: AppSpacing.spacingXs,
             ),
             decoration: BoxDecoration(
               color: scoreColor.withValues(alpha: 0.15),
@@ -257,7 +261,11 @@ class _RecommendationPageState extends State<RecommendationPage> {
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-            boxShadow: [AppSpacing.cardShadow],
+            boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: AppSpacing.cardShadow,
+              offset: const Offset(0, 2),
+            )],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,11 +338,15 @@ class _RecommendationPageState extends State<RecommendationPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
-      ),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
+            boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: AppSpacing.cardShadow,
+              offset: const Offset(0, 2),
+            )],
+          ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -344,7 +356,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xxs,
+                  vertical: AppSpacing.spacingXs,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
@@ -376,7 +388,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
             'Action: ${recommendation.action}',
             style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
           ),
-          const SizedBox(height: AppSpacing.xxs),
+          const SizedBox(height: AppSpacing.spacingXs),
           Text(
             'Factor: ${recommendation.factor}',
             style: AppTypography.caption.copyWith(color: AppColors.accent),
@@ -391,11 +403,15 @@ class _RecommendationPageState extends State<RecommendationPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
-      ),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
+            boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: AppSpacing.cardShadow,
+              offset: const Offset(0, 2),
+            )],
+          ),
       child: Text(
         label,
         style: AppTypography.body.copyWith(color: AppColors.mutedForeground),

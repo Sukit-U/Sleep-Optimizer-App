@@ -1,31 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
-import 'package:snoozemate/core/theme/app_spacing.dart';
-import 'package:snoozemate/core/theme/app_typography.dart';
-import 'package:snoozemate/core/presentation/widgets/app_button.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-class BedtimeOption {
-  final String bedtime;
-  final int cycles;
-  final int durationMinutes;
+import '../../../../services/firestore_service.dart';
+import '../../../../models/sleep_plan_model.dart';
+import '../../../../core/theme/app_colors.dart';
 
-  BedtimeOption({
-    required this.bedtime,
-    required this.cycles,
-    required this.durationMinutes,
-  });
-}
-
-String formatDuration(int minutes) {
-  int hours = minutes ~/ 60;
-  int mins = minutes % 60;
-  return '${hours}h ${mins}m';
-}
-
-/// Sleep Planner screen – UI only implementation.
-/// Preserves any existing business logic/calculation functions (e.g. `calculateBedtime`);
-/// this file focuses solely on the visual layout according to CompleteScreenSpecifications,
-/// Design‑System.md and UI‑Guidelines.md.
 class SleepPlannerPage extends StatefulWidget {
   const SleepPlannerPage({super.key});
 
@@ -34,303 +14,536 @@ class SleepPlannerPage extends StatefulWidget {
 }
 
 class _SleepPlannerPageState extends State<SleepPlannerPage> {
-  // Selected bedtime – UI only, assumes a calculation function exists elsewhere.
-  TimeOfDay? _selectedTime;
-  int _latencyMinutes = 15; // Default latency minutes
-  final List<String> _constraints = []; // Constraints selection state
-  static const List<String> constraintsList = [ // Available constraints
-    "Homework",
-    "Tutoring",
-    "Project",
-    "Late arrival",
-    "Personal activity",
+  final FirestoreService _firestoreService = FirestoreService();
+
+  // State from Lovable implementation
+  DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
+  double _latency = 15; // default 15 mins
+
+  final List<String> _allConstraints = [
+    'Homework',
+    'Tutoring',
+    'Project',
+    'Late arrival',
+    'Personal activity',
   ];
-  List<BedtimeOption> bedtimeOptions = []; // Will be populated based on _selectedTime
-  BedtimeOption? _chosenBedtime; // Currently selected bedtime option
-  
-  void _handleSavePlan() {
-    // Here you would typically save the plan to your data store
-    // For now, we'll just print the selected bedtime
-    if (_chosenBedtime != null) {
-      print('Saving plan: Bedtime at ${_chosenBedtime!.bedtime}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Plan saved: Bedtime at ${_chosenBedtime!.bedtime}')),
-      );
-    }
+  final Set<String> _selectedConstraints = {};
+
+  int? _chosenCycles;
+  bool _saved = false;
+
+  void _toggleConstraint(String c) {
+    setState(() {
+      if (_selectedConstraints.contains(c)) {
+        _selectedConstraints.remove(c);
+      } else {
+        _selectedConstraints.add(c);
+      }
+    });
   }
 
-// Placeholder for a calculation call; the actual implementation resides in the
-// business‑logic layer and is not modified here.
-
-  Future<void> _pickTime() async {
+  Future<void> _selectWakeUpTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? const TimeOfDay(hour: 22, minute: 0),
+      initialTime: TimeOfDay.fromDateTime(_wakeUpTime),
       builder: (context, child) {
-        // Apply design‑system theming to the picker dialog.
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+            colorScheme: const ColorScheme.dark(
               primary: AppColors.primary,
-              surface: AppColors.card,
-            ),
-            timePickerTheme: const TimePickerThemeData(
-              backgroundColor: AppColors.card,
+              onPrimary: Color(0xFF1A1D28),
+              surface: Color(0xFF2E3038),
+              onSurface: Color(0xFFF7F8FA),
             ),
           ),
-          child: child ?? const SizedBox.shrink(),
+          child: child!,
         );
       },
     );
 
-    if (picked != null && picked != _selectedTime) {
+    if (picked != null) {
+      final now = DateTime.now();
       setState(() {
-        _selectedTime = picked;
+        _wakeUpTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          picked.hour,
+          picked.minute,
+        );
+        // Reset chosen cycle if time changes
+        _chosenCycles = null;
       });
     }
   }
 
+  // Calculate suggested bedtimes
+  List<_BedtimeOption> _getOptions() {
+    final List<_BedtimeOption> options = [];
+
+    // We show exactly 3 options: 6 cycles (9h), 5 cycles (7.5h - recommended), 4 cycles (6h)
+    for (int cycles in [6, 5, 4]) {
+      final totalMinutes = (cycles * 90) + _latency.round();
+      final bedtime = _wakeUpTime.subtract(Duration(minutes: totalMinutes));
+
+      options.add(
+        _BedtimeOption(
+          cycles: cycles,
+          bedtimeString: DateFormat('hh:mm a').format(bedtime),
+          bedtimeDate: bedtime,
+          durationMinutes: (cycles * 90),
+        ),
+      );
+    }
+
+    return options;
+  }
+
+  Future<void> _handleSave() async {
+    final options = _getOptions();
+    final chosenOption = options.firstWhere(
+      (o) => o.cycles == (_chosenCycles ?? 5),
+      orElse: () => options[1],
+    );
+
+    final sleepPlan = SleepPlan(
+      planId: '',
+      userId:
+          'default_user', // Using default since we don't have auth state passed in here yet
+      wakeUpTime: _wakeUpTime,
+      createdAt: DateTime.now(),
+      sleepCycles: chosenOption.cycles,
+      suggestedBedtimes: options.map((o) => o.bedtimeString).toList(),
+    );
+
+    // Save to Firestore
+    await _firestoreService.addSleepPlan(sleepPlan);
+
+    setState(() {
+      _saved = true;
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _saved = false;
+        });
+      }
+    });
+  }
+
+  String _formatDuration(int minutes) {
+    if (minutes == 0) return '0h';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
+
   @override
   Widget build(BuildContext context) {
-return Scaffold(
-  body: SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.px,
-        vertical: AppSpacing.py,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with back navigation and title
-          Row(
+    final options = _getOptions();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF252830), // AppColors background
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: AppSpacing.radiusFull,
-                  ),
-                  child: Icon(Icons.arrow_left, size: AppSpacing.iconMd),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Column(
+              // ── Header ──
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Sleep Planner',
-                    style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 18,
+                        color: Color(0xFFF7F8FA),
+                      ),
+                    ),
                   ),
-                  Text(
-                    'When should I sleep?',
-                    style: AppTypography.h1.copyWith(color: AppColors.foreground),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Sleep Planner',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFFADB0BC), // muted
+                        ),
+                      ),
+                      Text(
+                        'When should I sleep?',
+                        style: GoogleFonts.sora(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFF7F8FA),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          // Wake-up time input
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              border: Border.all(color: AppColors.border),
-              borderRadius: AppSpacing.radiusLg,
-            ),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Wake-up time',
-                  style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
-                ),
-                GestureDetector(
-                  onTap: _pickTime,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.md,
-                      horizontal: AppSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: AppSpacing.radius2xl,
-                    ),
-                    child: Text(
-                      _selectedTime == null ? '--:--' : _selectedTime!.format(context),
-                      style: AppTypography.displaySmall.copyWith(color: AppColors.foreground),
-                    ),
+              const SizedBox(height: 32),
+
+              // ── Inputs Card ──
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(
+                    0xFF2E3038,
+                  ).withValues(alpha: 0.92), // card-surface
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                // Latency slider
-                Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Time to fall asleep: ${_latencyMinutes} min',
-                      style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                      'Wake-up time',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: const Color(0xFFADB0BC),
+                      ),
                     ),
-                    Slider(
-                      value: _latencyMinutes.toDouble(),
-                      min: 0,
-                      max: 45,
-                      divisions: 9,
-                      label: '${_latencyMinutes} min',
-                      activeColor: AppColors.primary,
-                      onChanged: (value) {
-                        setState(() {
-                          _latencyMinutes = value.round();
-                        });
-                      },
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => _selectWakeUpTime(context),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF252830,
+                          ).withValues(alpha: 0.4), // bg-background/40
+                          borderRadius: BorderRadius.circular(
+                            16,
+                          ), // rounded-2xl
+                          border: Border.all(
+                            color: AppColors.border.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Text(
+                          DateFormat('hh:mm a').format(_wakeUpTime),
+                          style: GoogleFonts.sora(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.5,
+                            color: const Color(0xFFF7F8FA),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Row(
+                      children: [
+                        Text(
+                          'Time to fall asleep: ',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFFADB0BC),
+                          ),
+                        ),
+                        Text(
+                          '${_latency.toInt()} min',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFFF7F8FA),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: AppColors.primary,
+                        inactiveTrackColor: AppColors.border,
+                        thumbColor: AppColors.primary,
+                        overlayColor: AppColors.primary.withValues(alpha: 0.2),
+                        trackHeight: 4,
+                      ),
+                      child: Slider(
+                        value: _latency,
+                        min: 0,
+                        max: 45,
+                        divisions: 9,
+                        onChanged: (val) {
+                          setState(() {
+                            _latency = val;
+                          });
+                        },
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Constraints section
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              ),
+              const SizedBox(height: 24),
+
+              // ── Constraints ──
               Text(
                 'Tonight I also have…',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.mutedForeground),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: const Color(0xFFADB0BC),
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: 8),
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: constraintsList.map((constraint) {
-                  bool isSelected = _constraints.contains(constraint);
+                spacing: 8,
+                runSpacing: 8,
+                children: _allConstraints.map((c) {
+                  final isOn = _selectedConstraints.contains(c);
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _constraints.remove(constraint);
-                        } else {
-                          _constraints.add(constraint);
-                        }
-                      });
-                    },
+                    onTap: () => _toggleConstraint(c),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.15) : AppColors.card,
+                        color: isOn
+                            ? AppColors.primary.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9999),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : AppColors.border,
+                          color: isOn ? AppColors.primary : AppColors.border,
                         ),
-                        borderRadius: AppSpacing.radiusFull,
                       ),
                       child: Text(
-                        constraint,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: isSelected ? AppColors.primary : AppColors.mutedForeground,
+                        c,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: isOn ? FontWeight.w500 : FontWeight.w400,
+                          color: isOn
+                              ? AppColors.primary
+                              : const Color(0xFFADB0BC),
                         ),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          // Suggested bedtimes
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Suggested bedtimes',
-                style: AppTypography.h2.copyWith(color: AppColors.foreground),
-              ),
-              Text(
-                'Wake at ${_selectedTime?.format(context)}',
-                style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Bedtime options
-          Column(
-            children: bedtimeOptions.map((option) {
-              bool isSelected = _chosenBedtime?.bedtime == option.bedtime;
-              bool isRecommended = option.cycles == 5; // Assuming 5 cycles is recommended
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _chosenBedtime = option;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: AppSpacing.radiusLg,
-                    boxShadow: isSelected ? [AppSpacing.cardShadow] : null,
+
+              const SizedBox(height: 32),
+
+              // ── Suggested Bedtimes ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Suggested bedtimes',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFF7F8FA),
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.nightlight_round, color: AppColors.primary),
-                      const SizedBox(width: AppSpacing.sm),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  Text(
+                    'Wake at ${DateFormat('HH:mm').format(_wakeUpTime)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFFADB0BC),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              Column(
+                children: options.map((o) {
+                  final isChosen = _chosenCycles == o.cycles;
+                  final recommended = o.cycles == 5;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _chosenCycles = o.cycles;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(
+                          0xFF2E3038,
+                        ).withValues(alpha: 0.92), // card-surface
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isChosen
+                              ? AppColors.primary
+                              : AppColors.border.withValues(alpha: 0.8),
+                          width: isChosen ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            option.bedtime,
-                            style: AppTypography.bodyMedium.copyWith(color: AppColors.foreground),
+                          Icon(
+                            Icons.nightlight_round,
+                            color: AppColors.primary,
+                            size: 24,
                           ),
-                          Text(
-                            '${option.cycles} cycles · ${formatDuration(option.durationMinutes)}',
-                            style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  o.bedtimeString,
+                                  style: GoogleFonts.sora(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF7F8FA),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${o.cycles} cycles • ${_formatDuration(o.durationMinutes)}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFFADB0BC),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (recommended)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: AppColors.accent.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Recommended',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFFF7F8FA),
+                                    ),
+                                  ),
+                                ),
+                              if (isChosen)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Icon(
+                                    Icons.check,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                            ],
                           ),
                         ],
                       ),
-                      const Spacer(),
-                      if (isRecommended)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.xs,
-                            vertical: AppSpacing.xxs,
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Save Button ──
+              SizedBox(
+                width: double.infinity,
+                child: GestureDetector(
+                  onTap: _handleSave,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(9999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.60),
+                          blurRadius: 30,
+                          spreadRadius: -12,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_saved)
+                          const Icon(
+                            Icons.check,
+                            size: 18,
+                            color: Color(0xFF1A1D28),
+                          )
+                        else
+                          const Icon(
+                            Icons.bookmark,
+                            size: 18,
+                            color: Color(0xFF1A1D28),
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.15),
-                            borderRadius: AppSpacing.radiusSm,
-                          ),
-                          child: Text(
-                            'Recommended',
-                            style: AppTypography.labelSmall.copyWith(color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          _saved ? 'Saved to history' : 'Save plan',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1A1D28),
                           ),
                         ),
-                      if (isSelected)
-                        Icon(Icons.check, color: AppColors.primary, size: AppSpacing.iconSm),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(height: 48), // Bottom padding
+            ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          // Save button
-          AppButton(
-            label: 'Save plan',
-            onPressed: _handleSavePlan,
-            variant: AppButtonVariant.primary,
-            size: AppButtonSize.large,
-          ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
+}
+
+class _BedtimeOption {
+  final int cycles;
+  final String bedtimeString;
+  final DateTime bedtimeDate;
+  final int durationMinutes;
+
+  _BedtimeOption({
+    required this.cycles,
+    required this.bedtimeString,
+    required this.bedtimeDate,
+    required this.durationMinutes,
+  });
 }

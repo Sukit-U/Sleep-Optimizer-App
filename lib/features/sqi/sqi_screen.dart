@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
-import '../../models/sqi_record_model.dart';
-import '../../models/recommendation_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Settings;
+import 'models/sqi_models.dart';
+import 'presentation/pages/sqi_result_page.dart';
 
 class SQIScreen extends StatefulWidget {
   final String userId;
@@ -13,6 +14,7 @@ class SQIScreen extends StatefulWidget {
 }
 
 class _SQIScreenState extends State<SQIScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
 
@@ -120,14 +122,28 @@ class _SQIScreenState extends State<SQIScreen> {
     );
 
     // Save to Firestore
-    final recordId = await _firestoreService.addSQIRecord(sqiRecord);
+    final recordRef = await _firestore.collection('sqiRecords').add({
+      'userId': widget.userId,
+      'sqiScore': sqiScore,
+      'sleepQualityLevel': sleepQualityLevel,
+      'questionnaireResponses': questionnaireResponses,
+      'createdAt': DateTime.now(),
+    });
+    final recordId = recordRef.id;
 
     // Generate recommendations
     final recommendations = _generateRecommendations(sqiRecord);
 
     // Save recommendations to Firestore
     for (final recommendation in recommendations) {
-      await _firestoreService.addRecommendation(recommendation.copyWith(recordId: recordId));
+      await _firestore.collection('recommendations').add({
+        'recordId': recordId,
+        'factor': recommendation.factor,
+        'title': recommendation.title,
+        'description': recommendation.description,
+        'action': recommendation.action,
+        'priority': recommendation.priority,
+      });
     }
 
     // Navigate to results screen
@@ -135,7 +151,7 @@ class _SQIScreenState extends State<SQIScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SQIResultScreen(
+        builder: (context) => SQIResultPage(
           sqiRecord: sqiRecord.copyWith(recordId: recordId),
           recommendations: recommendations,
         ),
@@ -483,11 +499,11 @@ extension on SQIRecord {
   SQIRecord copyWith({String? recordId}) {
     return SQIRecord(
       recordId: recordId ?? this.recordId,
-      userId: userId,
-      sqiScore: sqiScore,
-      sleepQualityLevel: sleepQualityLevel,
-      questionnaireResponses: questionnaireResponses,
-      createdAt: createdAt,
+      userId: this.userId,
+      sqiScore: this.sqiScore,
+      sleepQualityLevel: this.sleepQualityLevel,
+      questionnaireResponses: this.questionnaireResponses,
+      createdAt: this.createdAt,
     );
   }
 }

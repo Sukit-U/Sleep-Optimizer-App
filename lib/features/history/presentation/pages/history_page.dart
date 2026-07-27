@@ -90,7 +90,7 @@ class _HistoryPageState extends State<HistoryPage> {
   /// Segmented control with rounded-full pill style matching Lovable
   Widget _buildSegmentedControl() {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xxs),
+      padding: const EdgeInsets.all(AppSpacing.spacingXs),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
@@ -112,8 +112,8 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Text(
                     'SQI records',
                     style: AppTypography.tabLabel.copyWith(
-                      color: _selectedTab == 'sqi' 
-                          ? AppColors.primaryForeground 
+                      color: _selectedTab == 'sqi'
+                          ? AppColors.primaryForeground
                           : AppColors.mutedForeground,
                     ),
                   ),
@@ -135,8 +135,8 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Text(
                     'Sleep plans',
                     style: AppTypography.tabLabel.copyWith(
-                      color: _selectedTab == 'plans' 
-                          ? AppColors.primaryForeground 
+                      color: _selectedTab == 'plans'
+                          ? AppColors.primaryForeground
                           : AppColors.mutedForeground,
                     ),
                   ),
@@ -175,7 +175,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Row(
         children: [
@@ -212,7 +212,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xxs),
+                const SizedBox(height: AppSpacing.spacingXs),
                 Text(
                   _formatDate(record['date'] as DateTime),
                   style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
@@ -273,7 +273,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Row(
         children: [
@@ -301,7 +301,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   '${plan['bedtime']} → ${plan['wakeUp']}',
                   style: AppTypography.h3.copyWith(color: AppColors.foreground),
                 ),
-                const SizedBox(height: AppSpacing.xxs),
+                const SizedBox(height: AppSpacing.spacingXs),
                 Text(
                   '${plan['cycles']} cycles · ${_formatDate(plan['date'] as DateTime)}',
                   style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
@@ -344,7 +344,7 @@ class _HistoryPageState extends State<HistoryPage> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [AppSpacing.cardShadow],
+        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

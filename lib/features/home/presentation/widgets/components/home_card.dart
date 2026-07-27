@@ -28,9 +28,9 @@ class HomeCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: AppSpacing.radiusXl,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [AppSpacing.cardShadow],
+          boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withOpacity(0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

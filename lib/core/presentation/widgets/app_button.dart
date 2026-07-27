@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../theme/theme.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
 
 /// Custom button component based on CompleteScreenSpecifications design system
 /// Supports multiple variants: primary, secondary, outlined, ghost, icon
@@ -195,14 +197,14 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           height: _height,
           decoration: BoxDecoration(
             color: _backgroundColor,
-            borderRadius: AppSpacing.radiusFull,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
             border: Border.all(color: AppColors.border, width: 1),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: (widget.isDisabled || widget.isLoading) ? null : widget.onPressed,
-              borderRadius: AppSpacing.radiusFull,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
               child: Center(
                 child: widget.isLoading
                     ? SizedBox(
@@ -240,14 +242,14 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
               : null,
           decoration: BoxDecoration(
             color: _backgroundColor,
-            borderRadius: AppSpacing.radiusXl,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
             border: _border,
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: (widget.isDisabled || widget.isLoading) ? null : widget.onPressed,
-              borderRadius: AppSpacing.radiusXl,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               child: Padding(
                 padding: _padding,
                 child: Row(
@@ -339,15 +341,15 @@ class AppOutlinedButton extends StatelessWidget {
       constraints: fullWidth ? const BoxConstraints(minWidth: double.infinity) : null,
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.border),
-        borderRadius: AppSpacing.radiusXl,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: AppSpacing.radiusXl,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           child: Padding(
-            padding: AppSpacing.buttonPadding,
+            padding: EdgeInsets.all(AppSpacing.buttonPadding),
             child: Center(child: child),
           ),
         ),
@@ -414,14 +416,14 @@ class _AppIconButtonState extends State<AppIconButton> with SingleTickerProvider
           height: widget.size,
           decoration: BoxDecoration(
             color: widget.backgroundColor ?? AppColors.card,
-            borderRadius: AppSpacing.radiusFull,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
             border: Border.all(color: AppColors.border),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: widget.isDisabled ? null : widget.onPressed,
-              borderRadius: AppSpacing.radiusFull,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
               child: Center(
                 child: Icon(
                   widget.icon,

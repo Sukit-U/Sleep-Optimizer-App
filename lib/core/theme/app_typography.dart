@@ -83,6 +83,16 @@ class AppTypography {
     height: 1.4,
   );
 
+  /// Heading 5 - 14px, semibold
+  static const TextStyle h5 = TextStyle(
+    fontFamily: fontFamilyHeader,
+    fontFamilyFallback: fontFamilyHeaderFallback,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 1.4,
+  );
+
   // === BODY STYLES ===
   /// Primary body text - 14px, regular
   static const TextStyle bodyLarge = TextStyle(

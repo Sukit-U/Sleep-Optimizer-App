@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../sleep_planner/sleep_planner_screen.dart';
+import '../sleep_planner/presentation/pages/sleep_planner_page.dart';
 import '../sqi/sqi_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
@@ -37,12 +37,13 @@ class HomeScreen extends StatelessWidget {
               context,
               icon: Icons.schedule,
               title: 'Sleep Planner',
-              description: 'Calculate your ideal bedtime based on your wake-up time',
+              description:
+                  'Calculate your ideal bedtime based on your wake-up time',
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => SleepPlannerScreen(userId: userId),
+                    builder: (context) => const SleepPlannerPage(),
                   ),
                 );
               },
@@ -52,7 +53,8 @@ class HomeScreen extends StatelessWidget {
               context,
               icon: Icons.bed,
               title: 'Sleep Quality Score (SQI)',
-              description: 'Assess your sleep quality and get personalized recommendations',
+              description:
+                  'Assess your sleep quality and get personalized recommendations',
               onTap: () {
                 Navigator.push(
                   context,
@@ -92,9 +94,7 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -120,7 +120,9 @@ class HomeScreen extends StatelessWidget {
                       description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
