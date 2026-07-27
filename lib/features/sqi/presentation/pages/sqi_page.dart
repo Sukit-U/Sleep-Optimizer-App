@@ -81,7 +81,7 @@ class _SQIPageState extends State<SQIPage> {
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.border),
-                          borderRadius: AppSpacing.radiusFull,
+borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                         ),
                         child: const Icon(Icons.arrow_left, size: 20),
                       ),
