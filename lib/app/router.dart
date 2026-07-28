@@ -7,7 +7,6 @@ import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/sleep_planner/presentation/pages/sleep_planner_page.dart';
 import '../features/sleep_quality/presentation/pages/sleep_quality_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
-import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/home/presentation/pages/suggested_bedtimes_page.dart';
 
 class AppRoutes {
@@ -20,7 +19,6 @@ class AppRoutes {
   static const history = '/history';
   static const settings = '/settings';
   static const splash = '/splash';
-  static const profile = '/profile';
   static const suggestedBedtimes = '/suggested-bedtimes';
 }
 
@@ -37,14 +35,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RecommendationPage());
       case AppRoutes.history:
         return MaterialPageRoute(builder: (_) => const HistoryPage());
-        case AppRoutes.settings:
-          return MaterialPageRoute(builder: (_) => const SettingsPage());
-        case AppRoutes.splash:
-          return MaterialPageRoute(builder: (_) => const SplashPage());
-        case AppRoutes.profile:
-          return MaterialPageRoute(builder: (_) => const ProfilePage());
-        case AppRoutes.suggestedBedtimes:
-          return MaterialPageRoute(builder: (_) => const SuggestedBedtimesPage());
+      case AppRoutes.settings:
+        return MaterialPageRoute(builder: (_) => const SettingsPage());
+      case AppRoutes.splash:
+        return MaterialPageRoute(builder: (_) => const SplashPage());
+      case AppRoutes.suggestedBedtimes:
+        return MaterialPageRoute(builder: (_) => const SuggestedBedtimesPage());
         default:
           return MaterialPageRoute(builder: (_) => const HomePage());
     }

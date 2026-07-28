@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/router.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -147,6 +148,27 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF252830), // AppColors background
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF252830),
+        foregroundColor: const Color(0xFFF7F8FA),
+        elevation: 0,
+        title: Text(
+          'Sleep Planner',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: const Color(0xFFADB0BC),
+          ),
+        ),
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              AppRoutes.home,
+              (route) => false,
+            );
+          },
+          child: const BackButton(),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -157,22 +179,6 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 18,
-                        color: Color(0xFFF7F8FA),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

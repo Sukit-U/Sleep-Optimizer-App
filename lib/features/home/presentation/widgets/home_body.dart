@@ -3,12 +3,9 @@ import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 class HomeBody extends StatelessWidget {
-  const HomeBody({super.key, this.showProfileBanner = true});
-
-  final bool showProfileBanner;
+  const HomeBody({super.key});
 
   String _greet() {
     final h = DateTime.now().hour;
@@ -24,17 +21,15 @@ class HomeBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 112),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 24),
-          if (showProfileBanner) _buildCreateProfileBanner(context),
-          const SizedBox(height: 20),
-          _buildTonightsSuggestionCard(context),
-          const SizedBox(height: 20),
-          _buildFeatureGrid(context),
-          const SizedBox(height: 24),
-          _buildLatestScoreSection(context),
-        ],
+      children: [
+        _buildHeader(context),
+        const SizedBox(height: 24),
+        _buildTonightsSuggestionCard(context),
+        const SizedBox(height: 20),
+        _buildFeatureGrid(context),
+        const SizedBox(height: 24),
+        _buildLatestScoreSection(context),
+      ],
       ),
     );
   }
@@ -71,76 +66,7 @@ class HomeBody extends StatelessWidget {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).pushNamed(AppRoutes.settings);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.20),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-              border: Border.all(
-                color: AppColors.accent.withValues(alpha: 0.40),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              'Set profile',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.foreground,
-              ),
-            ),
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildCreateProfileBanner(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.accent.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.40)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Create your profile',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.foreground,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Personalize your recommendations.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-            const Icon(
-              LucideIcons.arrowRight,
-              size: 18,
-              color: AppColors.foreground,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -167,7 +93,7 @@ class HomeBody extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                LucideIcons.sparkles,
+                Icons.auto_awesome,
                 size: 14,
                 color: AppColors.mutedForeground,
               ),
@@ -230,7 +156,7 @@ class HomeBody extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   const Icon(
-                    LucideIcons.arrowRight,
+                    Icons.arrow_forward_rounded,
                     size: 16,
                     color: AppColors.primaryForeground,
                   ),
@@ -244,30 +170,32 @@ class HomeBody extends StatelessWidget {
   }
 
   Widget _buildFeatureGrid(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _FeatureCard(
-            icon: LucideIcons.moon,
-            iconColor: AppColors.primary,
-            title: 'Sleep Planner',
-            description: 'Find your best bedtime',
-            onTap: () =>
-                Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          Expanded(
+            child: _FeatureCard(
+              icon: Icons.nightlight_round,
+              iconColor: AppColors.primary,
+              title: 'Sleep Planner',
+              description: 'Find your best bedtime',
+              onTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _FeatureCard(
-            icon: LucideIcons.clipboardList,
-            iconColor: AppColors.accent,
-            title: 'Sleep Quality',
-            description: 'Take the assessment',
-            onTap: () =>
-                Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _FeatureCard(
+              icon: Icons.checklist_rtl_rounded,
+              iconColor: AppColors.accent,
+              title: 'Sleep Quality',
+              description: 'Take the assessment',
+              onTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -325,7 +253,7 @@ class HomeBody extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 const Icon(
-                  LucideIcons.arrowRight,
+                  Icons.arrow_forward_rounded,
                   size: 16,
                   color: AppColors.foreground,
                 ),
@@ -365,6 +293,7 @@ class _FeatureCard extends StatelessWidget {
           border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, size: 24, color: iconColor),

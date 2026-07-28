@@ -42,26 +42,19 @@ class _SQIPageState extends State<SQIPage> {
         _currentQuestionIndex++;
       });
     } else {
-      // When questionnaire is complete, navigate to the result screen.
-      // The actual navigation logic (e.g. passing answers) is preserved.
       Navigator.of(context).pushReplacementNamed('/sqi-result');
-    }
-  }
-
-  void _previousQuestion() {
-    if (_currentQuestionIndex > 0) {
-      setState(() {
-        _currentQuestionIndex--;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final String question = _questions[_currentQuestionIndex];
-    final bool showBackButton = _currentQuestionIndex > 0;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sleep Quality Index'),
+        leading: const BackButton(),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -71,39 +64,6 @@ class _SQIPageState extends State<SQIPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with back navigation and title
-              Row(
-                children: [
-                  if (showBackButton)
-                    GestureDetector(
-                      onTap: _previousQuestion,
-                      child: Container(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.border),
-borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                        ),
-                        child: const Icon(Icons.arrow_left, size: 20),
-                      ),
-                    )
-                  else
-                    const SizedBox(width: 48), // Space to align with back button when hidden
-                  const SizedBox(width: AppSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sleep Quality Index',
-                        style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
-                      ),
-                      Text(
-                        'Assess your sleep quality',
-                        style: AppTypography.h1.copyWith(color: AppColors.foreground),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
               const SizedBox(height: AppSpacing.lg),
               
               // Progress indicator

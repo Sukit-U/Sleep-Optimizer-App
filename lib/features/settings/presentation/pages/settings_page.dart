@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:snoozemate/core/presentation/widgets/app_bar.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
@@ -20,7 +19,10 @@ class SettingsPage extends StatelessWidget {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      appBar: const AppBarWidget(),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        leading: const BackButton(),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(

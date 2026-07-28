@@ -29,7 +29,10 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sleep Quality')),
+      appBar: AppBar(
+        title: const Text('Sleep Quality'),
+        leading: const BackButton(),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -26,51 +26,31 @@ class _RecommendationPageState extends State<RecommendationPage> {
         : const GenerateRecommendations().call(weakFactors: result.weakFactors);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your result',
+              style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+            ),
+            Text(
+              'Sleep Quality Index',
+              style: AppTypography.h1.copyWith(color: AppColors.foreground),
+            ),
+          ],
+        ),
+        leading: const BackButton(),
+      ),
       body: SafeArea(
         child: Padding(
-padding: const EdgeInsets.symmetric(
-  horizontal: AppSpacing.spacingXs,
-  vertical: AppSpacing.spacingXs,
-),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.px,
+            vertical: AppSpacing.py,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with back button and title
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: AppSpacing.iconButtonSize,
-                      height: AppSpacing.iconButtonSize,
-                      decoration: BoxDecoration(
-                        color: AppColors.card,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: AppSpacing.iconMd,
-                        color: AppColors.foreground,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your result',
-                        style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
-                      ),
-                      Text(
-                        'Sleep Quality Index',
-                        style: AppTypography.h1.copyWith(color: AppColors.foreground),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
               const SizedBox(height: AppSpacing.lg),
 
               // SQI Score display

@@ -5,7 +5,6 @@ import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:snoozemate/features/home/presentation/widgets/home_body.dart';
 
 class HomePage extends StatefulWidget {
@@ -19,22 +18,22 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<_TabItem> _tabs = [
-    _TabItem(route: AppRoutes.home, label: 'Home', icon: LucideIcons.home),
+    _TabItem(route: AppRoutes.home, label: 'Home', icon: Icons.home),
     _TabItem(
       route: AppRoutes.sleepPlanner,
       label: 'Planner',
-      icon: LucideIcons.moon,
+      icon: Icons.nightlight_round,
     ),
     _TabItem(
       route: AppRoutes.sleepQuality,
       label: 'SQI',
-      icon: LucideIcons.clipboardList,
+      icon: Icons.checklist_rtl_rounded,
     ),
-    _TabItem(route: AppRoutes.history, label: 'History', icon: LucideIcons.history),
+    _TabItem(route: AppRoutes.history, label: 'History', icon: Icons.history),
     _TabItem(
       route: AppRoutes.settings,
       label: 'Settings',
-      icon: LucideIcons.settings,
+      icon: Icons.settings,
     ),
   ];
 

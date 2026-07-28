@@ -32,6 +32,10 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('History', style: AppTypography.h1.copyWith(color: AppColors.foreground)),
+        leading: const BackButton(),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -41,35 +45,6 @@ class _HistoryPageState extends State<HistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with back button and title
-              Row(
-                children: [
-                  // Back button
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: AppSpacing.iconButtonSize,
-                      height: AppSpacing.iconButtonSize,
-                      decoration: BoxDecoration(
-                        color: AppColors.card,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: AppSpacing.iconMd,
-                        color: AppColors.foreground,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  // Screen title
-                  Text(
-                    'History',
-                    style: AppTypography.h1.copyWith(color: AppColors.foreground),
-                  ),
-                ],
-              ),
               const SizedBox(height: AppSpacing.lg),
 
               // Segmented control (SQI records / Sleep plans)

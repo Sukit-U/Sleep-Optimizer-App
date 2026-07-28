@@ -11,7 +11,10 @@ class SuggestedBedtimesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Suggested Bedtimes')),
+      appBar: AppBar(
+        title: const Text('Suggested Bedtimes'),
+        leading: const BackButton(),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

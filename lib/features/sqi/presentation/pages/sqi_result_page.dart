@@ -28,6 +28,7 @@ class SQIResultPage extends StatelessWidget {
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.foreground,
         elevation: 0,
+        leading: const BackButton(),
         title: Text(
           'SQI Results',
           style: GoogleFonts.sora(
