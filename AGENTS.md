@@ -33,7 +33,7 @@ flutter run                      # after emulator boots
 - **Boot order**: `Firebase.initializeApp()` must complete before any Firebase call is made.
 - **Theme tokens**: `AppTypography`, `AppColors`, `AppSpacing` in `lib/core/theme/` are the source of truth. Don't inline raw values unless the screen cannot use tokens.
 - **Router**: No GoRouter. Routes are `String` constants in `AppRoutes`; case selection is raw `switch`. Adding a route requires adding it in both `AppRoutes` and `AppRouter.generateRoute`.
-- **Back button after bottom nav**: The bottom nav uses `pushReplacementNamed` to switch tabs, which clears the back stack. `BackButton()` in an AppBar calls `Navigator.pop()`, which exits the app since there's no previous route. Non-home screens must use `Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false)` for their back action instead of default `BackButton()`.
+- **Back button + bottom nav**: The bottom nav uses `pushNamedAndRemoveUntil(route, (r) => r.isFirst)` in `_onTabTapped` (`home_page.dart:46`). This keeps `HomePage` as the root of the navigation stack, so `BackButton()` (which calls `Navigator.pop()`) correctly returns to Home from any bottom-nav screen. No per-screen back button overrides are needed.
 
 ## Tests
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../app/router.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -159,15 +158,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
             color: const Color(0xFFADB0BC),
           ),
         ),
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRoutes.home,
-              (route) => false,
-            );
-          },
-          child: const BackButton(),
-        ),
+        leading: const BackButton(),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -43,7 +43,10 @@ class _HomePageState extends State<HomePage> {
       _currentIndex = index;
     });
     final route = _tabs[index].route;
-    Navigator.of(context).pushReplacementNamed(route);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      route,
+      (route) => route.isFirst,
+    );
   }
 
   @override
