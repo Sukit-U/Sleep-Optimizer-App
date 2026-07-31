@@ -4,6 +4,7 @@ import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
 import '../../../../app/app.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../data/repositories/settings_repository.dart';
 
@@ -80,7 +81,7 @@ class SettingsPage extends StatelessWidget {
                         themeProvider.setTheme(nextMode);
                         await FirestoreSettingsRepository().saveSettings(
                           {
-                            'userId': 'local-user',
+                            'userId': AppConfig.defaultUserId,
                             'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
                           },
                         );

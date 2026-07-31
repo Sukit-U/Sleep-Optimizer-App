@@ -1,11 +1,15 @@
+// Standalone CLI migration script — console output is intentional.
+// ignore_for_file: avoid_print
+//
 // Run: flutter run --target lib/scripts/user_id_migration.dart
 //
 // This script migrates all sqiRecords with userId == 'local-user'
-// to userId == 'default_user', so they appear in HistoryPage.
+// to userId == AppConfig.defaultUserId, so they appear in HistoryPage.
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/config/app_config.dart';
 import '../firebase_options.dart';
 
 Future<void> finish(int exitCode) async {
@@ -60,7 +64,7 @@ Future<void> main() async {
 
   try {
     for (final doc in docs) {
-      batch.update(doc.reference, {'userId': 'default_user'});
+      batch.update(doc.reference, {'userId': AppConfig.defaultUserId});
       updated++;
 
       // Commit every 500 docs and start a new batch
@@ -83,6 +87,6 @@ Future<void> main() async {
 
   print('✅ Migration complete. $updated sqiRecords updated.');
   print('   Old value: userId == "local-user"');
-  print('   New value: userId == "default_user"');
+  print('   New value: userId == "${AppConfig.defaultUserId}"');
   await finish(0);
 }

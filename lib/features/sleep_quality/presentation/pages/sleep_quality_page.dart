@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/app.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../services/firestore_service.dart';
-import '../../../../models/recommendation_model.dart';
 import '../../../../shared/widgets/section_title.dart';
 import '../../data/repositories/sqi_repository.dart';
 import '../../domain/usecases/calculate_sqi.dart';
@@ -144,11 +144,11 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       // Save SQI record via repository (uses FirestoreService)
       final recordId = await _sqiRepository.saveRecord(
         {
-          'userId': 'default_user',
+          'userId': AppConfig.defaultUserId,
           'sqiScore': result.score,
           'sleepQualityLevel': result.level.name,
           'questionnaireResponses': _responses,
-          'createdAt': DateTime.now().toIso8601String(),
+          'createdAt': DateTime.now(),
         },
       );
 
@@ -156,20 +156,10 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       final recommendations = const GenerateRecommendations().call(
         weakFactors: result.weakFactors,
         level: result.level.name,
+        recordId: recordId,
       );
       for (final rec in recommendations) {
-        await firestoreService.addRecommendation(
-          Recommendation(
-            recommendationId: '',
-            recordId: recordId,
-            factor: rec.factor,
-            title: rec.title,
-            description: rec.description,
-            action: rec.action,
-            priority: rec.priority.name,
-            createdAt: DateTime.now(),
-          ),
-        );
+        await firestoreService.addRecommendation(rec);
       }
 
       await appStorage?.saveHistoryEntry(

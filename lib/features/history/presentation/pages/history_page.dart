@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/config/app_config.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/services/firestore_service.dart';
@@ -9,7 +10,7 @@ import 'package:snoozemate/models/recommendation_model.dart';
 class HistoryPage extends StatefulWidget {
   final String userId;
 
-  const HistoryPage({super.key, this.userId = 'default_user'});
+  const HistoryPage({super.key, this.userId = AppConfig.defaultUserId});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();

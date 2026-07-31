@@ -1,30 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart' hide Settings;
-import '../models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sleep_plan_model.dart';
 import '../models/sqi_record_model.dart';
 import '../models/recommendation_model.dart';
-import '../models/settings_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // User operations
-  Future<void> addUser(User user) async {
-    await _firestore.collection('users').doc(user.userId).set(user.toFirestore());
-  }
-
-  Future<User> getUser(String userId) async {
-    final doc = await _firestore.collection('users').doc(userId).get();
-    if (doc.exists) {
-      return User.fromFirestore(doc.data()!);
-    } else {
-      throw Exception('User not found');
-    }
-  }
-
-  Future<void> updateUser(User user) async {
-    await _firestore.collection('users').doc(user.userId).update(user.toFirestore());
-  }
 
   // SleepPlan operations
   Future<String> addSleepPlan(SleepPlan sleepPlan) async {
@@ -86,20 +66,12 @@ class FirestoreService {
   }
 
   // Settings operations
-  Future<void> addSettings(Settings settings) async {
-    await _firestore.collection('settings').doc(settings.userId).set(settings.toFirestore());
+  Future<void> saveSettings(Map<String, dynamic> payload) async {
+    await _firestore.collection('settings').doc(payload['userId'] as String).set(payload);
   }
 
-  Future<Settings> getSettings(String userId) async {
+  Future<Map<String, dynamic>?> getSettings(String userId) async {
     final doc = await _firestore.collection('settings').doc(userId).get();
-    if (doc.exists) {
-      return Settings.fromFirestore(doc.data()!);
-    } else {
-      throw Exception('Settings not found');
-    }
-  }
-
-  Future<void> updateSettings(Settings settings) async {
-    await _firestore.collection('settings').doc(settings.userId).update(settings.toFirestore());
+    return doc.exists ? doc.data() : null;
   }
 }

@@ -13,23 +13,21 @@ flutter run                      # after emulator boots
 
 ## Entrypoints & Navigation
 
-- `lib/main.dart` — app bootstrap. Initializes Firebase, `StorageService`, and `appThemeMode` (global `late`).
-- `lib/app/app.dart` — `SleepOptimizerApp`, root `MaterialApp`. Theme controlled by `Provider<ThemeProvider>`.
+- `lib/main.dart` — app bootstrap. Initializes Firebase and `StorageService`, assigns the shared `appStorage` global, and creates `ThemeProvider` before `runApp`.
+- `lib/app/app.dart` — `SnoozefriendApp`, root `MaterialApp`, and the shared `appStorage` global declaration. Theme controlled by `Provider<ThemeProvider>`.
 - `lib/app/router.dart` — `AppRouter.generateRoute` is the single navigator source of truth.
 
 ## Architecture
 
 - Flutter single-package app. Features in `lib/features/<feature>/domain|data|presentation/`.
-- Some legacy screens sit alongside the feature structure without migration:
-  - `lib/features/sqi/sqi_screen.dart`
-  - `lib/features/settings/settings_screen.dart`
-  - `lib/features/history/history_screen.dart`
+- **Single data-access layer**: all Firestore reads/writes go through `lib/services/firestore_service.dart` (`FirestoreService`). The legacy `FirebaseService` facade was deleted.
+- **User identity**: the app has no auth — every feature reads the default user ID from `AppConfig.defaultUserId` (`'default_user'`, `lib/core/config/app_config.dart`). Legacy `'local-user'` records were migrated by `lib/scripts/user_id_migration.dart`.
 - State management: `provider` package only. No Riverpod, Bloc, or GetX.
 
 ## Critical Gotchas
 
 - **Dependency compatibility**: `lucide_icons` is broken with Flutter 3.44.8 / Dart 3.12.2 (`IconData` is `final`). Use MaterialIcons (`Icons.*`) only.
-- **Global state**: `appStorage` and `appThemeMode` are global `late` variables. Do not import `main.dart` trigger-ally; they are initialized before `runApp`.
+- **Global state**: `appStorage` is a nullable global declared in `lib/app/app.dart` and assigned once in `main()` before `runApp`. Pages (settings, sleep quality) import it to persist theme/history locally. There is no `appThemeMode` global — theme mode lives in `ThemeProvider`. Do not import `main.dart` trigger-ally.
 - **Boot order**: `Firebase.initializeApp()` must complete before any Firebase call is made.
 - **Theme tokens**: `AppTypography`, `AppColors`, `AppSpacing` in `lib/core/theme/` are the source of truth. Don't inline raw values unless the screen cannot use tokens.
 - **Router**: No GoRouter. Routes are `String` constants in `AppRoutes`; case selection is raw `switch`. Adding a route requires adding it in both `AppRoutes` and `AppRouter.generateRoute`.
@@ -37,7 +35,7 @@ flutter run                      # after emulator boots
 
 ## Tests
 
-- 3 existing tests: `test/widget_test.dart`, `test/sqi_calculator_test.dart`, `test/sleep_planner_calculator_test.dart`
+- 2 existing tests: `test/widget_test.dart`, `test/sqi_calculator_test.dart` (the old `sleep_planner_calculator_test.dart` was removed with the deleted planner usecase)
 - Run all: `flutter test`
 - No integration-test setup detected.
 

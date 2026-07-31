@@ -1,4 +1,4 @@
-import '../entities/recommendation.dart';
+import '../../../../models/recommendation_model.dart';
 
 /// Builds per-factor recommendation data shared by the level-aware selection.
 class _FactorConfig {
@@ -74,19 +74,22 @@ class GenerateRecommendations {
   /// - Good SQI → recommendation only for the single lowest-scoring factor
   /// - Fair/Poor SQI → up to 3 recommendations, prioritised by severity
   /// - Max 3 recommendations total
-  List<RecommendationEntity> call({
+  List<Recommendation> call({
     required List<String> weakFactors,
     required String level,
+    String recordId = '',
   }) {
     // Excellent → positive reinforcement only
     if (level == 'excellent') {
       return [
-        RecommendationEntity(
+        Recommendation(
+          recommendationId: '',
+          recordId: recordId,
+          factor: 'General',
           title: _positiveReinforcement.title,
           description: _positiveReinforcement.description,
           action: _positiveReinforcement.action,
-          priority: _positiveReinforcement.priority,
-          factor: 'General',
+          priority: _positiveReinforcement.priority.name,
         ),
       ];
     }
@@ -97,18 +100,20 @@ class GenerateRecommendations {
       final config = _factorMap[factor];
       if (config == null) return [];
       return [
-        RecommendationEntity(
+        Recommendation(
+          recommendationId: '',
+          recordId: recordId,
+          factor: factor,
           title: config.title,
           description: config.description,
           action: config.action,
-          priority: config.priority,
-          factor: factor,
+          priority: config.priority.name,
         ),
       ];
     }
 
     // Fair / Poor → up to 3, prioritised
-    final recommendations = <RecommendationEntity>[];
+    final recommendations = <Recommendation>[];
     final uniqueFactors = weakFactors.take(3);
 
     for (final factor in uniqueFactors) {
@@ -116,12 +121,14 @@ class GenerateRecommendations {
       if (config == null) continue;
 
       recommendations.add(
-        RecommendationEntity(
+        Recommendation(
+          recommendationId: '',
+          recordId: recordId,
+          factor: factor,
           title: config.title,
           description: config.description,
           action: config.action,
-          priority: config.priority,
-          factor: factor,
+          priority: config.priority.name,
         ),
       );
     }

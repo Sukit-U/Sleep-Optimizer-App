@@ -1,5 +1,5 @@
-import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../services/firestore_service.dart';
 
 abstract class SettingsRepository {
   Future<void> saveSettings(Map<String, dynamic> payload);
@@ -8,14 +8,14 @@ abstract class SettingsRepository {
 
 class FirestoreSettingsRepository implements SettingsRepository {
   FirestoreSettingsRepository({
-    FirebaseService? firebaseService,
+    FirestoreService? firestoreService,
     StorageService? storageService,
   })  // ignore: prefer_initializing_formals
-      : _firebaseService = firebaseService ?? FirebaseService(),
+      : _firestoreService = firestoreService ?? FirestoreService(),
         // ignore: prefer_initializing_formals
         _storageService = storageService;
 
-  final FirebaseService _firebaseService;
+  final FirestoreService _firestoreService;
   final StorageService? _storageService;
 
   Future<StorageService> _getStorageService() async {
@@ -26,7 +26,7 @@ class FirestoreSettingsRepository implements SettingsRepository {
   Future<void> saveSettings(Map<String, dynamic> payload) async {
     try {
       // Try Firestore first
-      await _firebaseService.saveSettings(payload);
+      await _firestoreService.saveSettings(payload);
       // If successful, also save to local storage for offline use
       final storage = await _getStorageService();
       await storage.saveTheme(payload['theme'] as String);
@@ -42,7 +42,7 @@ class FirestoreSettingsRepository implements SettingsRepository {
   Future<Map<String, dynamic>?> loadSettings(String userId) async {
     try {
       // Try Firestore first
-      final firestoreSettings = await _firebaseService.getSettings(userId);
+      final firestoreSettings = await _firestoreService.getSettings(userId);
       if (firestoreSettings != null) {
         return firestoreSettings;
       }

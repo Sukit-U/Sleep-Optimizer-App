@@ -6,6 +6,8 @@ import '../core/theme/app_theme.dart';
 import '../core/providers/theme_provider.dart';
 import 'router.dart';
 
+/// Shared storage instance, initialized once in `main()` (see lib/main.dart).
+/// Pages import this global to persist theme and history locally.
 StorageService? appStorage;
 
 class SnoozefriendApp extends StatelessWidget {

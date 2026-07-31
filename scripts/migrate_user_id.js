@@ -4,7 +4,7 @@
  * Firestore Migration: Update sqiRecords userId from 'local-user' to 'default_user'
  *
  * Prerequisites:
- *   1. npm install firebase-admin
+ *   1. npm install firebase-admin (v12+ required – uses the modular API)
  *   2. Download a service account key from Firebase Console:
  *      Project Settings → Service Accounts → "Generate new private key"
  *   3. Save the JSON file as service-account-key.json in this directory
@@ -16,7 +16,8 @@
  *   node migrate_user_id.js
  */
 
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 const fs = require('fs');
 
 // Try explicit key file first, then fall back to GOOGLE_APPLICATION_CREDENTIALS
@@ -25,17 +26,17 @@ const KEY_FILE = './service-account-key.json';
 async function main() {
   // Initialize
   if (fs.existsSync(KEY_FILE)) {
-    admin.initializeApp({
-      credential: admin.credential.cert(KEY_FILE),
+    initializeApp({
+      credential: cert(KEY_FILE),
     });
   } else {
     // Falls back to GOOGLE_APPLICATION_CREDENTIALS env var
-    admin.initializeApp({
+    initializeApp({
       projectId: 'sleep-optimizer-59c83',
     });
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const collection = db.collection('sqiRecords');
 
   // 1. Query matching documents

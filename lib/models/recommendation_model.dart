@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Priority levels for generated recommendations.
+enum RecommendationPriority { critical, high, medium, low }
+
 class Recommendation {
   final String recommendationId;
   final String recordId; // Foreign key to SQIRecord

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
-import 'package:snoozemate/core/presentation/widgets/app_card.dart';
+import 'package:snoozemate/shared/widgets/app_card.dart';
 
 /// Page showing three suggested bedtime cards, as per the design spec.
 class SuggestedBedtimesPage extends StatelessWidget {

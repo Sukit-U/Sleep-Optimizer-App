@@ -20,7 +20,7 @@ class FirestoreSqiRepository implements SqiRepository {
       sleepQualityLevel: payload['sleepQualityLevel'] as String,
       questionnaireResponses:
           Map<String, dynamic>.from(payload['questionnaireResponses'] as Map),
-      createdAt: DateTime.parse(payload['createdAt'] as String),
+      createdAt: payload['createdAt'] as DateTime,
     ));
     return docId;
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 
@@ -124,7 +125,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     final sleepPlan = SleepPlan(
       planId: '',
       userId:
-          'default_user', // Using default since we don't have auth state passed in here yet
+          AppConfig.defaultUserId, // Using default since we don't have auth state passed in here yet
       wakeUpTime: _wakeUpTime,
       createdAt: DateTime.now(),
       sleepCycles: chosenOption.cycles,

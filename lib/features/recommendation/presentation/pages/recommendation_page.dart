@@ -3,7 +3,7 @@ import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
-import '../../domain/entities/recommendation.dart';
+import '../../../../models/recommendation_model.dart';
 import '../../domain/usecases/generate_recommendations.dart';
 import '../../../sleep_quality/domain/entities/sqi_result.dart';
 
@@ -21,110 +21,128 @@ class RecommendationPage extends StatefulWidget {
 class _RecommendationPageState extends State<RecommendationPage> {
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final result = widget.result;
     final recommendations = result == null
-        ? <RecommendationEntity>[]
+        ? <Recommendation>[]
         : const GenerateRecommendations().call(
             weakFactors: result.weakFactors,
             level: result.level.name,
           );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Your result',
-              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-            ),
-            Text(
-              'Sleep Quality Index',
-              style: AppTypography.h1.copyWith(color: colors.onSurface),
-            ),
-          ],
-        ),
-        leading: const BackButton(),
-      ),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.px,
             vertical: AppSpacing.py,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          children: [
+            // Inline header (Lovable reference: back button + caption + title)
+            _buildHeader(),
+
+            // SQI Score display
+            if (result != null) ...[
+              _buildSQIScoreDisplay(result),
               const SizedBox(height: AppSpacing.lg),
 
-              // SQI Score display
-              if (result != null) ...[
-                _buildSQIScoreDisplay(result),
-                const SizedBox(height: AppSpacing.lg),
+              // Factor breakdown
+              _buildFactorBreakdown(result),
+              const SizedBox(height: AppSpacing.lg),
 
-                // Factor breakdown
-                _buildFactorBreakdown(result),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Recommendations
-                _buildRecommendations(recommendations),
-              ],
-
-              // Empty state or recommendations
-              if (recommendations.isEmpty && result == null)
-                Expanded(
-                  child: _buildEmptyState(
-                    label: 'Complete your SQI to receive personalized recommendations.',
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView(
-                    children: recommendations.isEmpty
-                        ? [
-                            _buildEmptyState(
-                              label: 'Your habits look great — keep it up!',
-                            ),
-                          ]
-                        : recommendations
-                            .map((r) => _buildRecommendationItem(r))
-                            .toList(),
-                  ),
-                ),
-
-              // Navigation buttons
-              if (result != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildGhostButton(
-                        label: 'Home',
-                        icon: Icons.home,
-                        onPressed: () {
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            AppRoutes.home,
-                            (route) => route.isFirst,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: _buildPrimaryButton(
-                        label: 'View history',
-                        onPressed: () {
-                          Navigator.of(context).pushNamed(AppRoutes.history);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              // Recommendations
+              _buildRecommendations(recommendations),
             ],
-          ),
+
+            // Empty state or recommendations
+            if (recommendations.isEmpty && result == null)
+              _buildEmptyState(
+                label: 'Complete your SQI to receive personalized recommendations.',
+              )
+            else
+              ...recommendations.isEmpty
+                  ? [
+                      _buildEmptyState(
+                        label: 'Your habits look great — keep it up!',
+                      ),
+                    ]
+                  : recommendations.map((r) => _buildRecommendationItem(r)),
+
+            // Navigation buttons
+            if (result != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGhostButton(
+                      label: 'Home',
+                      icon: Icons.home,
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          AppRoutes.home,
+                          (route) => route.isFirst,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _buildPrimaryButton(
+                      label: 'View history',
+                      onPressed: () {
+                        Navigator.of(context).pushNamed(AppRoutes.history);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
         ),
+      ),
+    );
+  }
+
+  /// Inline header (Lovable reference: back button pill + caption + title)
+  Widget _buildHeader() {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg), // mb-6
+      child: Row(
+        children: [
+          // Circular back button (rounded-full border pill)
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: AppSpacing.iconButtonSize,
+              height: AppSpacing.iconButtonSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.outline),
+              ),
+              child: Icon(
+                Icons.arrow_back,
+                size: AppSpacing.iconSizeSm,
+                color: colors.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12), // gap-3
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your result',
+                  style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                ),
+                Text(
+                  'Sleep Quality Index',
+                  style: AppTypography.h1.copyWith(color: colors.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -297,7 +315,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Recommendations section header with sparkle icon
-  Widget _buildRecommendations(List<RecommendationEntity> recommendations) {
+  Widget _buildRecommendations(List<Recommendation> recommendations) {
     final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +340,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Detailed recommendation card
-  Widget _buildRecommendationItem(RecommendationEntity recommendation) {
+  Widget _buildRecommendationItem(Recommendation recommendation) {
     final colors = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -352,7 +370,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  'Priority ${recommendation.priority.name}',
+                  'Priority ${recommendation.priority}',
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
