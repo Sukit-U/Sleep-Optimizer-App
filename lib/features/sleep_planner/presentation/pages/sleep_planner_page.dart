@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class SleepPlannerPage extends StatefulWidget {
   const SleepPlannerPage({super.key});
@@ -29,8 +28,12 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   ];
   final Set<String> _selectedConstraints = {};
 
+  bool _hasSelectedWakeUpTime = false;
+  bool _showWakeUpTimeError = false;
   int? _chosenCycles;
   bool _saved = false;
+
+  bool get _isDirty => _hasSelectedWakeUpTime || _chosenCycles != null;
 
   void _toggleConstraint(String c) {
     setState(() {
@@ -43,17 +46,15 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   }
 
   Future<void> _selectWakeUpTime(BuildContext context) async {
+    final colors = Theme.of(context).colorScheme;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_wakeUpTime),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: Color(0xFF1A1D28),
-              surface: Color(0xFF2E3038),
-              onSurface: Color(0xFFF7F8FA),
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: colors.primary,
             ),
           ),
           child: child!,
@@ -71,6 +72,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           picked.hour,
           picked.minute,
         );
+        _hasSelectedWakeUpTime = true;
+        _showWakeUpTimeError = false;
         // Reset chosen cycle if time changes
         _chosenCycles = null;
       });
@@ -100,6 +103,18 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   }
 
   Future<void> _handleSave() async {
+    final colors = Theme.of(context).colorScheme;
+    if (!_hasSelectedWakeUpTime) {
+      setState(() {
+        _showWakeUpTimeError = true;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a wake-up time first.')),
+      );
+      return;
+    }
+
     final options = _getOptions();
     final chosenOption = options.firstWhere(
       (o) => o.cycles == (_chosenCycles ?? 5),
@@ -117,7 +132,22 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     );
 
     // Save to Firestore
-    await _firestoreService.addSleepPlan(sleepPlan);
+    try {
+      await _firestoreService.addSleepPlan(sleepPlan);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not save plan. Check your connection and try again.'),
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: colors.primary,
+            onPressed: _handleSave,
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _saved = true;
@@ -143,19 +173,45 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final options = _getOptions();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF252830), // AppColors background
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final discard = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Discard changes?'),
+            content: const Text('You have unsaved planner changes. Do you want to discard them?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Stay'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        if (discard == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF252830),
-        foregroundColor: const Color(0xFFF7F8FA),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         title: Text(
           'Sleep Planner',
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: const Color(0xFFADB0BC),
+            color: colors.onSurfaceVariant,
           ),
         ),
         leading: const BackButton(),
@@ -177,7 +233,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         'Sleep Planner',
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: const Color(0xFFADB0BC), // muted
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                       Text(
@@ -185,7 +241,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         style: GoogleFonts.sora(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFF7F8FA),
+                          color: colors.onSurface,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -200,12 +256,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    0xFF2E3038,
-                  ).withValues(alpha: 0.92), // card-surface
+                  color: colors.surface.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppColors.border.withValues(alpha: 0.8),
+                    color: colors.outline.withValues(alpha: 0.8),
                   ),
                 ),
                 child: Column(
@@ -215,7 +269,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       'Wake-up time',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFFADB0BC),
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -228,14 +282,14 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           vertical: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF252830,
-                          ).withValues(alpha: 0.4), // bg-background/40
+                          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(
                             16,
                           ), // rounded-2xl
                           border: Border.all(
-                            color: AppColors.border.withValues(alpha: 0.5),
+                            color: _showWakeUpTimeError
+                                ? colors.error
+                                : colors.outline.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(
@@ -244,7 +298,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                             fontSize: 32,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.5,
-                            color: const Color(0xFFF7F8FA),
+                            color: colors.onSurface,
                           ),
                         ),
                       ),
@@ -258,7 +312,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           'Time to fall asleep: ',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: const Color(0xFFADB0BC),
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         Text(
@@ -266,7 +320,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFFF7F8FA),
+                            color: colors.onSurface,
                           ),
                         ),
                       ],
@@ -274,10 +328,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     const SizedBox(height: 8),
                     SliderTheme(
                       data: SliderThemeData(
-                        activeTrackColor: AppColors.primary,
-                        inactiveTrackColor: AppColors.border,
-                        thumbColor: AppColors.primary,
-                        overlayColor: AppColors.primary.withValues(alpha: 0.2),
+                        activeTrackColor: colors.primary,
+                        inactiveTrackColor: colors.outline,
+                        thumbColor: colors.primary,
+                        overlayColor: colors.primary.withValues(alpha: 0.2),
                         trackHeight: 4,
                       ),
                       child: Slider(
@@ -302,7 +356,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 'Tonight I also have…',
                 style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: const Color(0xFFADB0BC),
+                  color: colors.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 8),
@@ -320,11 +374,11 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       ),
                       decoration: BoxDecoration(
                         color: isOn
-                            ? AppColors.primary.withValues(alpha: 0.15)
+                            ? colors.primary.withValues(alpha: 0.15)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(9999),
                         border: Border.all(
-                          color: isOn ? AppColors.primary : AppColors.border,
+                          color: isOn ? colors.primary : colors.outline,
                         ),
                       ),
                       child: Text(
@@ -333,8 +387,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           fontSize: 12,
                           fontWeight: isOn ? FontWeight.w500 : FontWeight.w400,
                           color: isOn
-                              ? AppColors.primary
-                              : const Color(0xFFADB0BC),
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -353,14 +407,14 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFFF7F8FA),
+                      color: colors.onSurface,
                     ),
                   ),
                   Text(
                     'Wake at ${DateFormat('HH:mm').format(_wakeUpTime)}',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: const Color(0xFFADB0BC),
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -382,14 +436,12 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(
-                          0xFF2E3038,
-                        ).withValues(alpha: 0.92), // card-surface
+                      color: colors.surface.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: isChosen
-                              ? AppColors.primary
-                              : AppColors.border.withValues(alpha: 0.8),
+                              ? colors.primary
+                              : colors.outline.withValues(alpha: 0.8),
                           width: isChosen ? 2 : 1,
                         ),
                       ),
@@ -398,7 +450,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         children: [
                           Icon(
                             Icons.nightlight_round,
-                            color: AppColors.primary,
+                            color: colors.primary,
                             size: 24,
                           ),
                           const SizedBox(width: 16),
@@ -411,7 +463,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                                   style: GoogleFonts.sora(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFF7F8FA),
+                                    color: colors.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -419,7 +471,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                                   '${o.cycles} cycles • ${_formatDuration(o.durationMinutes)}',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: const Color(0xFFADB0BC),
+                                    color: colors.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -435,12 +487,12 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.accent.withValues(
+                                    color: colors.secondary.withValues(
                                       alpha: 0.2,
                                     ),
                                     borderRadius: BorderRadius.circular(999),
                                     border: Border.all(
-                                      color: AppColors.accent.withValues(
+                                      color: colors.secondary.withValues(
                                         alpha: 0.4,
                                       ),
                                     ),
@@ -450,7 +502,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                                     style: GoogleFonts.inter(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
-                                      color: const Color(0xFFF7F8FA),
+                                      color: colors.onSurface,
                                     ),
                                   ),
                                 ),
@@ -459,7 +511,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                                   padding: const EdgeInsets.only(top: 8),
                                   child: Icon(
                                     Icons.check,
-                                    color: AppColors.primary,
+                                    color: colors.primary,
                                     size: 20,
                                   ),
                                 ),
@@ -481,12 +533,11 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                   onTap: _handleSave,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(9999),
+                    decoration: BoxDecoration(                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(9999),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.60),
+                          color: colors.primary.withValues(alpha: 0.60),
                           blurRadius: 30,
                           spreadRadius: -12,
                           offset: const Offset(0, 10),
@@ -497,16 +548,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (_saved)
-                          const Icon(
+                          Icon(
                             Icons.check,
                             size: 18,
-                            color: Color(0xFF1A1D28),
+                            color: colors.onPrimary,
                           )
                         else
-                          const Icon(
+                          Icon(
                             Icons.bookmark,
                             size: 18,
-                            color: Color(0xFF1A1D28),
+                            color: colors.onPrimary,
                           ),
                         const SizedBox(width: 8),
                         Text(
@@ -514,7 +565,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1A1D28),
+                            color: colors.onPrimary,
                           ),
                         ),
                       ],
@@ -526,6 +577,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

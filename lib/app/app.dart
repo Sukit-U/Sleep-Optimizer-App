@@ -8,15 +8,15 @@ import 'router.dart';
 
 StorageService? appStorage;
 
-class SleepOptimizerApp extends StatelessWidget {
-  const SleepOptimizerApp({super.key});
+class SnoozefriendApp extends StatelessWidget {
+  const SnoozefriendApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Sleep Optimizer',
+          title: 'Snoozefriend',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,

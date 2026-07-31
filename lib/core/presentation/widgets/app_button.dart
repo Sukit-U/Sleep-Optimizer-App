@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 
@@ -131,46 +130,49 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
     }
   }
 
-  Color get _backgroundColor {
+  Color _backgroundColor(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (widget.isDisabled || widget.isLoading) {
-      return AppColors.muted;
+      return colors.surfaceContainerHighest;
     }
     switch (widget.variant) {
       case AppButtonVariant.primary:
-        return AppColors.primary;
+        return colors.primary;
       case AppButtonVariant.secondary:
-        return AppColors.secondary;
+        return colors.secondary;
       case AppButtonVariant.outlined:
         return Colors.transparent;
       case AppButtonVariant.ghost:
-        return AppColors.muted.withValues(alpha: 0.5);
+        return colors.surfaceContainerHighest.withValues(alpha: 0.5);
       case AppButtonVariant.icon:
-        return AppColors.card;
+        return colors.surface;
     }
   }
 
-  Color get _foregroundColor {
+  Color _foregroundColor(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (widget.isDisabled || widget.isLoading) {
-      return AppColors.mutedForeground;
+      return colors.onSurfaceVariant;
     }
     switch (widget.variant) {
       case AppButtonVariant.primary:
-        return AppColors.primaryForeground;
+        return colors.onPrimary;
       case AppButtonVariant.secondary:
-        return AppColors.secondary;
+        return colors.onSecondary;
       case AppButtonVariant.outlined:
-        return AppColors.foreground;
+        return colors.onSurface;
       case AppButtonVariant.ghost:
-        return AppColors.foreground;
+        return colors.onSurface;
       case AppButtonVariant.icon:
-        return AppColors.foreground;
+        return colors.onSurface;
     }
   }
 
-  Border? get _border {
+  Border? _border(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (widget.variant == AppButtonVariant.outlined) {
       return Border.all(
-        color: widget.isDisabled ? AppColors.border : AppColors.border,
+        color: colors.outline,
         width: 1,
       );
     }
@@ -196,9 +198,9 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           width: _height,
           height: _height,
           decoration: BoxDecoration(
-            color: _backgroundColor,
+            color: _backgroundColor(context),
             borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-            border: Border.all(color: AppColors.border, width: 1),
+            border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
           ),
           child: Material(
             color: Colors.transparent,
@@ -212,13 +214,13 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
                         height: _iconSize,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: _foregroundColor,
+                          color: _foregroundColor(context),
                         ),
                       )
                     : Icon(
                         widget.icon ?? Icons.arrow_back,
                         size: _iconSize,
-                        color: _foregroundColor,
+                        color: _foregroundColor(context),
                       ),
               ),
             ),
@@ -241,9 +243,9 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
               ? const BoxConstraints(minWidth: double.infinity)
               : null,
           decoration: BoxDecoration(
-            color: _backgroundColor,
+            color: _backgroundColor(context),
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-            border: _border,
+            border: _border(context),
           ),
           child: Material(
             color: Colors.transparent,
@@ -271,17 +273,16 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
     if (widget.icon != null && widget.iconPosition == IconPosition.left) {
       children.add(
         Padding(
-          padding: EdgeInsets.only(right: widget.size == AppButtonSize.small ? 4.0 : 8.0),
-          child: widget.isLoading
+          padding: EdgeInsets.only(right: widget.size == AppButtonSize.small ? 4.0 : 8.0),                      child: widget.isLoading
               ? SizedBox(
                   width: _iconSize,
                   height: _iconSize,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: _foregroundColor,
+                    color: _foregroundColor(context),
                   ),
                 )
-              : Icon(widget.icon, size: _iconSize, color: _foregroundColor),
+              : Icon(widget.icon, size: _iconSize, color: _foregroundColor(context)),
         ),
       );
     }
@@ -289,24 +290,23 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
     children.add(
       Text(
         widget.label,
-        style: _textStyle.copyWith(color: _foregroundColor),
+        style: _textStyle.copyWith(color: _foregroundColor(context)),
       ),
     );
     
     if (widget.icon != null && widget.iconPosition == IconPosition.right) {
       children.add(
         Padding(
-          padding: EdgeInsets.only(left: widget.size == AppButtonSize.small ? 4.0 : 8.0),
-          child: widget.isLoading
+          padding: EdgeInsets.only(left: widget.size == AppButtonSize.small ? 4.0 : 8.0),                      child: widget.isLoading
               ? SizedBox(
                   width: _iconSize,
                   height: _iconSize,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: _foregroundColor,
+                    color: _foregroundColor(context),
                   ),
                 )
-              : Icon(widget.icon, size: _iconSize, color: _foregroundColor),
+              : Icon(widget.icon, size: _iconSize, color: _foregroundColor(context)),
         ),
       );
     }
@@ -336,11 +336,12 @@ class AppOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       height: 48,
       constraints: fullWidth ? const BoxConstraints(minWidth: double.infinity) : null,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.outline),
         borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
       ),
       child: Material(
@@ -405,6 +406,7 @@ class _AppIconButtonState extends State<AppIconButton> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTapDown: (_) => _scaleController.forward(),
       onTapUp: (_) => _scaleController.reverse(),
@@ -415,9 +417,9 @@ class _AppIconButtonState extends State<AppIconButton> with SingleTickerProvider
           width: widget.size,
           height: widget.size,
           decoration: BoxDecoration(
-            color: widget.backgroundColor ?? AppColors.card,
+            color: widget.backgroundColor ?? colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colors.outline),
           ),
           child: Material(
             color: Colors.transparent,
@@ -428,7 +430,7 @@ class _AppIconButtonState extends State<AppIconButton> with SingleTickerProvider
                 child: Icon(
                   widget.icon,
                   size: widget.size * 0.5,
-                  color: widget.iconColor ?? AppColors.foreground,
+                  color: widget.iconColor ?? colors.onSurface,
                 ),
               ),
             ),

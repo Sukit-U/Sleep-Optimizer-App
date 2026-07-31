@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
@@ -15,6 +14,7 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
@@ -34,7 +34,7 @@ class SettingsPage extends StatelessWidget {
               // Screen Title
               Text(
                 'Settings',
-                style: AppTypography.h1.copyWith(color: AppColors.foreground),
+                style: AppTypography.h1.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -42,10 +42,10 @@ class SettingsPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
                   boxShadow: [BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: colors.shadow,
                     blurRadius: AppSpacing.cardShadow,
                     offset: const Offset(0, 2),
                   )],
@@ -54,7 +54,7 @@ class SettingsPage extends StatelessWidget {
                   children: [
                     Icon(
                       isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                      color: AppColors.primary,
+                      color: colors.primary,
                       size: AppSpacing.iconXl,
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -64,11 +64,11 @@ class SettingsPage extends StatelessWidget {
                         children: [
                           Text(
                             'Dark mode',
-                            style: AppTypography.h3.copyWith(color: AppColors.foreground),
+                            style: AppTypography.h3.copyWith(color: colors.onSurface),
                           ),
                           Text(
                             'Use the app\'s dark-first visual style.',
-                            style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -86,7 +86,7 @@ class SettingsPage extends StatelessWidget {
                         );
                         await appStorage?.saveTheme(nextMode == ThemeMode.light ? 'light' : 'dark');
                       },
-                      activeThumbColor: AppColors.primary,
+                      activeThumbColor: colors.primary,
                     ),
                   ],
                 ),
@@ -97,10 +97,10 @@ class SettingsPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
                   boxShadow: [BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: colors.shadow,
                     blurRadius: AppSpacing.cardShadow,
                     offset: const Offset(0, 2),
                   )],
@@ -110,12 +110,12 @@ class SettingsPage extends StatelessWidget {
                   children: [
                     Text(
                       'About',
-                      style: AppTypography.h3.copyWith(color: AppColors.foreground),
+                      style: AppTypography.h3.copyWith(color: colors.onSurface),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Sleep Optimizer helps students improve sleep habits through a planner, SQI, and personalized guidance.',
-                      style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+                      'Snoozefriend helps students improve sleep habits through a planner, SQI, and personalized guidance.',
+                      style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),

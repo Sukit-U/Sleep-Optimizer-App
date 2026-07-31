@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 
 /// Reusable container that matches the Lovable `card-surface` utility:
@@ -22,12 +21,13 @@ class HomeCardSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(AppSpacing.radius2xl);
 
     final decoration = BoxDecoration(
-      color: AppColors.surface.withValues(alpha: 0.92),
+      color: colors.surface.withValues(alpha: 0.92),
       borderRadius: radius,
-      border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+      border: Border.all(color: colors.outline.withValues(alpha: 0.8)),
     );
 
     final body = ClipRRect(

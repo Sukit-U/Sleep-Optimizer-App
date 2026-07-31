@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snoozemate/app/router.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
+
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
@@ -44,10 +44,11 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // ── Ambient orb 1: purple at top-center ──
@@ -56,7 +57,7 @@ class _SplashPageState extends State<SplashPage> {
             left: size.width * 0.5 - 160,
             child: _AmbientOrb(
               size: AppSpacing.huge * 8, // 320
-              color: AppColors.accent.withValues(alpha: 0.60 * 0.6),
+              color: colors.secondary.withValues(alpha: 0.60 * 0.6),
             ),
           ),
           // ── Ambient orb 2: blue at bottom-right ──
@@ -65,7 +66,7 @@ class _SplashPageState extends State<SplashPage> {
             right: -AppSpacing.huge * 2.4, // -96
             child: _AmbientOrb(
               size: AppSpacing.huge * 9.6, // 384
-              color: AppColors.primary.withValues(alpha: 0.60 * 0.4),
+              color: colors.primary.withValues(alpha: 0.60 * 0.4),
             ),
           ),
 
@@ -112,6 +113,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Widget _buildHeader() {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       children: [
         // Icon container — 96×96, rounded-3xl, gradient, shadow
@@ -127,13 +129,13 @@ class _SplashPageState extends State<SplashPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.30),
-                    AppColors.accent.withValues(alpha: 0.30),
+                    colors.primary.withValues(alpha: 0.30),
+                    colors.secondary.withValues(alpha: 0.30),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.50),
+                    color: colors.primary.withValues(alpha: 0.50),
                     blurRadius: 60,
                     offset: Offset(0, AppSpacing.xxl - 8), // 20
                     spreadRadius: -AppSpacing.xxl + 4, // -20
@@ -143,14 +145,14 @@ class _SplashPageState extends State<SplashPage> {
               child: Icon(
                 Icons.nightlight_round,
                 size: AppSpacing.iconXxl + 4, // 44
-                color: AppColors.primary,
+                color: colors.primary,
               ),
             ),
             // Sparkles badge — top-right corner
             Positioned(
               top: -AppSpacing.sm - 2, // -6
               right: -AppSpacing.sm - 2, // -6
-              child: Icon(Icons.auto_awesome, size: AppSpacing.iconSm, color: AppColors.accent),
+              child: Icon(Icons.auto_awesome, size: AppSpacing.iconSm,              color: colors.secondary),
             ),
           ],
         ),
@@ -158,12 +160,12 @@ class _SplashPageState extends State<SplashPage> {
         SizedBox(height: AppSpacing.defaultSpacing),
 
         Text(
-          'Sleep Optimizer',
+          'Snoozefriend',
           textAlign: TextAlign.center,
           style: GoogleFonts.sora(
             fontSize: AppTypography.h1.fontSize,
             fontWeight: FontWeight.w700,
-            color: AppColors.foreground,
+            color: colors.onSurface,
             letterSpacing: AppTypography.h1.letterSpacing,
             height: AppTypography.h1.height,
           ),
@@ -172,12 +174,12 @@ class _SplashPageState extends State<SplashPage> {
         SizedBox(height: AppSpacing.sm),
 
         Text(
-          'Plan smarter nights. Build healthier habits.',
+          'Sleep quality intelligence for better rest.',
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: AppTypography.body.fontSize,
             fontWeight: AppTypography.body.fontWeight,
-            color: AppColors.mutedForeground,
+            color: colors.onSurfaceVariant,
             height: AppTypography.body.height,
           ),
         ),
@@ -186,22 +188,23 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Widget _buildFeatureList() {
+    final colors = Theme.of(context).colorScheme;
     final features = [
       _FeatureData(
         icon: Icons.nightlight_round,
-        iconColor: AppColors.primary,
+        iconColor: colors.primary,
         title: 'Sleep Planner',
         description: 'Find bedtimes aligned with complete sleep cycles.',
       ),
       _FeatureData(
         icon: Icons.checklist,
-        iconColor: AppColors.accent,
+        iconColor: colors.secondary,
         title: 'Sleep Quality Index',
         description: 'A 3-minute assessment of your sleep habits.',
       ),
       _FeatureData(
         icon: Icons.auto_awesome,
-        iconColor: AppColors.primary,
+        iconColor: colors.primary,
         title: 'Personalized advice',
         description: 'Small, actionable steps — one habit at a time.',
       ),
@@ -213,6 +216,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Widget _buildCTA() {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       children: [
         // Continue button — btn-primary style (pill, blue, shadow)
@@ -223,11 +227,11 @@ class _SplashPageState extends State<SplashPage> {
             child: Container(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.md + 2), // 14
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: colors.primary,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.60),
+                    color: colors.primary.withValues(alpha: 0.60),
                     blurRadius: 30,
                     spreadRadius: -AppSpacing.md, // -12
                     offset: Offset(0, AppSpacing.defaultSpacing - 6), // 10
@@ -240,7 +244,7 @@ class _SplashPageState extends State<SplashPage> {
                 style: GoogleFonts.inter(
                   fontSize: AppTypography.button.fontSize,
                   fontWeight: AppTypography.button.fontWeight,
-                  color: AppColors.primaryForeground,
+                  color: colors.onPrimary,
                 ),
               ),
             ),
@@ -255,7 +259,7 @@ class _SplashPageState extends State<SplashPage> {
           style: GoogleFonts.inter(
             fontSize: AppTypography.caption.fontSize! - 1, // 11
             fontWeight: AppTypography.caption.fontWeight,
-            color: AppColors.mutedForeground,
+            color: colors.onSurfaceVariant,
           ),
         ),
       ],
@@ -311,15 +315,16 @@ class _FeatureRow extends StatelessWidget {
   // static const _mutedFg = Color(0xFFADB0BC);
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Container(
         padding: EdgeInsets.all(AppSpacing.defaultSpacing),
         decoration: BoxDecoration(
           // card-surface: surface 92% opacity, border, radius-2xl (24px), backdrop-blur-ish
-          color: AppColors.surface.withValues(alpha: 0.92),
+          color: colors.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.80), width: 1),
+          border: Border.all(color: colors.outline.withValues(alpha: 0.80), width: 1),
         ),
         child: Row(
           children: [
@@ -329,7 +334,7 @@ class _FeatureRow extends StatelessWidget {
               height: AppSpacing.iconMdContainer,
               decoration: BoxDecoration(
                 // bg-background/40 equivalent
-                color: AppColors.background.withValues(alpha: 0.40),
+                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.40),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               ),
               child: Icon(feature.icon, size: AppSpacing.iconMd - 2, color: feature.iconColor), // 18
@@ -346,7 +351,7 @@ class _FeatureRow extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: AppTypography.body.fontSize,
                       fontWeight: AppTypography.body.fontWeight,
-                      color: AppColors.foreground,
+                      color: colors.onSurface,
                       height: AppTypography.body.height,
                     ),
                   ),
@@ -356,7 +361,7 @@ class _FeatureRow extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: AppTypography.caption.fontSize,
                       fontWeight: AppTypography.caption.fontWeight,
-                      color: AppColors.mutedForeground,
+                      color: colors.onSurfaceVariant,
                       height: AppTypography.caption.height,
                     ),
                   ),

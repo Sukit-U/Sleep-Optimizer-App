@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
@@ -21,31 +20,32 @@ class HomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed(route),
       child: Container(
         margin: const EdgeInsets.all(AppSpacing.xs),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-          border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: AppColors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
+          border: Border.all(color: colors.outline, width: 1),
+          boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: colors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: AppSpacing.iconXxl, color: AppColors.primary),
+            Icon(icon, size: AppSpacing.iconXxl, color: colors.primary),
             const SizedBox(height: AppSpacing.sm),
             Text(
               title,
-              style: AppTypography.h2.copyWith(color: AppColors.foreground),
+              style: AppTypography.h2.copyWith(color: colors.onSurface),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
               description,
-              style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+              style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],

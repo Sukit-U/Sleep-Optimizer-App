@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
@@ -20,10 +21,14 @@ class RecommendationPage extends StatefulWidget {
 class _RecommendationPageState extends State<RecommendationPage> {
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final result = widget.result;
     final recommendations = result == null
         ? <RecommendationEntity>[]
-        : const GenerateRecommendations().call(weakFactors: result.weakFactors);
+        : const GenerateRecommendations().call(
+            weakFactors: result.weakFactors,
+            level: result.level.name,
+          );
 
     return Scaffold(
       appBar: AppBar(
@@ -32,11 +37,11 @@ class _RecommendationPageState extends State<RecommendationPage> {
           children: [
             Text(
               'Your result',
-              style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
             ),
             Text(
               'Sleep Quality Index',
-              style: AppTypography.h1.copyWith(color: AppColors.foreground),
+              style: AppTypography.h1.copyWith(color: colors.onSurface),
             ),
           ],
         ),
@@ -98,7 +103,10 @@ class _RecommendationPageState extends State<RecommendationPage> {
                         label: 'Home',
                         icon: Icons.home,
                         onPressed: () {
-                          // Navigate to home
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            AppRoutes.home,
+                            (route) => route.isFirst,
+                          );
                         },
                       ),
                     ),
@@ -107,7 +115,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                       child: _buildPrimaryButton(
                         label: 'View history',
                         onPressed: () {
-                          // Navigate to history
+                          Navigator.of(context).pushNamed(AppRoutes.history);
                         },
                       ),
                     ),
@@ -125,16 +133,16 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// SQI Score display with circular gradient
   Widget _buildSQIScoreDisplay(SqiResult result) {
+    final colors = Theme.of(context).colorScheme;
     final scoreColor = _getScoreColor(result.score);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-          boxShadow: [BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.roundedLg),            boxShadow: [BoxShadow(
+            color: colors.shadow,
             blurRadius: AppSpacing.cardShadow,
             offset: const Offset(0, 2),
           )],
@@ -155,7 +163,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   child: CircularProgressIndicator(
                     value: result.score / 100,
                     strokeWidth: 8,
-                    backgroundColor: AppColors.mutedBackground,
+                    backgroundColor: colors.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
                   ),
                 ),
@@ -164,7 +172,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   width: 128,
                   height: 128,
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: colors.surface,
                     shape: BoxShape.circle,
                   ),
                   child: Column(
@@ -173,14 +181,14 @@ class _RecommendationPageState extends State<RecommendationPage> {
                       Text(
                         '${result.score}',
                         style: AppTypography.displayLarge.copyWith(
-                          color: AppColors.foreground,
+                          color: colors.onSurface,
                           fontSize: 48,
                         ),
                       ),
                       Text(
                         '/ 100',
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.mutedForeground,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -212,12 +220,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Factor breakdown section with progress bars
   Widget _buildFactorBreakdown(SqiResult result) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Factor breakdown',
-          style: AppTypography.h2.copyWith(color: AppColors.foreground),
+          style: AppTypography.h2.copyWith(color: colors.onSurface),
         ),
         const SizedBox(height: AppSpacing.md),
         ..._buildFactorItems(result),
@@ -226,23 +235,21 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   List<Widget> _buildFactorItems(SqiResult result) {
-    final factors = [
-      {'key': 'duration', 'label': 'Sleep Duration', 'score': 75},
-      {'key': 'latency', 'label': 'Sleep Latency', 'score': 60},
-      {'key': 'efficiency', 'label': 'Sleep Efficiency', 'score': 82},
-    ];
+    final colors = Theme.of(context).colorScheme;
+    final entries = result.factorScores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
-    return factors.map((f) {
-      final score = f['score'] as int;
+    return entries.map((f) {
+      final score = f.value;
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: colors.shadow,
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
@@ -254,12 +261,12 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    f['label'] as String,
-                    style: AppTypography.body.copyWith(color: AppColors.foreground),
+                    f.key,
+                    style: AppTypography.body.copyWith(color: colors.onSurface),
                   ),
                   Text(
                     '$score/100',
-                    style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                    style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -268,7 +275,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 height: 8,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.mutedBackground,
+                  color: colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: FractionallySizedBox(
@@ -291,6 +298,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Recommendations section header with sparkle icon
   Widget _buildRecommendations(List<RecommendationEntity> recommendations) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -299,12 +307,12 @@ class _RecommendationPageState extends State<RecommendationPage> {
             Icon(
               Icons.auto_awesome,
               size: AppSpacing.iconMd,
-              color: AppColors.primary,
+              color: colors.primary,
             ),
             const SizedBox(width: AppSpacing.xs),
             Text(
               'Personalized recommendations',
-              style: AppTypography.h2.copyWith(color: AppColors.foreground),
+              style: AppTypography.h2.copyWith(color: colors.onSurface),
             ),
           ],
         ),
@@ -315,14 +323,15 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Detailed recommendation card
   Widget _buildRecommendationItem(RecommendationEntity recommendation) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: colors.shadow,
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
@@ -339,39 +348,38 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   vertical: AppSpacing.spacingXs,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
                   'Priority ${recommendation.priority.name}',
-                  style: AppTypography.small.copyWith(color: AppColors.primary),
+                  style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
               Text(
                 recommendation.factor,
-                style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+                style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            recommendation.title,
-            style: AppTypography.h3.copyWith(color: AppColors.foreground),
+            recommendation.title,              style: AppTypography.h3.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             recommendation.description,
-            style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Action: ${recommendation.action}',
-            style: AppTypography.caption.copyWith(color: AppColors.mutedForeground),
+            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.spacingXs),
           Text(
             'Factor: ${recommendation.factor}',
-            style: AppTypography.caption.copyWith(color: AppColors.accent),
+            style: AppTypography.caption.copyWith(color: colors.secondary),
           ),
         ],
       ),
@@ -380,21 +388,22 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Empty state component
   Widget _buildEmptyState({required String label}) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
             boxShadow: [BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: colors.shadow,
               blurRadius: AppSpacing.cardShadow,
               offset: const Offset(0, 2),
             )],
           ),
       child: Text(
         label,
-        style: AppTypography.body.copyWith(color: AppColors.mutedForeground),
+        style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
         textAlign: TextAlign.center,
       ),
     );
@@ -402,6 +411,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Ghost button for secondary actions
   Widget _buildGhostButton({required String label, IconData? icon, VoidCallback? onPressed}) {
+    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -409,20 +419,19 @@ class _RecommendationPageState extends State<RecommendationPage> {
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
         ),
-        decoration: BoxDecoration(
-          color: AppColors.muted.withValues(alpha: 0.5),
+        decoration: BoxDecoration(              color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: AppSpacing.iconMd, color: AppColors.foreground),
+              Icon(icon, size: AppSpacing.iconMd, color: colors.onSurface),
               const SizedBox(width: AppSpacing.xs),
             ],
             Text(
               label,
-              style: AppTypography.button.copyWith(color: AppColors.foreground),
+              style: AppTypography.button.copyWith(color: colors.onSurface),
             ),
           ],
         ),
@@ -432,6 +441,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Primary button for main actions
   Widget _buildPrimaryButton({required String label, VoidCallback? onPressed}) {
+    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -440,13 +450,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          color: colors.primary,
           borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
         ),
         child: Center(
           child: Text(
             label,
-            style: AppTypography.button.copyWith(color: AppColors.primaryForeground),
+            style: AppTypography.button.copyWith(color: colors.onPrimary),
           ),
         ),
       ),

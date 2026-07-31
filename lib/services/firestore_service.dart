@@ -33,8 +33,14 @@ class FirestoreService {
   }
 
   Future<List<SleepPlan>> getSleepPlans(String userId) async {
-    final snapshot = await _firestore.collection('sleepPlans').where('userId', isEqualTo: userId).get();
-    return snapshot.docs.map((doc) => SleepPlan.fromFirestore(doc.data(), doc.id)).toList();
+    final snapshot = await _firestore
+        .collection('sleepPlans')
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .where((doc) => doc.data()['userId'] == userId)
+        .map((doc) => SleepPlan.fromFirestore(doc.data(), doc.id))
+        .toList();
   }
 
   // SQIRecord operations
@@ -44,8 +50,14 @@ class FirestoreService {
   }
 
   Future<List<SQIRecord>> getSQIRecords(String userId) async {
-    final snapshot = await _firestore.collection('sqiRecords').where('userId', isEqualTo: userId).get();
-    return snapshot.docs.map((doc) => SQIRecord.fromFirestore(doc.data(), doc.id)).toList();
+    final snapshot = await _firestore
+        .collection('sqiRecords')
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .where((doc) => doc.data()['userId'] == userId)
+        .map((doc) => SQIRecord.fromFirestore(doc.data(), doc.id))
+        .toList();
   }
 
   // Recommendation operations
@@ -55,8 +67,22 @@ class FirestoreService {
   }
 
   Future<List<Recommendation>> getRecommendations(String recordId) async {
-    final snapshot = await _firestore.collection('recommendations').where('recordId', isEqualTo: recordId).get();
-    return snapshot.docs.map((doc) => Recommendation.fromFirestore(doc.data(), doc.id)).toList();
+    final snapshot = await _firestore
+        .collection('recommendations')
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .where((doc) => doc.data()['recordId'] == recordId)
+        .map((doc) => Recommendation.fromFirestore(doc.data(), doc.id))
+        .toList();
+  }
+
+  Future<void> deleteSleepPlan(String planId) async {
+    await _firestore.collection('sleepPlans').doc(planId).delete();
+  }
+
+  Future<void> deleteSQIRecord(String recordId) async {
+    await _firestore.collection('sqiRecords').doc(recordId).delete();
   }
 
   // Settings operations

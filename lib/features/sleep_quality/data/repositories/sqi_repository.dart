@@ -1,17 +1,27 @@
-import '../../../../core/services/firebase_service.dart';
+import '../../../../services/firestore_service.dart';
+import '../../../../models/sqi_record_model.dart';
 
 abstract class SqiRepository {
-  Future<void> saveRecord(Map<String, dynamic> payload);
+  Future<String> saveRecord(Map<String, dynamic> payload);
 }
 
 class FirestoreSqiRepository implements SqiRepository {
-  FirestoreSqiRepository({FirebaseService? firebaseService})
-      : _firebaseService = firebaseService ?? FirebaseService();
+  FirestoreSqiRepository({FirestoreService? firestoreService})
+      : _firestoreService = firestoreService ?? FirestoreService();
 
-  final FirebaseService _firebaseService;
+  final FirestoreService _firestoreService;
 
   @override
-  Future<void> saveRecord(Map<String, dynamic> payload) {
-    return _firebaseService.saveSqiRecord(payload);
+  Future<String> saveRecord(Map<String, dynamic> payload) async {
+    final docId = await _firestoreService.addSQIRecord(SQIRecord(
+      recordId: '',
+      userId: payload['userId'] as String,
+      sqiScore: payload['sqiScore'] as int,
+      sleepQualityLevel: payload['sleepQualityLevel'] as String,
+      questionnaireResponses:
+          Map<String, dynamic>.from(payload['questionnaireResponses'] as Map),
+      createdAt: DateTime.parse(payload['createdAt'] as String),
+    ));
+    return docId;
   }
 }

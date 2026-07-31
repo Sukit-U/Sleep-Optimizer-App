@@ -8,7 +8,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Sleep Optimizer'),
+      title: const Text('Snoozefriend'),
       backgroundColor: Theme.of(context).primaryColor,
       elevation: 0,
     );

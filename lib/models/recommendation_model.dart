@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Recommendation {
   final String recommendationId;
   final String recordId; // Foreign key to SQIRecord
@@ -6,6 +8,7 @@ class Recommendation {
   final String description;
   final String action;
   final String priority;
+  final DateTime createdAt;
 
   Recommendation({
     required this.recommendationId,
@@ -15,7 +18,8 @@ class Recommendation {
     required this.description,
     required this.action,
     required this.priority,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   // Factory constructor for creating a Recommendation from Firestore data
   factory Recommendation.fromFirestore(Map<String, dynamic> data, String documentId) {
@@ -27,6 +31,7 @@ class Recommendation {
       description: data['description'] ?? '',
       action: data['action'] ?? '',
       priority: data['priority'] ?? 'Low',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -39,6 +44,7 @@ class Recommendation {
       'description': description,
       'action': action,
       'priority': priority,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 

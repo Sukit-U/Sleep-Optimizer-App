@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'app/app.dart';
 import 'core/services/storage_service.dart';
 import 'core/providers/theme_provider.dart';
+import 'firebase_options.dart';
 
 late StorageService appStorage;
 late ValueNotifier<ThemeMode> appThemeMode;
@@ -13,7 +14,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase before any Firebase services are used
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   appStorage = await StorageService.create();
   appThemeMode = ValueNotifier<ThemeMode>(
@@ -34,6 +37,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SleepOptimizerApp();
+    return const SnoozefriendApp();
   }
 }

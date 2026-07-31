@@ -109,4 +109,8 @@ class AppColors {
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightBorder = Color(0xFFE5E5E5);
   static const Color lightMuted = Color(0xFFF5F5F5);
+  /// Light muted foreground - medium gray for light theme
+  static const Color lightMutedForeground = Color(0xFF6B7280);
+  /// Light on-secondary - dark text on purple accent
+  static const Color lightOnSecondary = Color(0xFF1A1A1A);
 }

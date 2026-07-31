@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:snoozemate/app/router.dart';
-import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:snoozemate/features/home/presentation/widgets/home_body.dart';
@@ -58,7 +57,7 @@ class _HomePageState extends State<HomePage> {
       child: SizedBox(
         width: containerWidth,
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Stack(
             children: [
               SafeArea(child: HomeBody()),
@@ -78,6 +77,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFloatingBottomNav() {
+    final colors = Theme.of(context).colorScheme;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -88,15 +88,15 @@ class _HomePageState extends State<HomePage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated.withValues(alpha: 0.85),
+                color: colors.surface.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                 border: Border.all(
-                  color: AppColors.border,
+                  color: colors.outline,
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadow.withValues(alpha: 0.60),
+                    color: colors.shadow.withValues(alpha: 0.60),
                     blurRadius: 60,
                     offset: const Offset(0, 20),
                   ),
@@ -119,8 +119,8 @@ class _HomePageState extends State<HomePage> {
                               tab.icon,
                               size: 20,
                               color: active
-                                  ? AppColors.primary
-                                  : AppColors.mutedForeground,
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
                             ),
                             const SizedBox(height: AppSpacing.xs - 2),
                             Text(
@@ -131,8 +131,8 @@ class _HomePageState extends State<HomePage> {
                                     ? FontWeight.w600
                                     : FontWeight.w500,
                                 color: active
-                                    ? AppColors.primary
-                                    : AppColors.mutedForeground,
+                                    ? colors.primary
+                                    : colors.onSurfaceVariant,
                               ),
                             ),
                           ],

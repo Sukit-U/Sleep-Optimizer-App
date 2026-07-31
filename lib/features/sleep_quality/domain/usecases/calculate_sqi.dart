@@ -13,15 +13,15 @@ class CalculateSqi {
       'Caffeine': 15,
     };
 
-    final scores = <String, int>{};
+    final factorScores = <String, int>{};
 
     for (final entry in factors.entries) {
       final value = responses[entry.key] ?? 0;
       final weightedValue = ((value / 5) * entry.value).round();
-      scores[entry.key] = weightedValue;
+      factorScores[entry.key] = weightedValue;
     }
 
-    final sortedByScore = scores.entries.toList()
+    final sortedByScore = factorScores.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
 
     final weakFactors = sortedByScore
@@ -29,13 +29,14 @@ class CalculateSqi {
         .map((entry) => entry.key)
         .toList();
 
-    final score = scores.values.reduce((a, b) => a + b);
+    final score = factorScores.values.reduce((a, b) => a + b);
     final level = _mapLevel(score);
 
     return SqiResult(
       score: score,
       level: level,
       weakFactors: weakFactors,
+      factorScores: factorScores,
       responses: responses,
     );
   }
