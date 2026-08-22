@@ -6,6 +6,11 @@ import 'package:snoozemate/services/firestore_service.dart';
 import 'package:snoozemate/models/sleep_plan_model.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
 import 'package:snoozemate/models/recommendation_model.dart';
+import 'package:snoozemate/shared/widgets/history_sqi_record_card.dart';
+import 'package:snoozemate/shared/widgets/history_sleep_plan_card.dart';
+import 'package:snoozemate/shared/widgets/empty_state_card.dart';
+import 'package:snoozemate/shared/widgets/error_state_widget.dart';
+import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
 
 class HistoryPage extends StatefulWidget {
   final String userId;
@@ -42,7 +47,6 @@ class _HistoryPageState extends State<HistoryPage> {
     try {
       final sleepPlans = await _firestoreService.getSleepPlans(widget.userId);
       final sqiRecords = await _firestoreService.getSQIRecords(widget.userId);
-      // Results are already sorted by FirestoreService (orderBy createdAt desc)
       setState(() {
         _sleepPlans = sleepPlans;
         _sqiRecords = sqiRecords;
@@ -83,14 +87,12 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _openRecommendations(SQIRecord record) async {
     final recordId = record.recordId;
-    // Use cache if available
     if (_recsCache.containsKey(recordId)) {
       if (!mounted) return;
-      _showRecsSheet(_recsCache[recordId]!);
+      showRecommendationSheet(context, recs: _recsCache[recordId]!);
       return;
     }
 
-    // Mark loading and show a loading bottom sheet
     if (!mounted) return;
     _recsLoading.add(recordId);
 
@@ -99,7 +101,7 @@ class _HistoryPageState extends State<HistoryPage> {
       _recsCache[recordId] = recs;
       _recsLoading.remove(recordId);
       if (!mounted) return;
-      _showRecsSheet(recs);
+      showRecommendationSheet(context, recs: recs);
     } catch (e) {
       _recsLoading.remove(recordId);
       if (!mounted) return;
@@ -107,134 +109,6 @@ class _HistoryPageState extends State<HistoryPage> {
         SnackBar(content: Text('Could not load recommendations.')),
       );
     }
-  }
-
-  void _showRecsSheet(List<Recommendation> recs) {
-    final colors = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        builder: (ctx, scrollController) => Container(
-          padding: const EdgeInsets.all(AppSpacing.px),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radius2xl)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.onSurfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Icon(Icons.auto_awesome, size: AppSpacing.iconMd, color: colors.primary),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'Recommendations',
-                    style: AppTypography.h2.copyWith(color: colors.onSurface),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              if (recs.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'No recommendations recorded for this assessment.',
-                      style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    children: recs.map(_buildRecItem).toList(),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecItem(Recommendation rec) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.spacingXs,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
-                ),
-                child: Text(
-                  rec.priority,
-                  style: AppTypography.small.copyWith(color: colors.primary),
-                ),
-              ),
-              Text(
-                rec.factor,
-                style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            rec.title,
-            style: AppTypography.h3.copyWith(color: colors.onSurface),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            rec.description,
-            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Action: ${rec.action}',
-            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -261,7 +135,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? _buildErrorState()
+                        ? ErrorStateWidget(
+                            message: 'Failed to load history',
+                            detail: _error,
+                            onRetry: _loadHistory,
+                          )
                         : _selectedTab == 'sqi'
                             ? _buildSQIList()
                             : _buildPlansList(),
@@ -297,8 +175,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Text(
                     'SQI records',
                     style: AppTypography.tabLabel.copyWith(
-                      color: _selectedTab == 'sqi'          ? colors.onPrimary
-          : colors.onSurfaceVariant,
+                      color: _selectedTab == 'sqi'
+                          ? colors.onPrimary
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -318,8 +197,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Text(
                     'Sleep plans',
                     style: AppTypography.tabLabel.copyWith(
-                      color: _selectedTab == 'plans'          ? colors.onPrimary
-          : colors.onSurfaceVariant,
+                      color: _selectedTab == 'plans'
+                          ? colors.onPrimary
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -333,9 +213,10 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Widget _buildSQIList() {
     if (_sqiRecords.isEmpty) {
-      return _buildEmptyState(
+      return EmptyStateCard(
         label: 'No assessments yet.',
-        cta: 'Take assessment',
+        ctaLabel: 'Take assessment',
+        onCtaPressed: () => Navigator.of(context).pushNamed('/sleep-quality'),
       );
     }
 
@@ -344,89 +225,21 @@ class _HistoryPageState extends State<HistoryPage> {
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final record = _sqiRecords[index];
-        return _buildSQIItem(record);
+        return SQIRecordCard(
+          record: record,
+          onTap: () => _openRecommendations(record),
+          onDelete: () => _deleteSQIRecord(record.recordId),
+        );
       },
     );
   }
 
-  Widget _buildSQIItem(SQIRecord record) {
-    final colors = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: () => _openRecommendations(record),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: colors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppSpacing.iconXl,
-            height: AppSpacing.iconXl,
-            decoration: BoxDecoration(
-              color: colors.secondary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.roundedSm),
-            ),
-            child: Icon(
-              Icons.assignment_outlined,
-              size: AppSpacing.iconMd,
-              color: colors.secondary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${record.sqiScore}',
-                      style: AppTypography.h2.copyWith(color: colors.onSurface),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      '· ${record.sleepQualityLevel}',
-                      style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.spacingXs),
-                Text(
-                  _formatDate(record.createdAt),
-                  style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _deleteSQIRecord(record.recordId),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.delete_outline,
-                size: AppSpacing.iconMd,
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
-  }
-
   Widget _buildPlansList() {
     if (_sleepPlans.isEmpty) {
-      return _buildEmptyState(
+      return EmptyStateCard(
         label: 'No plans saved yet.',
-        cta: 'Open planner',
+        ctaLabel: 'Open planner',
+        onCtaPressed: () => Navigator.of(context).pushNamed('/sleep-planner'),
       );
     }
 
@@ -435,177 +248,11 @@ class _HistoryPageState extends State<HistoryPage> {
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final plan = _sleepPlans[index];
-        return _buildPlanItem(plan);
+        return HistorySleepPlanCard(
+          plan: plan,
+          onDelete: () => _deleteSleepPlan(plan.planId),
+        );
       },
     );
-  }
-
-  Widget _buildPlanItem(SleepPlan plan) {
-    final colors = Theme.of(context).colorScheme;
-    final firstBedtime = plan.suggestedBedtimes.isNotEmpty ? plan.suggestedBedtimes.first : '';
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: colors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppSpacing.iconXl,
-            height: AppSpacing.iconXl,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSpacing.roundedSm),
-            ),
-            child: Icon(
-              Icons.nightlight_round,
-              size: AppSpacing.iconMd,
-              color: colors.primary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$firstBedtime → ${_formatTime(plan.wakeUpTime)}',
-                  style: AppTypography.h3.copyWith(color: colors.onSurface),
-                ),
-                const SizedBox(height: AppSpacing.spacingXs),
-                Text(
-                  '${plan.sleepCycles} cycles · ${_formatDate(plan.createdAt)}',
-                  style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _deleteSleepPlan(plan.planId),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.delete_outline,
-                size: AppSpacing.iconMd,
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState({required String label, required String cta}) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [BoxShadow(blurRadius: AppSpacing.cardShadow, color: colors.shadow.withValues(alpha: 0.45), offset: Offset(0, AppSpacing.defaultSpacing - 6))],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).pushNamed(
-                _selectedTab == 'sqi' ? '/sleep-quality' : '/sleep-planner',
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: colors.primary,
-                borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
-              ),
-              child: Text(
-                cta,
-                style: AppTypography.button.copyWith(color: colors.onPrimary),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    final colors = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: colors.onSurfaceVariant),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Failed to load history',
-            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            _error ?? '',
-            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          GestureDetector(
-            onTap: _loadHistory,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: colors.primary,
-                borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
-              ),
-              child: Text(
-                'Retry',
-                style: AppTypography.button.copyWith(color: colors.onPrimary),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays == 0) {
-      return 'Today, ${_formatTime(dateTime)}';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday, ${_formatTime(dateTime)}';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    }
-  }
-
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
-    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:${dateTime.minute.toString().padLeft(2, '0')} $period';
   }
 }

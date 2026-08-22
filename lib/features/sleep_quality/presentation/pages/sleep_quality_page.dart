@@ -4,6 +4,7 @@ import '../../../../app/app.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../shared/widgets/section_title.dart';
+import '../../../../shared/widgets/sqi_question_card.dart';
 import '../../data/repositories/sqi_repository.dart';
 import '../../domain/usecases/calculate_sqi.dart';
 import '../../../recommendation/domain/usecases/generate_recommendations.dart';
@@ -18,7 +19,8 @@ class SleepQualityPage extends StatefulWidget {
 
 class _SleepQualityPageState extends State<SleepQualityPage> {
   final _sqiRepository = FirestoreSqiRepository();
-  final List<_Question> _questions = const [
+
+  static const _questions = [
     _Question(label: 'Sleep duration', helper: 'How many hours did you sleep?'),
     _Question(label: 'Sleep regularity', helper: 'How consistent was your bedtime?'),
     _Question(label: 'Screen time', helper: 'How much screen time before bed?'),
@@ -58,65 +60,32 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Sleep Quality'),
-        leading: const BackButton(),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SectionTitle(title: 'Sleep Quality Check-In'),
-          const SizedBox(height: 8),
-          ..._questions.map((question) => _buildQuestionCard(question)),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _submit,
-            icon: const Icon(Icons.assessment_rounded),
-            label: const Text('Calculate SQI'),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-
-  Widget _buildQuestionCard(_Question question) {
-    final hasError = _unansweredTouched.contains(question.label);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: hasError
-            ? BorderSide(color: Theme.of(context).colorScheme.error, width: 1.5)
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: AppBar(
+          title: const Text('Sleep Quality'),
+          leading: const BackButton(),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            Text(question.label, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(question.helper, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: List.generate(5, (index) {
-                final value = index + 1;
-                final selected = _responses[question.label] == value;
-                return ChoiceChip(
-                  label: Text('$value'),
-                  selected: selected,
-                  onSelected: (_) {
-                    setState(() {
-                      _responses[question.label] = value;
-                      _unansweredTouched.remove(question.label);
-                    });
-                  },
-                );
-              }),
+            const SectionTitle(title: 'Sleep Quality Check-In'),
+            const SizedBox(height: 8),
+            ..._questions.map((question) => SQIQuestionCard(
+              label: question.label,
+              helper: question.helper,
+              selectedValue: _responses[question.label],
+              hasError: _unansweredTouched.contains(question.label),
+              onSelected: (value) {
+                setState(() {
+                  _responses[question.label] = value;
+                  _unansweredTouched.remove(question.label);
+                });
+              },
+            )),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _submit,
+              icon: const Icon(Icons.assessment_rounded),
+              label: const Text('Calculate SQI'),
             ),
           ],
         ),
@@ -141,7 +110,6 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
     final firestoreService = FirestoreService();
 
     try {
-      // Save SQI record via repository (uses FirestoreService)
       final recordId = await _sqiRepository.saveRecord(
         {
           'userId': AppConfig.defaultUserId,
@@ -152,7 +120,6 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         },
       );
 
-      // Generate and persist recommendations (linked to SQI record)
       final recommendations = const GenerateRecommendations().call(
         weakFactors: result.weakFactors,
         level: result.level.name,
@@ -184,9 +151,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       return;
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -198,8 +163,6 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
 
 class _Question {
   const _Question({required this.label, required this.helper});
-
   final String label;
   final String helper;
 }
-
