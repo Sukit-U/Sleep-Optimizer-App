@@ -1,0 +1,289 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // IMPORTANT: This app currently has NO Firebase Authentication.
+    // All records use a hardcoded userId = 'default_user'.
+    // These rules enforce schema validation, type safety, size limits,
+    // and field restrictions to prevent data corruption and abuse.
+    //
+    // When Firebase Auth is added, upgrade rules to require
+    // isAuthenticated() and ownership checks.
+    //
+    // Collection: sleepPlans
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable on update, max 100 chars)
+    //   - wakeUpTime: timestamp (required)
+    //   - createdAt: timestamp (required, immutable on update)
+    //   - sleepCycles: number (required, integer 1–10)
+    //   - suggestedBedtimes: list of strings (required, max 10 items, each max 100 chars)
+    //
+    // Collection: sqiRecords
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable on update, max 100 chars)
+    //   - sqiScore: number (required, integer 0–100)
+    //   - sleepQualityLevel: string (required, one of 'Poor','Fair','Good','Excellent')
+    //   - questionnaireResponses: map (required, max 20 keys)
+    //   - createdAt: timestamp (required, immutable on update)
+    //
+    // Collection: recommendations
+    // Document ID: auto-generated
+    // Fields:
+    //   - recordId: string (required, immutable on update, max 100 chars)
+    //   - factor: string (required, max 200 chars)
+    //   - title: string (required, max 200 chars)
+    //   - description: string (required, max 2000 chars)
+    //   - action: string (required, max 2000 chars)
+    //   - priority: string (required, one of 'critical','high','medium','low',
+    //               'Critical','High','Medium','Low')
+    //   - createdAt: timestamp (required, immutable on update)
+    //
+    // Collection: settings
+    // Document ID: userId string (e.g. 'default_user')
+    // Fields:
+    //   - userId: string (required, must match document ID, max 100 chars)
+    //   - theme: string (required, one of 'light','dark')
+    //
+    // Firestore Queries Used:
+    //   - sleepPlans: orderBy('createdAt', descending: true)
+    //   - sqiRecords: orderBy('createdAt', descending: true)
+    //   - recommendations: orderBy('createdAt', descending: true)
+    //   - settings: get by document ID (userId)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Validate required fields exist in the incoming document
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains ONLY the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that specified immutable fields have not been changed
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate string type and length
+    function isValidString(field, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= 1 &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate a string field allows empty (min length 0)
+    function isValidStringAllowEmpty(field, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate that a field is a timestamp
+    function isTimestamp(field) {
+      return request.resource.data[field] is timestamp;
+    }
+
+    // Validate that a field is a number within a range (inclusive)
+    function isNumberInRange(field, minVal, maxVal) {
+      return request.resource.data[field] is number &&
+        request.resource.data[field] >= minVal &&
+        request.resource.data[field] <= maxVal;
+    }
+
+    // Validate that a field is an integer (whole number) within a range
+    function isIntInRange(field, minVal, maxVal) {
+      return request.resource.data[field] is int &&
+        request.resource.data[field] >= minVal &&
+        request.resource.data[field] <= maxVal;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validate SleepPlan document data
+    function isValidSleepPlan() {
+      let data = request.resource.data;
+      let allowedFields = ['userId', 'wakeUpTime', 'createdAt', 'sleepCycles', 'suggestedBedtimes'];
+      let requiredFields = ['userId', 'wakeUpTime', 'createdAt', 'sleepCycles', 'suggestedBedtimes'];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        // userId: non-empty string, max 100 chars
+        isValidString('userId', 100) &&
+        // wakeUpTime: must be a timestamp
+        isTimestamp('wakeUpTime') &&
+        // createdAt: must be a timestamp
+        isTimestamp('createdAt') &&
+        // sleepCycles: integer between 1 and 10
+        isIntInRange('sleepCycles', 1, 10) &&
+        // suggestedBedtimes: list with max 10 items
+        data.suggestedBedtimes is list &&
+        data.suggestedBedtimes.size() >= 1 &&
+        data.suggestedBedtimes.size() <= 10;
+    }
+
+    // Validate SQIRecord document data
+    function isValidSQIRecord() {
+      let data = request.resource.data;
+      let allowedFields = ['userId', 'sqiScore', 'sleepQualityLevel', 'questionnaireResponses', 'createdAt'];
+      let requiredFields = ['userId', 'sqiScore', 'sleepQualityLevel', 'questionnaireResponses', 'createdAt'];
+      let validLevels = ['Poor', 'Fair', 'Good', 'Excellent'];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        // userId: non-empty string, max 100 chars
+        isValidString('userId', 100) &&
+        // sqiScore: integer between 0 and 100
+        isIntInRange('sqiScore', 0, 100) &&
+        // sleepQualityLevel: one of the valid enum values
+        data.sleepQualityLevel is string &&
+        data.sleepQualityLevel in validLevels &&
+        // questionnaireResponses: must be a map, max 20 keys
+        data.questionnaireResponses is map &&
+        data.questionnaireResponses.keys().size() <= 20 &&
+        // createdAt: must be a timestamp
+        isTimestamp('createdAt');
+    }
+
+    // Validate Recommendation document data
+    function isValidRecommendation() {
+      let data = request.resource.data;
+      let allowedFields = ['recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
+      let requiredFields = ['recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
+      let validPriorities = ['critical', 'high', 'medium', 'low', 'Critical', 'High', 'Medium', 'Low'];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        // recordId: non-empty string, max 100 chars
+        isValidString('recordId', 100) &&
+        // factor: non-empty string, max 200 chars
+        isValidString('factor', 200) &&
+        // title: non-empty string, max 200 chars
+        isValidString('title', 200) &&
+        // description: non-empty string, max 2000 chars
+        isValidString('description', 2000) &&
+        // action: non-empty string, max 2000 chars
+        isValidString('action', 2000) &&
+        // priority: one of the valid enum values
+        data.priority is string &&
+        data.priority in validPriorities &&
+        // createdAt: must be a timestamp
+        isTimestamp('createdAt');
+    }
+
+    // Validate Settings document data
+    function isValidSettings(docId) {
+      let data = request.resource.data;
+      let allowedFields = ['userId', 'theme'];
+      let requiredFields = ['userId', 'theme'];
+      let validThemes = ['light', 'dark'];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        // userId: must match the document ID
+        data.userId is string &&
+        data.userId == docId &&
+        data.userId.size() <= 100 &&
+        // theme: one of 'light' or 'dark'
+        data.theme is string &&
+        data.theme in validThemes;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // --- sleepPlans ---
+    // CRUD: create, read (list with orderBy createdAt), delete
+    // No update operations observed in the codebase, but allowed with validation
+    match /sleepPlans/{planId} {
+      // Allow read: required for orderBy('createdAt') queries
+      // NOTE: No auth in this app currently. When auth is added,
+      // restrict to: allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if true;
+
+      // Allow create with full schema validation
+      allow create: if isValidSleepPlan();
+
+      // Allow update with full schema validation + immutable field protection
+      allow update: if isValidSleepPlan() &&
+        areImmutableFieldsUnchanged(['userId', 'createdAt']);
+
+      // Allow delete (app supports deleteSleepPlan)
+      // NOTE: When auth is added, restrict to owner only
+      allow delete: if true;
+    }
+
+    // --- sqiRecords ---
+    // CRUD: create, read (list with orderBy createdAt), delete
+    match /sqiRecords/{recordId} {
+      // Allow read: required for orderBy('createdAt') queries
+      allow read: if true;
+
+      // Allow create with full schema validation
+      allow create: if isValidSQIRecord();
+
+      // Allow update with full schema validation + immutable field protection
+      allow update: if isValidSQIRecord() &&
+        areImmutableFieldsUnchanged(['userId', 'createdAt']);
+
+      // Allow delete (app supports deleteSQIRecord)
+      allow delete: if true;
+    }
+
+    // --- recommendations ---
+    // CRUD: create, read (list with orderBy createdAt)
+    // No delete observed in codebase, but allowed for future use
+    match /recommendations/{recommendationId} {
+      // Allow read: required for orderBy('createdAt') queries
+      allow read: if true;
+
+      // Allow create with full schema validation
+      allow create: if isValidRecommendation();
+
+      // Allow update with full schema validation + immutable field protection
+      allow update: if isValidRecommendation() &&
+        areImmutableFieldsUnchanged(['recordId', 'createdAt']);
+
+      // Allow delete
+      allow delete: if true;
+    }
+
+    // --- settings ---
+    // CRUD: create/set (upsert by userId doc ID), read (get by userId)
+    // No delete observed in codebase
+    match /settings/{userId} {
+      // Allow read: for fetching user settings
+      allow read: if true;
+
+      // Allow create with full schema validation (userId must match doc ID)
+      allow create: if isValidSettings(userId);
+
+      // Allow update with full schema validation (userId must match doc ID)
+      allow update: if isValidSettings(userId);
+
+      // Deny delete: settings should not be deleted
+      allow delete: if false;
+    }
+
+    // ===============================================================
+    // Default Deny: Block all other collections
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
