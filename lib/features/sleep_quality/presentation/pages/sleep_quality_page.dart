@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/app.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../shared/widgets/section_title.dart';
 import '../../../../shared/widgets/sqi_question_card.dart';
@@ -94,13 +95,24 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
   }
 
   Future<void> _submit() async {
+    final auth = context.read<AuthService>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final userId = await auth.ensureSignedIn();
+    if (userId == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+      );
+      return;
+    }
+
     if (_responses.length != _questions.length) {
       final unanswered =
           _questions.where((q) => !_responses.containsKey(q.label)).toList();
       setState(() {
         _unansweredTouched.addAll(unanswered.map((q) => q.label));
       });
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please answer every SQI question before submitting.')),
       );
       return;
@@ -112,7 +124,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
     try {
       final recordId = await _sqiRepository.saveRecord(
         {
-          'userId': AppConfig.defaultUserId,
+          'userId': userId,
           'sqiScore': result.score,
           'sleepQualityLevel': result.level.name,
           'questionnaireResponses': _responses,

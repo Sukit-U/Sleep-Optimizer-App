@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:snoozemate/core/services/auth_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
-import '../../../../app/app.dart';
-import '../../../../core/config/app_config.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../data/repositories/settings_repository.dart';
 
 /// SettingsPage – UI styled to match design system while preserving
 /// all backend logic (theme provider, firestore, app storage).
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -77,15 +81,33 @@ class SettingsPage extends StatelessWidget {
                     Switch(
                       value: isDarkMode,
                       onChanged: (_) async {
+                        final auth = context.read<AuthService>();
+                        // Captured before the async gap; the app-scoped
+                        // messenger stays valid even if this page is disposed.
+                        final messenger = ScaffoldMessenger.of(context);
+
+                        final userId = await auth.ensureSignedIn();
+                        if (userId == null) {
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+                          );
+                          return;
+                        }
                         final nextMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
                         themeProvider.setTheme(nextMode);
-                        await FirestoreSettingsRepository().saveSettings(
-                          {
-                            'userId': AppConfig.defaultUserId,
-                            'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
-                          },
-                        );
-                        await appStorage?.saveTheme(nextMode == ThemeMode.light ? 'light' : 'dark');
+                        try {
+                          await FirestoreSettingsRepository().saveSettings(
+                            {
+                              'userId': userId,
+                              'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
+                            },
+                          );
+                        } catch (e) {
+                          // Repository already fell back to local storage.
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Theme saved on this device only (offline).')),
+                          );
+                        }
                       },
                       activeThumbColor: colors.primary,
                     ),

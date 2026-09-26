@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:snoozemate/core/config/app_config.dart';
+import 'package:provider/provider.dart';
+import 'package:snoozemate/core/services/auth_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/services/firestore_service.dart';
@@ -13,9 +14,7 @@ import 'package:snoozemate/shared/widgets/error_state_widget.dart';
 import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
 
 class HistoryPage extends StatefulWidget {
-  final String userId;
-
-  const HistoryPage({super.key, this.userId = AppConfig.defaultUserId});
+  const HistoryPage({super.key});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -31,28 +30,43 @@ class _HistoryPageState extends State<HistoryPage> {
 
   // Recommendation cache: recordId -> list of recommendations
   final Map<String, List<Recommendation>> _recsCache = {};
-  final Set<String> _recsLoading = {};
 
   @override
   void initState() {
     super.initState();
-    _loadHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadHistory();
+    });
   }
 
   Future<void> _loadHistory() async {
+    // Recover a failed boot sign-in instead of showing a dead end; the
+    // error state's Retry button re-enters here.
+    final userId = await context.read<AuthService>().ensureSignedIn();
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Could not sign in. Check your connection and retry.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
     try {
-      final sleepPlans = await _firestoreService.getSleepPlans(widget.userId);
-      final sqiRecords = await _firestoreService.getSQIRecords(widget.userId);
+      final sleepPlans = await _firestoreService.getSleepPlans(userId);
+      final sqiRecords = await _firestoreService.getSQIRecords(userId);
+      if (!mounted) return;
       setState(() {
         _sleepPlans = sleepPlans;
         _sqiRecords = sqiRecords;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _error = e.toString();
@@ -94,16 +108,13 @@ class _HistoryPageState extends State<HistoryPage> {
     }
 
     if (!mounted) return;
-    _recsLoading.add(recordId);
 
     try {
       final recs = await _firestoreService.getRecommendations(recordId);
       _recsCache[recordId] = recs;
-      _recsLoading.remove(recordId);
       if (!mounted) return;
       showRecommendationSheet(context, recs: recs);
     } catch (e) {
-      _recsLoading.remove(recordId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not load recommendations.')),

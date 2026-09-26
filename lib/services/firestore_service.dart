@@ -8,51 +8,57 @@ class FirestoreService {
 
   // SleepPlan operations
   Future<String> addSleepPlan(SleepPlan sleepPlan) async {
-    final docRef = await _firestore.collection('sleepPlans').add(sleepPlan.toFirestore());
+    final docRef = await _firestore
+        .collection('sleepPlans')
+        .add(sleepPlan.toFirestore());
     return docRef.id;
   }
 
   Future<List<SleepPlan>> getSleepPlans(String userId) async {
     final snapshot = await _firestore
         .collection('sleepPlans')
+        .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs
-        .where((doc) => doc.data()['userId'] == userId)
         .map((doc) => SleepPlan.fromFirestore(doc.data(), doc.id))
         .toList();
   }
 
   // SQIRecord operations
   Future<String> addSQIRecord(SQIRecord sqiRecord) async {
-    final docRef = await _firestore.collection('sqiRecords').add(sqiRecord.toFirestore());
+    final docRef = await _firestore
+        .collection('sqiRecords')
+        .add(sqiRecord.toFirestore());
     return docRef.id;
   }
 
   Future<List<SQIRecord>> getSQIRecords(String userId) async {
     final snapshot = await _firestore
         .collection('sqiRecords')
+        .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs
-        .where((doc) => doc.data()['userId'] == userId)
         .map((doc) => SQIRecord.fromFirestore(doc.data(), doc.id))
         .toList();
   }
 
   // Recommendation operations
   Future<String> addRecommendation(Recommendation recommendation) async {
-    final docRef = await _firestore.collection('recommendations').add(recommendation.toFirestore());
+    final docRef = await _firestore
+        .collection('recommendations')
+        .add(recommendation.toFirestore());
     return docRef.id;
   }
 
   Future<List<Recommendation>> getRecommendations(String recordId) async {
     final snapshot = await _firestore
         .collection('recommendations')
+        .where('recordId', isEqualTo: recordId)
         .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs
-        .where((doc) => doc.data()['recordId'] == recordId)
         .map((doc) => Recommendation.fromFirestore(doc.data(), doc.id))
         .toList();
   }
@@ -67,7 +73,10 @@ class FirestoreService {
 
   // Settings operations
   Future<void> saveSettings(Map<String, dynamic> payload) async {
-    await _firestore.collection('settings').doc(payload['userId'] as String).set(payload);
+    await _firestore
+        .collection('settings')
+        .doc(payload['userId'] as String)
+        .set(payload);
   }
 
   Future<Map<String, dynamic>?> getSettings(String userId) async {

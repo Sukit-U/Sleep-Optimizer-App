@@ -1,0 +1,14 @@
+{
+  "name": "firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime validation of ../firestore.rules against the Firestore emulator.",
+  "scripts": {
+    "test": "node scripts/run-emulator-tests.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase-tools": "^15.0.0"
+  }
+}

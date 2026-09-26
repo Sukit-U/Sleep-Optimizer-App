@@ -6,14 +6,6 @@ service cloud.firestore {
     // Assumed Data Model
     // ===============================================================
     //
-    // IMPORTANT: This app currently has NO Firebase Authentication.
-    // All records use a hardcoded userId = 'default_user'.
-    // These rules enforce schema validation, type safety, size limits,
-    // and field restrictions to prevent data corruption and abuse.
-    //
-    // When Firebase Auth is added, upgrade rules to require
-    // isAuthenticated() and ownership checks.
-    //
     // Collection: sleepPlans
     // Document ID: auto-generated
     // Fields:
@@ -28,7 +20,7 @@ service cloud.firestore {
     // Fields:
     //   - userId: string (required, immutable on update, max 100 chars)
     //   - sqiScore: number (required, integer 0–100)
-    //   - sleepQualityLevel: string (required, one of 'Poor','Fair','Good','Excellent')
+    //   - sleepQualityLevel: string (required, one of 'poor','fair','good','excellent')
     //   - questionnaireResponses: map (required, max 20 keys)
     //   - createdAt: timestamp (required, immutable on update)
     //
@@ -45,15 +37,15 @@ service cloud.firestore {
     //   - createdAt: timestamp (required, immutable on update)
     //
     // Collection: settings
-    // Document ID: userId string (e.g. 'default_user')
+    // Document ID: userId string (e.g. Firebase Auth UID)
     // Fields:
     //   - userId: string (required, must match document ID, max 100 chars)
     //   - theme: string (required, one of 'light','dark')
     //
     // Firestore Queries Used:
-    //   - sleepPlans: orderBy('createdAt', descending: true)
-    //   - sqiRecords: orderBy('createdAt', descending: true)
-    //   - recommendations: orderBy('createdAt', descending: true)
+    //   - sleepPlans: where('userId', '==', uid).orderBy('createdAt', descending: true)
+    //   - sqiRecords: where('userId', '==', uid).orderBy('createdAt', descending: true)
+    //   - recommendations: where('recordId', '==', ...).orderBy('createdAt', descending: true)
     //   - settings: get by document ID (userId)
     //
     // ===============================================================
@@ -61,6 +53,14 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
 
     // Validate required fields exist in the incoming document
     function hasRequiredFields(fields) {
@@ -140,7 +140,8 @@ service cloud.firestore {
       let data = request.resource.data;
       let allowedFields = ['userId', 'sqiScore', 'sleepQualityLevel', 'questionnaireResponses', 'createdAt'];
       let requiredFields = ['userId', 'sqiScore', 'sleepQualityLevel', 'questionnaireResponses', 'createdAt'];
-      let validLevels = ['Poor', 'Fair', 'Good', 'Excellent'];
+      // The app writes SleepQualityLevel enum names, which are lowercase.
+    let validLevels = ['poor', 'fair', 'good', 'excellent'];
 
       return hasOnlyAllowedFields(allowedFields) &&
         hasRequiredFields(requiredFields) &&
@@ -210,70 +211,98 @@ service cloud.firestore {
     // CRUD: create, read (list with orderBy createdAt), delete
     // No update operations observed in the codebase, but allowed with validation
     match /sleepPlans/{planId} {
-      // Allow read: required for orderBy('createdAt') queries
-      // NOTE: No auth in this app currently. When auth is added,
-      // restrict to: allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow read: if true;
+      // Allow read: user can only read their own plans
+      // Query requires: where('userId', '==', request.auth.uid).orderBy('createdAt', descending: true)
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
 
-      // Allow create with full schema validation
-      allow create: if isValidSleepPlan();
+      // Allow create with full schema validation + ownership check
+      allow create: if isAuthenticated() &&
+        isValidSleepPlan() &&
+        request.resource.data.userId == request.auth.uid;
 
-      // Allow update with full schema validation + immutable field protection
-      allow update: if isValidSleepPlan() &&
-        areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      // Allow update with full schema validation + immutable field protection + ownership
+      allow update: if isAuthenticated() &&
+        isValidSleepPlan() &&
+        areImmutableFieldsUnchanged(['userId', 'createdAt']) &&
+        resource.data.userId == request.auth.uid;
 
-      // Allow delete (app supports deleteSleepPlan)
-      // NOTE: When auth is added, restrict to owner only
-      allow delete: if true;
+      // Allow delete: owner only
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
     }
 
     // --- sqiRecords ---
     // CRUD: create, read (list with orderBy createdAt), delete
     match /sqiRecords/{recordId} {
-      // Allow read: required for orderBy('createdAt') queries
-      allow read: if true;
+      // Allow read: user can only read their own records
+      // Query requires: where('userId', '==', request.auth.uid).orderBy('createdAt', descending: true)
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
 
-      // Allow create with full schema validation
-      allow create: if isValidSQIRecord();
+      // Allow create with full schema validation + ownership check
+      allow create: if isAuthenticated() &&
+        isValidSQIRecord() &&
+        request.resource.data.userId == request.auth.uid;
 
-      // Allow update with full schema validation + immutable field protection
-      allow update: if isValidSQIRecord() &&
-        areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      // Allow update with full schema validation + immutable field protection + ownership
+      allow update: if isAuthenticated() &&
+        isValidSQIRecord() &&
+        areImmutableFieldsUnchanged(['userId', 'createdAt']) &&
+        resource.data.userId == request.auth.uid;
 
-      // Allow delete (app supports deleteSQIRecord)
-      allow delete: if true;
+      // Allow delete: owner only
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
     }
 
     // --- recommendations ---
     // CRUD: create, read (list with orderBy createdAt)
     // No delete observed in codebase, but allowed for future use
+    // Access controlled via the parent SQIRecord ownership
     match /recommendations/{recommendationId} {
-      // Allow read: required for orderBy('createdAt') queries
-      allow read: if true;
+      // Allow read: any authenticated user. Rules cannot inspect query
+      // parameters, so recordId ownership cannot be enforced on reads
+      // (request.resource.data does not exist for read requests).
+      // Documents leak nothing beyond their parent SQI record's auto-ID.
+      allow read: if isAuthenticated();
 
-      // Allow create with full schema validation
-      allow create: if isValidRecommendation();
+      // Allow create with full schema validation + parent ownership check
+      allow create: if isAuthenticated() &&
+        isValidRecommendation() &&
+        exists(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)) &&
+        get(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)).data.userId == request.auth.uid;
 
-      // Allow update with full schema validation + immutable field protection
-      allow update: if isValidRecommendation() &&
-        areImmutableFieldsUnchanged(['recordId', 'createdAt']);
+      // Allow update with full schema validation + immutable field protection + parent ownership
+      allow update: if isAuthenticated() &&
+        isValidRecommendation() &&
+        areImmutableFieldsUnchanged(['recordId', 'createdAt']) &&
+        exists(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)) &&
+        get(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)).data.userId == request.auth.uid;
 
-      // Allow delete
-      allow delete: if true;
+      // Allow delete: parent ownership check
+      allow delete: if isAuthenticated() &&
+        exists(/databases/$(database)/documents/sqiRecords/$(resource.data.recordId)) &&
+        get(/databases/$(database)/documents/sqiRecords/$(resource.data.recordId)).data.userId == request.auth.uid;
     }
 
     // --- settings ---
     // CRUD: create/set (upsert by userId doc ID), read (get by userId)
     // No delete observed in codebase
     match /settings/{userId} {
-      // Allow read: for fetching user settings
-      allow read: if true;
+      // Allow read: user can only read their own settings
+      allow read: if isAuthenticated() &&
+        userId == request.auth.uid;
 
-      // Allow create with full schema validation (userId must match doc ID)
-      allow create: if isValidSettings(userId);
+      // Allow create with full schema validation (userId must match doc ID and auth uid)
+      allow create: if isAuthenticated() &&
+        isValidSettings(userId) &&
+        userId == request.auth.uid;
 
-      // Allow update with full schema validation (userId must match doc ID)
-      allow update: if isValidSettings(userId);
+      // Allow update with full schema validation (userId must match doc ID and auth uid)
+      allow update: if isAuthenticated() &&
+        isValidSettings(userId) &&
+        userId == request.auth.uid;
 
       // Deny delete: settings should not be deleted
       allow delete: if false;

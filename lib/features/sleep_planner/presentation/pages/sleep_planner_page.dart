@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/config/app_config.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 import '../../../../shared/widgets/bedtime_option_card.dart';
@@ -90,7 +91,6 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       options.add(_BedtimeOption(
         cycles: cycles,
         bedtimeString: DateFormat('hh:mm a').format(bedtime),
-        bedtimeDate: bedtime,
         durationMinutes: (cycles * 90),
       ));
     }
@@ -99,6 +99,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
   Future<void> _handleSave() async {
     final colors = Theme.of(context).colorScheme;
+    final auth = context.read<AuthService>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final userId = await auth.ensureSignedIn();
+    if (userId == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+      );
+      return;
+    }
     if (!_hasSelectedWakeUpTime) {
       setState(() => _showWakeUpTimeError = true);
       if (!mounted) return;
@@ -116,7 +126,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
     final sleepPlan = SleepPlan(
       planId: '',
-      userId: AppConfig.defaultUserId,
+      userId: userId,
       wakeUpTime: _wakeUpTime,
       createdAt: DateTime.now(),
       sleepCycles: chosenOption.cycles,
@@ -417,13 +427,11 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 class _BedtimeOption {
   final int cycles;
   final String bedtimeString;
-  final DateTime bedtimeDate;
   final int durationMinutes;
 
   _BedtimeOption({
     required this.cycles,
     required this.bedtimeString,
-    required this.bedtimeDate,
     required this.durationMinutes,
   });
 }
