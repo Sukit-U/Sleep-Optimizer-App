@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "790423794853",
+    "project_id": "sleep-optimizer-59c83",
+    "storage_bucket": "sleep-optimizer-59c83.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790423794853:android:86ee998e7ba6127d1fc94c",
+        "android_client_info": {
+          "package_name": "com.example.snoozemate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

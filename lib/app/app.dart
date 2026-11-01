@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../core/services/storage_service.dart';
+import '../core/theme/app_theme.dart';
+import '../core/providers/theme_provider.dart';
+import 'router.dart';
+
+/// Shared storage instance, initialized once in `main()` (see lib/main.dart).
+/// Pages import this global to persist theme and history locally.
+StorageService? appStorage;
+
+class SnoozefriendApp extends StatelessWidget {
+  const SnoozefriendApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Snoozefriend',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+initialRoute: '/splash',
+          onGenerateRoute: AppRouter.generateRoute,
+        );
+      },
+    );
+  }
+}

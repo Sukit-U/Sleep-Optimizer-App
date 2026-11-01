@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "sleep-optimizer-59c83",
+          "appId": "1:790423794853:android:86ee998e7ba6127d1fc94c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "sleep-optimizer-59c83",
+          "configurations": {
+            "android": "1:790423794853:android:86ee998e7ba6127d1fc94c",
+            "ios": "1:790423794853:ios:618f0814255930491fc94c"
+          }
+        }
+      }
+    }
+  }
+}
