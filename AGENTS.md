@@ -11,9 +11,24 @@ flutter emulators --launch Medium_Phone
 flutter run                      # after emulator boots
 ```
 
+## Destructive Operations (hard rule)
+
+**Never run a collection- or database-level delete against a live Firebase project.**
+On 2026-11-08, `firebase firestore:delete "sleepPlans" --shallow --force` against
+`sleep-optimizer-59c83` deleted every document in that collection, and it could not be
+restored (PITR disabled, no backups). Treat the live project as unrecoverable data.
+
+- A delete must name exactly one document (`collection/docId`). Never a bare collection
+  path, never `--all-collections`, never `firestore:bulkdelete`.
+- No deploys or deletions against production without explicit per-command human approval.
+- Exit code 0 does not mean "deleted": it also means "nothing matched". Confirm with a
+  read as the owning user, and check `git status`/dry runs before destructive flags.
+- Prefer creating test data with a throwaway account and removing it the same way it was
+  created (owner-scoped client delete), or don't create it at all.
+
 ## Entrypoints & Navigation
 
-- `lib/main.dart` — app bootstrap. Initializes Firebase and `StorageService`, assigns the shared `appStorage` global, and creates `ThemeProvider` before `runApp`.
+- `lib/main.dart` — entrypoint only: `runApp(const AppBootstrap())`. The boot sequence (Firebase init, emulator switch, `ensureSignedIn()`, `StorageService`, `appStorage`, `ThemeProvider`) lives in `lib/app/bootstrap.dart`, which renders an error + Retry screen when boot fails.
 - `lib/app/app.dart` — `SnoozefriendApp`, root `MaterialApp`, and the shared `appStorage` global declaration. Theme controlled by `Provider<ThemeProvider>`.
 - `lib/app/router.dart` — `AppRouter.generateRoute` is the single navigator source of truth.
 
@@ -21,13 +36,13 @@ flutter run                      # after emulator boots
 
 - Flutter single-package app. Features in `lib/features/<feature>/domain|data|presentation/`.
 - **Single data-access layer**: all Firestore reads/writes go through `lib/services/firestore_service.dart` (`FirestoreService`). The legacy `FirebaseService` facade was deleted.
-- **User identity**: the app has no auth — every feature reads the default user ID from `AppConfig.defaultUserId` (`'default_user'`, `lib/core/config/app_config.dart`). Legacy `'local-user'` records were migrated by `lib/scripts/user_id_migration.dart`.
+- **User identity**: anonymous Firebase Auth via `AuthService` (`lib/core/services/auth_service.dart`); `AppBootstrap` (`lib/app/bootstrap.dart`) calls `ensureSignedIn()` before the app builds. Pages must take the uid from `AuthService.uid` / the authenticated user, never from a constant. `firestore.rules` scopes every collection by `request.auth.uid`.
 - State management: `provider` package only. No Riverpod, Bloc, or GetX.
 
 ## Critical Gotchas
 
 - **Dependency compatibility**: `lucide_icons` is broken with Flutter 3.44.8 / Dart 3.12.2 (`IconData` is `final`). Use MaterialIcons (`Icons.*`) only.
-- **Global state**: `appStorage` is a nullable global declared in `lib/app/app.dart` and assigned once in `main()` before `runApp`. Pages (settings, sleep quality) import it to persist theme/history locally. There is no `appThemeMode` global — theme mode lives in `ThemeProvider`. Do not import `main.dart` trigger-ally.
+- **Global state**: `appStorage` is a nullable global declared in `lib/app/app.dart` and assigned once in `_bootFirebase()` (`lib/app/bootstrap.dart`) before the app builds. Pages (settings, sleep quality) import it to persist theme/history locally. There is no `appThemeMode` global — theme mode lives in `ThemeProvider`. Do not import `main.dart` trigger-ally.
 - **Boot order**: `Firebase.initializeApp()` must complete before any Firebase call is made.
 - **Theme tokens**: `AppTypography`, `AppColors`, `AppSpacing` in `lib/core/theme/` are the source of truth. Don't inline raw values unless the screen cannot use tokens.
 - **Router**: No GoRouter. Routes are `String` constants in `AppRoutes`; case selection is raw `switch`. Adding a route requires adding it in both `AppRoutes` and `AppRouter.generateRoute`.

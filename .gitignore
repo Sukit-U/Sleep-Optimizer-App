@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 analysis_results.txt
+
+# Signing material - never commit
+/android/key.properties
+*.jks
+*.keystore

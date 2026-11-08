@@ -8,7 +8,7 @@
       "android": {
         "default": {
           "projectId": "sleep-optimizer-59c83",
-          "appId": "1:790423794853:android:86ee998e7ba6127d1fc94c",
+          "appId": "1:790423794853:android:b834a222cb28203f1fc94c",
           "fileOutput": "android/app/google-services.json"
         }
       },
@@ -16,7 +16,7 @@
         "lib/firebase_options.dart": {
           "projectId": "sleep-optimizer-59c83",
           "configurations": {
-            "android": "1:790423794853:android:86ee998e7ba6127d1fc94c",
+            "android": "1:790423794853:android:b834a222cb28203f1fc94c",
             "ios": "1:790423794853:ios:618f0814255930491fc94c"
           }
         }

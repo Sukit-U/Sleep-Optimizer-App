@@ -1,4 +1,4 @@
-package com.example.snoozemate
+package com.snoozefriend.snoozemate
 
 import io.flutter.embedding.android.FlutterActivity
 

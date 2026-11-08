@@ -16,9 +16,12 @@ val keystoreProperties = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val hasKeystore = keystoreProperties["storeFile"] != null
+if (!hasKeystore) {
+    logger.warn("android/key.properties not found — release builds will be UNSIGNED. See docs/RELEASE_SIGNING.md")
+}
 
 android {
-    namespace = "com.example.snoozemate"
+    namespace = "com.snoozefriend.snoozemate"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +31,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.snoozemate"
+        // Permanent once published: must match the Android app registered in
+        // Firebase and the app id in Play Console.
+        applicationId = "com.snoozefriend.snoozemate"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -38,7 +43,8 @@ android {
     signingConfigs {
         if (hasKeystore) {
             create("release") {
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                // Paths are resolved from android/, the dir holding key.properties.
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -48,12 +54,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                // TODO: Restore key.properties + upload-keystore.jks before publishing.
-                signingConfigs.getByName("debug")
-            }
+            // No fallback to the debug key: an unsigned artifact is obvious,
+            // a debug-signed release silently cannot be published.
+            signingConfig = if (hasKeystore) signingConfigs.getByName("release") else null
         }
     }
 }
