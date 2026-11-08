@@ -67,16 +67,21 @@ class _AppBootstrapState extends State<AppBootstrap> {
   Widget build(BuildContext context) {
     final dependencies = _dependencies;
     if (dependencies == null) {
+      final error = _error;
       return MaterialApp(
         title: 'Sleep Optimizer',
         theme: AppTheme.darkTheme,
         home: Scaffold(
           body: SafeArea(
-            child: ErrorStateWidget(
-              message: "Snoozefriend couldn't start",
-              detail: '$_error',
-              onRetry: _retry,
-            ),
+            // Booting is not a failure: show progress until boot actually
+            // throws, otherwise a slow start flashes "couldn't start".
+            child: error == null
+                ? const Center(child: CircularProgressIndicator())
+                : ErrorStateWidget(
+                    message: "Snoozefriend couldn't start",
+                    detail: '$error',
+                    onRetry: _retry,
+                  ),
           ),
         ),
       );
