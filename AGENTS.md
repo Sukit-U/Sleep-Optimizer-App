@@ -21,7 +21,7 @@ flutter run                      # after emulator boots
 
 - Flutter single-package app. Features in `lib/features/<feature>/domain|data|presentation/`.
 - **Single data-access layer**: all Firestore reads/writes go through `lib/services/firestore_service.dart` (`FirestoreService`). The legacy `FirebaseService` facade was deleted.
-- **User identity**: the app has no auth — every feature reads the default user ID from `AppConfig.defaultUserId` (`'default_user'`, `lib/core/config/app_config.dart`). Legacy `'local-user'` records were migrated by `lib/scripts/user_id_migration.dart`.
+- **User identity**: anonymous Firebase Auth via `AuthService` (`lib/core/services/auth_service.dart`); `main.dart` calls `ensureSignedIn()` before `runApp`. Pages must take the uid from `AuthService.uid` / the authenticated user, never from a constant. `firestore.rules` scopes every collection by `request.auth.uid`.
 - State management: `provider` package only. No Riverpod, Bloc, or GetX.
 
 ## Critical Gotchas

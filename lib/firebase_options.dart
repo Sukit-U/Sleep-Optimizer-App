@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc',
-    appId: '1:790423794853:android:86ee998e7ba6127d1fc94c',
+    appId: '1:790423794853:android:b834a222cb28203f1fc94c',
     messagingSenderId: '790423794853',
     projectId: 'sleep-optimizer-59c83',
     storageBucket: 'sleep-optimizer-59c83.firebasestorage.app',
