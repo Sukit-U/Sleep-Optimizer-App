@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(firebase deploy:*)",
+      "Bash(firebase hosting:*)",
+      "Bash(firebase functions:delete:*)",
+      "Bash(firebase firestore:delete:*)",
+      "Bash(firebase firestore:bulkdelete:*)",
+      "Bash(firebase firestore:databases:update:*)",
+      "Bash(firebase firestore:databases:delete:*)",
+      "Bash(firebase firestore:backups:*)",
+      "Bash(firebase firestore:import:*)",
+      "Bash(firebase auth:*)",
+      "Bash(firebase apps:create:*)",
+      "Bash(firebase apps:delete:*)",
+      "Bash(firebase apps:sdkconfig:*)",
+      "Bash(firebase projects:create:*)",
+      "Bash(firebase projects:delete:*)",
+      "Bash(firebase init:*)",
+      "Bash(firebase remoteconfig:rollback:*)",
+      "Bash(firebase use:*)",
+      "Bash(flutterfire configure:*)",
+      "Bash(gcloud firestore databases update:*)",
+      "Bash(gcloud firestore databases delete:*)",
+      "Bash(gcloud firestore import:*)",
+      "Bash(gcloud alpha firestore:*)",
+      "Bash(gcloud beta firestore:*)",
+      "Bash(gcloud projects delete:*)",
+      "Bash(gcloud services enable:*)",
+      "Bash(gcloud iam:*)"
+    ]
+  }
+}

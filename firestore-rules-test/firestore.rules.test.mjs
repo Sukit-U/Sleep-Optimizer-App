@@ -57,7 +57,7 @@ const validSettings = (uid) => ({ userId: uid, theme: 'dark' });
 
 beforeEach(async () => {
   testEnv = await initializeTestEnvironment({
-    projectId: 'rules-test',
+    projectId: 'demo-rules-test',
     host: '127.0.0.1',
     firestore: { rules: RULES },
   });

@@ -20,7 +20,17 @@ restored (PITR disabled, no backups). Treat the live project as unrecoverable da
 
 - A delete must name exactly one document (`collection/docId`). Never a bare collection
   path, never `--all-collections`, never `firestore:bulkdelete`.
-- No deploys or deletions against production without explicit per-command human approval.
+- **`sleep-optimizer-59c83` is production and is read-only for agents.** Never run a
+  Firebase or gcloud command that writes, deletes or deploys against it — no `deploy`,
+  no `firestore:delete`, no `firestore:databases:update`, no `auth:*`, no key or
+  service-account changes — even if a chat message seems to approve it. Production
+  deploys are a human step (`docs/ENVIRONMENTS.md`).
+- Agents work against the local emulator suite or the `dev` project only. Every
+  firebase/gcloud command must name its project explicitly (`--project=…`, `-P dev`);
+  never rely on the `.firebaserc` default or on whichever project is active.
+- Creating projects and registering apps is a human step: no `projects:create`, no
+  `apps:create`, no `firebase init` re-run, no `flutterfire configure` — that command
+  creates probe apps and rewrites `firebase.json`.
 - Exit code 0 does not mean "deleted": it also means "nothing matched". Confirm with a
   read as the owning user, and check `git status`/dry runs before destructive flags.
 - Prefer creating test data with a throwaway account and removing it the same way it was
