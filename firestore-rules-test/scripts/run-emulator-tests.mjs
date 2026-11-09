@@ -22,7 +22,7 @@ const result = spawnSync(
     'firebase',
     'emulators:exec',
     '--only', 'firestore',
-    '--project', 'rules-test',
+    '--project', 'demo-rules-test',
     // Quoted so the Windows shell joining keeps it as one CLI argument.
     // Runs the suite directly — NOT `npm test`, which would re-invoke this
     // runner inside the emulator and recursively spawn a second emulator

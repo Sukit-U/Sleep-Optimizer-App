@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "sleep-optimizer-dev",
+    "dev": "sleep-optimizer-dev",
+    "prod": "sleep-optimizer-59c83"
+  }
+}
