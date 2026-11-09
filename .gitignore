@@ -49,3 +49,6 @@ analysis_results.txt
 /android/key.properties
 *.jks
 *.keystore
+# Analysis / tooling output (never commit)
+graphify-out/
+scripts/node_modules/
