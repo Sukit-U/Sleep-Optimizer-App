@@ -24,24 +24,18 @@ Java 11+ (firebase-tools needs 21+); if `JAVA_HOME` is not set, the runner
 defaults to the JDK bundled with Android Studio
 (`C:\Program Files\Android\Android Studio\jbr`) — set `JAVA_HOME` to override.
 
-To run the suite directly against an already-running emulator (e.g. started by
-`firebase emulators:start` elsewhere):
-
-```bash
-npm run test:direct
-```
-
 The tests load `../firestore.rules` directly — no deployment needed — so any
 rule change is validated in seconds before `firebase deploy --only firestore:rules`.
 
-`scripts/verify-live-roundtrip.mjs` reads **production** Firestore through the
-**live** rules as a fresh anonymous identity (REST, same endpoints the SDK
-uses) — used to verify per-user isolation after end-to-end app runs.
+Everything here runs against the emulator only. There is deliberately no committed
+script that talks to a live project: production is read-only for agents, and checking
+deployed rules against `sleep-optimizer-59c83` is a human step (see
+[`../docs/ENVIRONMENTS.md`](../docs/ENVIRONMENTS.md)).
 
 The Flutter app can join the same emulators for a full local loop:
 
 ```bash
-flutter run --dart-define=USE_FIREBASE_EMULATOR=true
+flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EMULATOR=true
 ```
 
 (Debug builds only; Firestore 8080, Auth 9099. Note `firestore.indexes.json`
