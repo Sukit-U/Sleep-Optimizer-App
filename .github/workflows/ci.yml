@@ -163,7 +163,7 @@ jobs:
         run: flutter build apk --debug --flavor dev --dart-define=APP_ENV=dev
 
       - name: Upload dev debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-dev-debug-apk
           path: build/app/outputs/flutter-apk/app-dev-debug.apk
