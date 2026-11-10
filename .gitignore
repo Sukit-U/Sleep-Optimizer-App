@@ -50,6 +50,12 @@ analysis_results.txt
 *.jks
 *.keystore
 
+# Firebase credentials - never commit. The scripts in scripts/ use Application
+# Default Credentials or the emulator; a key file must never live in the repo.
+**/service-account-key*.json
+**/*-firebase-adminsdk-*.json
+**/firebase-adminsdk*.json
+
 # Local environment files — real values never get committed.
 # .env.example stays tracked, so the negation must come after the patterns.
 .env
@@ -60,3 +66,10 @@ analysis_results.txt
 # file here: android/app/src/<flavor>/google-services.json is the only valid
 # location, and a file at this path would be applied to every flavor.
 /android/app/google-services.json
+
+# One-off command output / failed downloads that landed at the repo root.
+# Audited (no credentials) and deleted; patterns are exact paths, so a real
+# .zip or .log elsewhere in the tree is still tracked and still scanned.
+/github-mcp-server.zip
+/icacls.log
+/takeown.log

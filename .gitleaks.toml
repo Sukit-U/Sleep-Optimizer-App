@@ -1,0 +1,43 @@
+# Secret scanning rules for gitleaks (see the "Secret scan" job in
+# .github/workflows/ci.yml).
+#
+# Built-in rules are extended, never replaced by hand-rolled detectors. The
+# allowlist below is deliberately narrow: no blanket `*.zip`/`*.log` path
+# ignores, no whole-directory exemptions for source, and no rule-wide
+# exemption that would hide a different secret in the same file.
+
+[extend]
+useDefault = true
+
+# `gitleaks dir` does not read .gitignore, so a developer machine would scan
+# generated Flutter artifacts and the temporary Chrome profile that
+# `flutter run -d chrome` creates. None of this is source and CI never checks
+# it out, so it is excluded by directory only.
+[[allowlists]]
+description = "Generated build output and local tool caches (never committed)"
+paths = [
+  '''^\.dart_tool/''',
+  '''^build/''',
+  '''^coverage/''',
+  '''^\.idea/''',
+]
+
+# Firebase client configuration ships inside the app binary by design: these
+# `AIza...` keys are public app identifiers, protected by API restrictions and
+# Firestore rules rather than by secrecy. The Firebase *project id*
+# (`sleep-optimizer-dev`, `sleep-optimizer-59c83`) is equally public and is not
+# a credential.
+#
+# Only these exact published key values are allowed. Any other key — a new
+# Firebase key, a Maps/Gemini key, a GCP service-account key — does not match
+# and still fails the job, so a real leak pasted next to these values is not
+# hidden.
+[[allowlists]]
+description = "Public Firebase client API keys committed as app config"
+regexTarget = "secret"
+regexes = [
+  '''AIzaSyApJiVW7vthWsS2vAdME4FZZ7EtOhu2p7E''',
+  '''AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc''',
+  '''AIzaSyCgtA4hogbsbEqohgODRw2e9lLTE9eI0yE''',
+  '''AIzaSyDAsvbUUJo2ZxigAASsAjonK-7euzUkMKs''',
+]
