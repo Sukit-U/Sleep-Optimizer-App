@@ -23,10 +23,10 @@ config with the wrong project.
 { "projects": { "default": "sleep-optimizer-dev", "dev": "sleep-optimizer-dev", "prod": "sleep-optimizer-59c83" } }
 ```
 
-> **TODO (owner):** `sleep-optimizer-dev` is a placeholder for the project you create in
-> the Console. If your dev project id differs, change both `default` and `dev` in
-> `.firebaserc` — and nothing else. Until it exists, every CLI command that resolves the
-> default fails loudly with "project not found", which is the intended fail-safe.
+The dev config is committed: `lib/firebase_options_dev.dart` and
+`android/app/src/dev/google-services.json` both describe `sleep-optimizer-dev` (project
+number `564363714331`). If the dev project is ever renamed, update `default` and `dev` in
+`.firebaserc` and regenerate the two dev files — never the prod ones.
 
 `default` points at dev on purpose: a command that forgets `-P`/`--project` can no
 longer reach production.

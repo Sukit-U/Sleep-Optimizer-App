@@ -49,3 +49,14 @@ analysis_results.txt
 /android/key.properties
 *.jks
 *.keystore
+
+# Local environment files — real values never get committed.
+# .env.example stays tracked, so the negation must come after the patterns.
+.env
+.env.*
+!.env.example
+
+# Firebase's default google-services output path. There is deliberately no
+# file here: android/app/src/<flavor>/google-services.json is the only valid
+# location, and a file at this path would be applied to every flavor.
+/android/app/google-services.json
