@@ -1,14 +1,21 @@
 # Environments
 
-Three targets, one Flutter app. Nothing in the app switches them automatically today —
-you choose the target with the Firebase CLI alias and with the `firebase_options` file
-the code imports.
+Three targets, one Flutter app. The app target is fixed at build time by two flags that
+must always travel together: the Android **product flavor** (`dev` / `prod`, which picks
+`android/app/src/<flavor>/google-services.json`) and **`--dart-define=APP_ENV`** (which
+picks `lib/firebase_options_dev.dart` / `lib/firebase_options.dart`).
 
-| Target | Firebase project | CLI alias | App config |
-| --- | --- | --- | --- |
-| Local | `demo-*` id + emulator suite | none (emulator) | resolved from whatever `firebase_options.dart` holds; no data leaves the machine |
-| Dev | `sleep-optimizer-dev` | `dev` (also the `.firebaserc` default) | `lib/firebase_options_dev.dart` (not wired yet) |
-| Prod | `sleep-optimizer-59c83` | `prod` | `lib/firebase_options.dart`, `android/app/google-services.json` |
+| Target | Firebase project | CLI alias | Build flags | App config |
+| --- | --- | --- | --- | --- |
+| Local | `demo-*` id + emulator suite | none (emulator) | `--flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EMULATOR=true` | dev files below; no data leaves the machine |
+| Dev | `sleep-optimizer-dev` | `dev` (also the `.firebaserc` default) | `--flavor dev --dart-define=APP_ENV=dev` | `lib/firebase_options_dev.dart`, `android/app/src/dev/google-services.json` |
+| Prod | `sleep-optimizer-59c83` | `prod` | `--flavor prod --dart-define=APP_ENV=prod` | `lib/firebase_options.dart`, `android/app/src/prod/google-services.json` |
+
+`APP_ENV` defaults to `dev`, so a build that forgets the define can never reach
+production data. An unknown value throws `StateError` at startup instead of falling back
+to a real project. There is deliberately **no** `android/app/google-services.json`: a
+file at that path is used for every flavor and would silently override the per-flavor
+config with the wrong project.
 
 `.firebaserc`:
 
@@ -64,7 +71,7 @@ flutterfire configure --yes \
   --project=sleep-optimizer-59c83 \
   --platforms=android,ios \
   --out=lib/firebase_options.dart \
-  --android-out=android/app/google-services.json
+  --android-out=android/app/src/prod/google-services.json
 ```
 
 Things `flutterfire configure` does that you must expect:
@@ -84,8 +91,10 @@ than from the CLI:
 
 | Place | Value |
 | --- | --- |
-| `android/app/build.gradle.kts` (`namespace`, `applicationId`) | `com.snoozefriend.snoozemate` |
-| `android/app/google-services.json` | `com.snoozefriend.snoozemate` → `1:790423794853:android:b834a222cb28203f1fc94c` (the old `com.example.snoozemate` client, `…:86ee998e7ba6127d1fc94c`, is still listed) |
+| `android/app/build.gradle.kts` (`namespace`, `applicationId`) | `com.snoozefriend.snoozemate` (dev adds `applicationIdSuffix = ".dev"`) |
+| `android/app/src/dev/google-services.json` | `sleep-optimizer-dev` → `com.snoozefriend.snoozemate.dev` |
+| `android/app/src/prod/google-services.json` | `sleep-optimizer-59c83` → `com.snoozefriend.snoozemate` → `1:790423794853:android:b834a222cb28203f1fc94c` (the old `com.example.snoozemate` client, `…:86ee998e7ba6127d1fc94c`, is still listed) |
+| `lib/firebase_options_dev.dart` → `android` | `sleep-optimizer-dev` |
 | `lib/firebase_options.dart` → `android` | `1:790423794853:android:b834a222cb28203f1fc94c` |
 | `firebase.json` → `flutter.platforms` | android `b834…`, dart android `b834…`, dart ios `1:790423794853:ios:618f0814255930491fc94c` |
 | `ios/Runner.xcodeproj` `PRODUCT_BUNDLE_IDENTIFIER` | `com.example.snoozemate` |
@@ -99,24 +108,36 @@ an iOS app for `com.snoozefriend.snoozemate` in the Console, change
 `flutterfire configure`. Do not hand-edit `iosBundleId`: a bundle id with no registered
 iOS app breaks sign-in.
 
-Wiring the Dart side is **deliberately not done yet**. Today
-`lib/app/bootstrap.dart` imports `lib/firebase_options.dart` (prod). When the dev project
-is ready, the switch becomes a compile-time choice, for example:
+### How the Dart side picks a project
+
+`lib/app/bootstrap.dart` calls `Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv))`.
+Both come from [`lib/app/firebase_environment.dart`](../lib/app/firebase_environment.dart):
 
 ```dart
-// lib/app/bootstrap.dart
-const useDev = bool.fromEnvironment('FIREBASE_ENV_DEV');
-// firebase_options_dev.dart exposes the same `DefaultFirebaseOptions` shape
+const String appEnv = String.fromEnvironment('APP_ENV', defaultValue: 'dev');
+// 'dev'  -> firebase_options_dev.dart  (sleep-optimizer-dev)
+// 'prod' -> firebase_options.dart      (sleep-optimizer-59c83)
+// other  -> StateError
 ```
 
-then `flutter run --dart-define=FIREBASE_ENV_DEV=true`. Do not hardcode a project id in
-`lib/`; the generated `firebase_options_*.dart` files are the only place ids live.
+So a run always names its target:
+
+```bash
+flutter run --flavor dev --dart-define=APP_ENV=dev
+flutter build apk --debug --flavor dev --dart-define=APP_ENV=dev
+flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
+```
+
+Do not hardcode a project id in `lib/`; the generated `firebase_options_*.dart` files are
+the only place ids live. `test/android_app_id_test.dart` keeps the Gradle application ids
+and both `google-services.json` files in agreement, and
+`test/firebase_environment_test.dart` pins the dev project and the `dev` default.
 
 ## Running against the emulator
 
 ```bash
 firebase emulators:start --only auth,firestore --project=demo-snoozemate
-flutter run --dart-define=USE_FIREBASE_EMULATOR=true
+flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EMULATOR=true
 ```
 
 - The `demo-` prefix keeps the emulator fully offline; it never contacts a real project.

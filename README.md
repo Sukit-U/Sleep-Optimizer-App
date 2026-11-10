@@ -39,6 +39,50 @@ When implementing this project:
 
 ---
 
+## Environments & Builds
+
+The app has two build targets, and every command names the target with **both** a flavor and
+`APP_ENV` — the flavor picks `android/app/src/<flavor>/google-services.json`, `APP_ENV` picks
+the matching Dart Firebase config. See [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
+
+| Target | Firebase project | Flags |
+| --- | --- | --- |
+| dev (default) | `sleep-optimizer-dev` | `--flavor dev --dart-define=APP_ENV=dev` |
+| prod | `sleep-optimizer-59c83` | `--flavor prod --dart-define=APP_ENV=prod` |
+
+Run and build dev:
+
+```bash
+flutter pub get
+flutter run --flavor dev --dart-define=APP_ENV=dev
+flutter build apk --debug --flavor dev --dart-define=APP_ENV=dev
+```
+
+Against the local Firebase emulator suite (nothing leaves the machine):
+
+```bash
+firebase emulators:start --only auth,firestore --project=demo-snoozemate
+flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EMULATOR=true
+```
+
+Build prod (release signing comes from the gitignored `android/key.properties`; without it
+the artifacts are unsigned):
+
+```bash
+flutter build apk --release --flavor prod --dart-define=APP_ENV=prod
+flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
+```
+
+Artifacts land at `build/app/outputs/flutter-apk/app-dev-debug.apk`,
+`build/app/outputs/flutter-apk/app-prod-release.apk` and
+`build/app/outputs/bundle/prodRelease/app-prod-release.aab`.
+
+`APP_ENV` defaults to `dev`; any value other than `dev`/`prod` fails at startup with a
+`StateError`. CI (`.github/workflows/ci.yml`) builds the dev debug APK, and
+`.github/workflows/release.yml` builds the prod AAB + APK on `v*` tags.
+
+---
+
 ## Planned Technology Stack
 
 Frontend
