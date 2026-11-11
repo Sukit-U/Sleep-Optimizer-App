@@ -97,7 +97,7 @@ jobs:
       # Flavored outputs are named app-<flavor>-<buildType>.* and live under a
       # <flavor><BuildType> directory.
       - name: Upload App Bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-prod-release-aab
           path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
@@ -105,7 +105,7 @@ jobs:
           retention-days: 14
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-prod-release-apk
           # Glob, because Gradle appends "-unsigned" when the signing secrets
