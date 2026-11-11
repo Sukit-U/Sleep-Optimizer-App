@@ -54,6 +54,8 @@ jobs:
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-latest
+    # A stalled download in the install step must not burn the default 6h.
+    timeout-minutes: 10
     permissions:
       contents: read
     env:
@@ -63,6 +65,8 @@ jobs:
         with:
           # Full history so the pull-request range below can be resolved.
           fetch-depth: 0
+          # This job only reads; keep the token out of .git/config.
+          persist-credentials: false
 
       # Downloads into $RUNNER_TEMP, never into the workspace: the scan below
       # runs over ".", so an archive left in the checkout would be unpacked by

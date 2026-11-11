@@ -67,9 +67,7 @@ analysis_results.txt
 # location, and a file at this path would be applied to every flavor.
 /android/app/google-services.json
 
-# One-off command output / failed downloads that landed at the repo root.
-# Audited (no credentials) and deleted; patterns are exact paths, so a real
-# .zip or .log elsewhere in the tree is still tracked and still scanned.
+# A failed download that landed at the repo root: audited (no credentials),
+# deleted in this change, and kept out by its exact anchored path. A real .zip
+# elsewhere in the tree is still tracked and still scanned.
 /github-mcp-server.zip
-/icacls.log
-/takeown.log

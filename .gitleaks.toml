@@ -28,16 +28,17 @@ paths = [
 # (`sleep-optimizer-dev`, `sleep-optimizer-59c83`) is equally public and is not
 # a credential.
 #
-# Only these exact published key values are allowed. Any other key — a new
-# Firebase key, a Maps/Gemini key, a GCP service-account key — does not match
-# and still fails the job, so a real leak pasted next to these values is not
-# hidden.
+# Only these exact published key values are allowed, and the patterns are
+# anchored, so a longer key that merely contains one of them does not match.
+# Any other key — a new Firebase key, a Maps/Gemini key, a GCP
+# service-account key — does not match and still fails the job, so a
+# real leak pasted next to these values is not hidden.
 [[allowlists]]
 description = "Public Firebase client API keys committed as app config"
 regexTarget = "secret"
 regexes = [
-  '''AIzaSyApJiVW7vthWsS2vAdME4FZZ7EtOhu2p7E''',
-  '''AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc''',
-  '''AIzaSyCgtA4hogbsbEqohgODRw2e9lLTE9eI0yE''',
-  '''AIzaSyDAsvbUUJo2ZxigAASsAjonK-7euzUkMKs''',
+  '''^AIzaSyApJiVW7vthWsS2vAdME4FZZ7EtOhu2p7E$''',
+  '''^AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc$''',
+  '''^AIzaSyCgtA4hogbsbEqohgODRw2e9lLTE9eI0yE$''',
+  '''^AIzaSyDAsvbUUJo2ZxigAASsAjonK-7euzUkMKs$''',
 ]
