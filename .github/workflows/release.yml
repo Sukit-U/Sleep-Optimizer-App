@@ -24,9 +24,9 @@ jobs:
     name: Analyze + test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -57,9 +57,9 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -97,7 +97,7 @@ jobs:
       # Flavored outputs are named app-<flavor>-<buildType>.* and live under a
       # <flavor><BuildType> directory.
       - name: Upload App Bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-prod-release-aab
           path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
@@ -105,7 +105,7 @@ jobs:
           retention-days: 14
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-prod-release-apk
           # Glob, because Gradle appends "-unsigned" when the signing secrets
