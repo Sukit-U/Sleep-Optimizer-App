@@ -5,8 +5,12 @@ Runs `../firestore.rules` against the real Firestore emulator using
 
 - **sqiRecords** — the lowercase `sleepQualityLevel` values the app persists,
   ownership on create/read/delete, unowned queries, invalid payloads
-- **recommendations** — writes gated on parent-record ownership; reads
-  authenticated-only (rules cannot see `where('recordId', …)` parameters)
+- **recommendations** — `userId` (copied from the parent SQI record) is stored
+  on the document, so reads, lists and queries are owner-only: another user's
+  direct read, an unowned query, and an unfiltered collection query all fail.
+  Writes must match both the owner and the parent record. Legacy documents
+  without `userId` are unreadable by design (see
+  `../scripts/backfill_recommendation_owner.js`)
 - **settings** — `userId == docId == auth.uid`, theme enum, no deletes
 - **sleepPlans** — ownership plus schema validation
 - **default deny** for unknown collections

@@ -146,20 +146,35 @@ flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EM
   ```bash
   cd firestore-rules-test && npm test    # emulators:exec, project id "demo-rules-test"
   ```
+- Step-by-step checks (rules suite, owner backfill, verification) are in
+  [`RULES_AND_BACKFILL_DEV.md`](RULES_AND_BACKFILL_DEV.md).
 - Emulator data is disposable — delete it freely, no backups needed.
 
 ## Production deploys (human only)
 
 1. Review `firestore.rules` / `firestore.indexes.json` on `main`; confirm the rule tests
    pass in the emulator first.
-2. Sanity-check the target explicitly — do not trust the default:
+2. If `recommendations` gained its owner field (`userId`), backfill the documents written
+   before it. Dry-run first, then apply, naming the project every time:
+   ```bash
+   cd scripts
+   node backfill_recommendation_owner.js --project=sleep-optimizer-dev
+   node backfill_recommendation_owner.js --project=sleep-optimizer-dev --apply
+   ```
+   Both scripts in `scripts/` refuse the production project id by design, so a production
+   backfill is run by a human with reviewed tooling outside this workflow — never by an
+   agent and never with a project id taken from the default. Until it runs, legacy
+   recommendations are unreadable (`read` requires `userId == request.auth.uid`; there is
+   deliberately no rules fallback).
+3. Return to the repository root. Sanity-check the target explicitly — do not trust the
+   default:
    ```bash
    firebase use        # should list dev as (default) and prod as an alias
    firebase deploy --only firestore:rules,firestore:indexes -P prod
    ```
-3. Record what changed and when. Verify behaviour on a **dev** project or emulator, not
+4. Record what changed and when. Verify behaviour on a **dev** project or emulator, not
    by creating documents in production.
-4. Firestore delete protection is enabled on prod. Turning it off is a console step and a
+5. Firestore delete protection is enabled on prod. Turning it off is a console step and a
    deliberate decision, not part of a normal deploy.
 
 ## Plan limits — why prod is not ready for real users
