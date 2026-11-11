@@ -1,0 +1,66 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in step with the SDK used locally (`flutter --version`), so analyze and
+  # test results mean the same thing on a laptop and on the runner.
+  FLUTTER_VERSION: '3.44.8'
+
+jobs:
+  analyze-and-test:
+    name: Analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  build-ios:
+    name: Build unsigned iOS app
+    needs: [analyze-and-test]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Fails loudly here when the Podfile, the Xcode project's deployment
+      # target and the Firebase pods drift apart, before Flutter hides it.
+      - name: Install CocoaPods dependencies
+        working-directory: ios
+        run: pod install
+
+      # Compiles the Dart code, the storyboards and the Pods. No signing
+      # material is configured in CI, so this produces an unsigned .app rather
+      # than an installable IPA.
+      - name: Build iOS
+        run: flutter build ios --debug --no-codesign
