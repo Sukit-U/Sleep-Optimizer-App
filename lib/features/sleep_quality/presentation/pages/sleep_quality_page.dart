@@ -65,30 +65,32 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           title: const Text('Sleep Quality'),
           leading: const BackButton(),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const SectionTitle(title: 'Sleep Quality Check-In'),
-            const SizedBox(height: 8),
-            ..._questions.map((question) => SQIQuestionCard(
-              label: question.label,
-              helper: question.helper,
-              selectedValue: _responses[question.label],
-              hasError: _unansweredTouched.contains(question.label),
-              onSelected: (value) {
-                setState(() {
-                  _responses[question.label] = value;
-                  _unansweredTouched.remove(question.label);
-                });
-              },
-            )),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _submit,
-              icon: const Icon(Icons.assessment_rounded),
-              label: const Text('Calculate SQI'),
-            ),
-          ],
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const SectionTitle(title: 'Sleep Quality Check-In'),
+              const SizedBox(height: 8),
+              ..._questions.map((question) => SQIQuestionCard(
+                label: question.label,
+                helper: question.helper,
+                selectedValue: _responses[question.label],
+                hasError: _unansweredTouched.contains(question.label),
+                onSelected: (value) {
+                  setState(() {
+                    _responses[question.label] = value;
+                    _unansweredTouched.remove(question.label);
+                  });
+                },
+              )),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.assessment_rounded),
+                label: const Text('Calculate SQI'),
+              ),
+            ],
+          ),
         ),
       ),
     );
