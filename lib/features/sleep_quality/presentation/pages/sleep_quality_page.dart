@@ -52,7 +52,6 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
                 child: const Text('Discard'),
-              ),
             ],
           ),
         );
@@ -138,6 +137,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         weakFactors: result.weakFactors,
         level: result.level.name,
         recordId: recordId,
+        userId: userId,
       );
       for (final rec in recommendations) {
         await firestoreService.addRecommendation(rec);
