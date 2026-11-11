@@ -43,6 +43,69 @@ jobs:
       - name: Test
         run: flutter test
 
+  # Fails the build when a real credential is committed — in the working tree
+  # or in any commit the pull request adds. The scanner is pinned and checksum
+  # verified, and every finding is printed with --redact so a live secret never
+  # reaches the Actions log.
+  #
+  # gitleaks is deliberately run from its BSD-3 release binary rather than the
+  # marketplace action: the action requires a paid GITLEAKS_LICENSE for
+  # organisations, and a licence failure would silently weaken the guard.
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    # A stalled download in the install step must not burn the default 6h.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: '8.30.1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the pull-request range below can be resolved.
+          fetch-depth: 0
+          # This job only reads; keep the token out of .git/config.
+          persist-credentials: false
+
+      # Downloads into $RUNNER_TEMP, never into the workspace: the scan below
+      # runs over ".", so an archive left in the checkout would be unpacked by
+      # --max-archive-depth and its own README (which shows example findings)
+      # would be reported as if it were repository content.
+      - name: Install gitleaks (pinned + checksum verified)
+        run: |
+          set -euo pipefail
+          bin_dir="${RUNNER_TEMP:?}/gitleaks-${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          mkdir -p "$bin_dir"
+          cd "$bin_dir"
+          curl -sSfL -O "${base}/${archive}"
+          curl -sSfL -O "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " ${archive}$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "$archive" gitleaks
+          echo "$bin_dir" >> "$GITHUB_PATH"
+          "$bin_dir/gitleaks" version
+
+      # Whole tree, so a key that lands in a file the diff would not highlight
+      # (renames, generated config) is still caught. Archives are unpacked and
+      # scanned too, since a committed .zip is an easy way to smuggle one.
+      - name: Scan files
+        run: >-
+          gitleaks dir . --config .gitleaks.toml
+          --redact --no-banner --verbose --exit-code 1 --max-archive-depth=2
+
+      # Only the commits this pull request adds, so unrelated history can never
+      # fail someone else's change.
+      - name: Scan pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: >-
+          gitleaks git . --config .gitleaks.toml
+          --redact --no-banner --verbose --exit-code 1
+          --log-opts="${BASE_SHA}..HEAD"
+
   rules:
     name: Firestore rules
     runs-on: ubuntu-latest
