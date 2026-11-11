@@ -49,6 +49,9 @@ analysis_results.txt
 /android/key.properties
 *.jks
 *.keystore
+# Analysis / tooling output (never commit)
+graphify-out/
+scripts/node_modules/
 
 # Firebase credentials - never commit. The scripts in scripts/ use Application
 # Default Credentials or the emulator; a key file must never live in the repo.
