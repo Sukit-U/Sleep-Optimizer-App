@@ -36,6 +36,17 @@ restored (PITR disabled, no backups). Treat the live project as unrecoverable da
 - Prefer creating test data with a throwaway account and removing it the same way it was
   created (owner-scoped client delete), or don't create it at all.
 
+## Environment Separation — required before any edit or Firebase operation
+
+Before changing code or running Firebase-related commands:
+
+- Confirm the target is either the local Emulator Suite or the Firebase Dev project (`sleep-optimizer-dev`). Never target production (`sleep-optimizer-59c83`).
+- Production (`sleep-optimizer-59c83`) is strictly read-only: do not write, delete, deploy, or change its configuration.
+- Never rely on `.firebaserc` defaults or the active project. Every `firebase` or `gcloud` command must explicitly specify the project with `--project=sleep-optimizer-dev`, or the explicitly configured emulator project ID when targeting local emulators.
+- Do not use a project alias such as `dev` where an explicit project ID can be used.
+- Creating Firebase projects and registering apps are human-only steps. Do not run `projects:create`, `apps:create`, `firebase init` again, or `flutterfire configure`.
+- If the target environment is unclear, stop and ask before editing or running commands.
+
 ## Entrypoints & Navigation
 
 - `lib/main.dart` — entrypoint only: `runApp(const AppBootstrap())`. The boot sequence (Firebase init, emulator switch, `ensureSignedIn()`, `StorageService`, `appStorage`, `ThemeProvider`) lives in `lib/app/bootstrap.dart`, which renders an error + Retry screen when boot fails.
