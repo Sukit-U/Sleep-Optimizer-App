@@ -21,7 +21,7 @@ jobs:
     name: Analyze + test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v6
         with:
@@ -61,7 +61,7 @@ jobs:
     env:
       GITLEAKS_VERSION: '8.30.1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history so the pull-request range below can be resolved.
           fetch-depth: 0
@@ -113,7 +113,7 @@ jobs:
       run:
         working-directory: firestore-rules-test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The Firestore emulator needs Java 11+; firebase-tools (spawned by
       # `npm test` via `npx firebase emulators:exec`) needs 21+. setup-java also
@@ -141,7 +141,7 @@ jobs:
     needs: [analyze-and-test, rules]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v6
         with:
