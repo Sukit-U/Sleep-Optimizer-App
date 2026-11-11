@@ -110,7 +110,10 @@ class _HistoryPageState extends State<HistoryPage> {
     if (!mounted) return;
 
     try {
-      final recs = await _firestoreService.getRecommendations(recordId);
+      final recs = await _firestoreService.getRecommendations(
+        recordId,
+        record.userId,
+      );
       _recsCache[recordId] = recs;
       if (!mounted) return;
       showRecommendationSheet(context, recs: recs);

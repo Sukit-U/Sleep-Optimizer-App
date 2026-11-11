@@ -82,12 +82,14 @@ Store generated recommendations.
 Fields
 
 - recommendationId ('String')
+- userId (String) — owner of the parent SQI record
 - recordId (String)
 - factor (String)
 - title (String)
 - description (String)
 - action (String)
 - priority (String)
+- createdAt (Timestamp)
 
 ---
 
@@ -165,6 +167,8 @@ Firestore
 - Each user has one settings record.
 - Sleep Plans are independent from SQI records.
 - Recommendations belong to one SQI record.
+- A recommendation inherits that record's owner (`userId`); the rules only let
+  the owner read it, and the app query filters by `userId` as well.
 
 ---
 

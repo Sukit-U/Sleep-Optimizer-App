@@ -52,3 +52,25 @@ analysis_results.txt
 # Analysis / tooling output (never commit)
 graphify-out/
 scripts/node_modules/
+
+# Firebase credentials - never commit. The scripts in scripts/ use Application
+# Default Credentials or the emulator; a key file must never live in the repo.
+**/service-account-key*.json
+**/*-firebase-adminsdk-*.json
+**/firebase-adminsdk*.json
+
+# Local environment files — real values never get committed.
+# .env.example stays tracked, so the negation must come after the patterns.
+.env
+.env.*
+!.env.example
+
+# Firebase's default google-services output path. There is deliberately no
+# file here: android/app/src/<flavor>/google-services.json is the only valid
+# location, and a file at this path would be applied to every flavor.
+/android/app/google-services.json
+
+# A failed download that landed at the repo root: audited (no credentials),
+# deleted in this change, and kept out by its exact anchored path. A real .zip
+# elsewhere in the tree is still tracked and still scanned.
+/github-mcp-server.zip
