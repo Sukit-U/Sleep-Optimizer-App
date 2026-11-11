@@ -43,7 +43,8 @@ const validRecord = (uid) => ({
   createdAt: NOW,
 });
 
-const validRec = (recordId) => ({
+const validRec = (recordId, uid) => ({
+  userId: uid,
   recordId,
   factor: 'Stress',
   title: 'Create a simple wind-down routine',
@@ -135,47 +136,121 @@ describe('sqiRecords', () => {
 });
 
 describe('recommendations', () => {
-  let recordRef;
+  let aliceRecord;
+
+  const ownerQuery = (db, uid, recordId) =>
+    db
+      .collection('recommendations')
+      .where('userId', '==', uid)
+      .where('recordId', '==', recordId)
+      .orderBy('createdAt', 'desc')
+      .get();
 
   beforeEach(async () => {
-    recordRef = await assertSucceeds(
+    aliceRecord = await assertSucceeds(
       alice().collection('sqiRecords').add(validRecord(ALICE)),
     );
   });
 
   it('owner creates a recommendation for their own record', async () => {
     await assertSucceeds(
-      alice().collection('recommendations').add(validRec(recordRef.id)),
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+  });
+
+  it('rejects a recommendation without an owner field', async () => {
+    const { userId, ...unowned } = validRec(aliceRecord.id, ALICE);
+    await assertFails(alice().collection('recommendations').add(unowned));
+  });
+
+  it('rejects a recommendation carrying another user’s userId', async () => {
+    await assertFails(
+      bob().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
     );
   });
 
   it('rejects a recommendation pointing at another user’s record', async () => {
     await assertFails(
-      bob().collection('recommendations').add(validRec(recordRef.id)),
+      bob().collection('recommendations').add(validRec(aliceRecord.id, BOB)),
     );
   });
 
   it('rejects a recommendation pointing at a nonexistent record', async () => {
     await assertFails(
-      alice().collection('recommendations').add(validRec('no-such-record')),
+      alice().collection('recommendations').add(validRec('no-such-record', ALICE)),
     );
   });
 
-  // Reads cannot inspect the where('recordId', ...) query parameter, so the
-  // deployed rule allows any authenticated read (write paths still enforce
-  // parent-record ownership). This test proves reads are not accidentally
-  // re-broken by a rule referencing request.resource.data on reads.
-  it('authenticated users can read recommendations (deliberate relaxation)', async () => {
-    await assertSucceeds(
-      alice().collection('recommendations').add(validRec(recordRef.id)),
+  it('owner reads their own recommendation document', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
     );
+    await assertSucceeds(alice().collection('recommendations').doc(ref.id).get());
+  });
+
+  it('owner lists their recommendations with an owner-scoped query', async () => {
     await assertSucceeds(
-      bob()
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    const snapshot = await assertSucceeds(ownerQuery(alice(), ALICE, aliceRecord.id));
+    assert.equal(snapshot.size, 1);
+  });
+
+  it('rejects unauthenticated reads and queries', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(anon().collection('recommendations').doc(ref.id).get());
+    await assertFails(ownerQuery(anon(), ALICE, aliceRecord.id));
+  });
+
+  it('rejects another user’s direct read of a recommendation', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(bob().collection('recommendations').doc(ref.id).get());
+  });
+
+  it('rejects another user’s query for the owner’s recommendations', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    // Same recordId, but the rule requires the query to be scoped to the caller.
+    await assertFails(ownerQuery(bob(), ALICE, aliceRecord.id));
+  });
+
+  it('returns nothing for another user’s own-scoped query (rules are not filters)', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    const snapshot = await assertSucceeds(ownerQuery(bob(), BOB, aliceRecord.id));
+    assert.equal(snapshot.size, 0);
+  });
+
+  it('rejects an unfiltered collection-wide query', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(alice().collection('recommendations').get());
+  });
+
+  it('rejects reads of legacy documents that carry no owner field', async () => {
+    const legacy = validRec(aliceRecord.id, ALICE);
+    delete legacy.userId;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
         .collection('recommendations')
-        .where('recordId', '==', recordRef.id)
-        .orderBy('createdAt', 'desc')
-        .get(),
+        .doc('legacy-recommendation')
+        .set(legacy);
+    });
+
+    // No fallback: the owner cannot read it either, and the scoped query skips it.
+    await assertFails(
+      alice().collection('recommendations').doc('legacy-recommendation').get(),
     );
+    const snapshot = await assertSucceeds(ownerQuery(alice(), ALICE, aliceRecord.id));
+    assert.equal(snapshot.size, 0);
   });
 });
 

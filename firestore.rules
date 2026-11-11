@@ -27,6 +27,8 @@ service cloud.firestore {
     // Collection: recommendations
     // Document ID: auto-generated
     // Fields:
+    //   - userId: string (required, immutable on update, max 100 chars,
+    //             must equal the owner of recordId and request.auth.uid)
     //   - recordId: string (required, immutable on update, max 100 chars)
     //   - factor: string (required, max 200 chars)
     //   - title: string (required, max 200 chars)
@@ -45,7 +47,8 @@ service cloud.firestore {
     // Firestore Queries Used:
     //   - sleepPlans: where('userId', '==', uid).orderBy('createdAt', descending: true)
     //   - sqiRecords: where('userId', '==', uid).orderBy('createdAt', descending: true)
-    //   - recommendations: where('recordId', '==', ...).orderBy('createdAt', descending: true)
+    //   - recommendations: where('userId', '==', uid).where('recordId', '==', ...)
+    //                      .orderBy('createdAt', descending: true)
     //   - settings: get by document ID (userId)
     //
     // ===============================================================
@@ -162,12 +165,14 @@ service cloud.firestore {
     // Validate Recommendation document data
     function isValidRecommendation() {
       let data = request.resource.data;
-      let allowedFields = ['recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
-      let requiredFields = ['recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
+      let allowedFields = ['userId', 'recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
+      let requiredFields = ['userId', 'recordId', 'factor', 'title', 'description', 'action', 'priority', 'createdAt'];
       let validPriorities = ['critical', 'high', 'medium', 'low', 'Critical', 'High', 'Medium', 'Low'];
 
       return hasOnlyAllowedFields(allowedFields) &&
         hasRequiredFields(requiredFields) &&
+        // userId: non-empty string, max 100 chars
+        isValidString('userId', 100) &&
         // recordId: non-empty string, max 100 chars
         isValidString('recordId', 100) &&
         // factor: non-empty string, max 200 chars
@@ -259,24 +264,31 @@ service cloud.firestore {
     // --- recommendations ---
     // CRUD: create, read (list with orderBy createdAt)
     // No delete observed in codebase, but allowed for future use
-    // Access controlled via the parent SQIRecord ownership
+    // Access controlled by the owner stored on the document AND the parent
+    // SQIRecord ownership (the two must agree).
     match /recommendations/{recommendationId} {
-      // Allow read: any authenticated user. Rules cannot inspect query
-      // parameters, so recordId ownership cannot be enforced on reads
-      // (request.resource.data does not exist for read requests).
-      // Documents leak nothing beyond their parent SQI record's auto-ID.
-      allow read: if isAuthenticated();
+      // Allow read: owner only. The owner is denormalized onto the document
+      // because rules cannot inspect query parameters, so a collection-wide
+      // query cannot be narrowed to the caller. Rules are not filters: the
+      // app query must include where('userId', '==', request.auth.uid) or
+      // the whole request is denied.
+      // Documents written before userId existed are intentionally unreadable;
+      // backfill them from the parent SQI record instead of weakening this.
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
 
       // Allow create with full schema validation + parent ownership check
       allow create: if isAuthenticated() &&
         isValidRecommendation() &&
+        request.resource.data.userId == request.auth.uid &&
         exists(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)) &&
         get(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)).data.userId == request.auth.uid;
 
       // Allow update with full schema validation + immutable field protection + parent ownership
       allow update: if isAuthenticated() &&
         isValidRecommendation() &&
-        areImmutableFieldsUnchanged(['recordId', 'createdAt']) &&
+        areImmutableFieldsUnchanged(['userId', 'recordId', 'createdAt']) &&
+        request.resource.data.userId == request.auth.uid &&
         exists(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)) &&
         get(/databases/$(database)/documents/sqiRecords/$(request.resource.data.recordId)).data.userId == request.auth.uid;
 

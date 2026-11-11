@@ -46,15 +46,27 @@ class FirestoreService {
 
   // Recommendation operations
   Future<String> addRecommendation(Recommendation recommendation) async {
+    // Recommendations inherit the owner of their parent SQI record. Writing
+    // without it would be rejected by the rules after the SQI record has
+    // already been saved, so fail fast here instead.
+    if (recommendation.userId.isEmpty) {
+      throw ArgumentError('Recommendation.userId is required');
+    }
     final docRef = await _firestore
         .collection('recommendations')
         .add(recommendation.toFirestore());
     return docRef.id;
   }
 
-  Future<List<Recommendation>> getRecommendations(String recordId) async {
+  // Firestore rules do not filter query results: the query itself must be
+  // scoped to the owner, or the whole request is rejected.
+  Future<List<Recommendation>> getRecommendations(
+    String recordId,
+    String userId,
+  ) async {
     final snapshot = await _firestore
         .collection('recommendations')
+        .where('userId', isEqualTo: userId)
         .where('recordId', isEqualTo: recordId)
         .orderBy('createdAt', descending: true)
         .get();

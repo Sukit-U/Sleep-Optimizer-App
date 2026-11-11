@@ -5,6 +5,9 @@ enum RecommendationPriority { critical, high, medium, low }
 
 class Recommendation {
   final String recommendationId;
+  /// Owner of the parent SQIRecord (Firebase Auth uid). Empty means the object
+  /// has not been persisted yet; Firestore rules require a matching owner.
+  final String userId;
   final String recordId; // Foreign key to SQIRecord
   final String factor;
   final String title;
@@ -15,6 +18,7 @@ class Recommendation {
 
   Recommendation({
     required this.recommendationId,
+    this.userId = '',
     required this.recordId,
     required this.factor,
     required this.title,
@@ -28,6 +32,7 @@ class Recommendation {
   factory Recommendation.fromFirestore(Map<String, dynamic> data, String documentId) {
     return Recommendation(
       recommendationId: documentId,
+      userId: data['userId'] ?? '',
       recordId: data['recordId'] ?? '',
       factor: data['factor'] ?? '',
       title: data['title'] ?? '',
@@ -41,6 +46,7 @@ class Recommendation {
   // Method to convert Recommendation to a Map for Firestore
   Map<String, dynamic> toFirestore() {
     return {
+      'userId': userId,
       'recordId': recordId,
       'factor': factor,
       'title': title,
@@ -54,6 +60,7 @@ class Recommendation {
   // Copy with method to create a new instance with updated values
   Recommendation copyWith({
     String? recommendationId,
+    String? userId,
     String? recordId,
     String? factor,
     String? title,
@@ -63,6 +70,7 @@ class Recommendation {
   }) {
     return Recommendation(
       recommendationId: recommendationId ?? this.recommendationId,
+      userId: userId ?? this.userId,
       recordId: recordId ?? this.recordId,
       factor: factor ?? this.factor,
       title: title ?? this.title,
