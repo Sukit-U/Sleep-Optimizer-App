@@ -65,8 +65,9 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           title: const Text('Sleep Quality'),
           leading: const BackButton(),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
           children: [
             const SectionTitle(title: 'Sleep Quality Check-In'),
             const SizedBox(height: 8),
@@ -90,6 +91,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

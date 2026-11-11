@@ -15,10 +15,12 @@ class SuggestedBedtimesPage extends StatelessWidget {
         title: const Text('Suggested Bedtimes'),
         leading: const BackButton(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: List.generate(3, (i) => _BedtimeCard(index: i + 1)),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: List.generate(3, (i) => _BedtimeCard(index: i + 1)),
+          ),
         ),
       ),
     );
