@@ -252,6 +252,73 @@ describe('recommendations', () => {
     const snapshot = await assertSucceeds(ownerQuery(alice(), ALICE, aliceRecord.id));
     assert.equal(snapshot.size, 0);
   });
+
+  // Deleting an assessment must remove the record and every recommendation
+  // that belongs to it. The rules allow a recommendation delete only while its
+  // parent record still exists, so the app deletes both sides in one WriteBatch
+  // (see FirestoreService.deleteSqiRecordWithRecommendations). These two cases
+  // pin the ordering contract the app relies on.
+  it('owner deletes a record with all its recommendations in one batch', async () => {
+    const owned = [
+      validRec(aliceRecord.id, ALICE),
+      { ...validRec(aliceRecord.id, ALICE), factor: 'Caffeine' },
+      { ...validRec(aliceRecord.id, ALICE), factor: 'Screen time' },
+    ];
+    for (const rec of owned) {
+      await assertSucceeds(alice().collection('recommendations').add(rec));
+    }
+
+    const db = alice();
+    const scoped = await assertSucceeds(ownerQuery(db, ALICE, aliceRecord.id));
+    assert.equal(scoped.size, 3);
+
+    const batch = db.batch();
+    for (const doc of scoped.docs) {
+      batch.delete(doc.ref);
+    }
+    batch.delete(db.collection('sqiRecords').doc(aliceRecord.id));
+    await assertSucceeds(batch.commit());
+
+    // Both sides are really gone, not just hidden from the client.
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const admin = context.firestore();
+      const remainingRecs = await admin.collection('recommendations').get();
+      assert.equal(remainingRecs.size, 0);
+      const parent = await admin
+        .collection('sqiRecords')
+        .doc(aliceRecord.id)
+        .get();
+      assert.equal(parent.exists, false);
+    });
+
+    // And the owner no longer sees the assessment in History.
+    const remainingRecords = await assertSucceeds(
+      alice().collection('sqiRecords').where('userId', '==', ALICE).get(),
+    );
+    assert.equal(remainingRecords.size, 0);
+  });
+
+  it('a recommendation cannot be deleted once its parent record is gone', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    // Deletes the parent only - the ordering the app must never use again.
+    await assertSucceeds(
+      alice().collection('sqiRecords').doc(aliceRecord.id).delete(),
+    );
+
+    // The child survives and can no longer be removed from the client: this is
+    // the permanent orphan the batch in the previous case prevents.
+    await assertFails(alice().collection('recommendations').doc(ref.id).delete());
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const orphan = await context
+        .firestore()
+        .collection('recommendations')
+        .doc(ref.id)
+        .get();
+      assert.equal(orphan.exists, true);
+    });
+  });
 });
 
 describe('settings', () => {

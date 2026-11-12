@@ -79,8 +79,36 @@ class FirestoreService {
     await _firestore.collection('sleepPlans').doc(planId).delete();
   }
 
-  Future<void> deleteSQIRecord(String recordId) async {
-    await _firestore.collection('sqiRecords').doc(recordId).delete();
+  /// Deletes an SQI record together with every recommendation that belongs to
+  /// it, in a single atomic batch.
+  ///
+  /// The rules allow a recommendation delete only while its parent SQI record
+  /// still exists (`firestore.rules`, recommendations delete). Deleting the
+  /// parent on its own therefore orphans its recommendations permanently: the
+  /// client can no longer delete them, because the delete rule's parent
+  /// ownership lookup fails, and nothing in the app ever revisits them again.
+  /// Children and parent
+  /// must travel together, and the batch keeps them consistent — if it fails,
+  /// nothing is removed.
+  ///
+  /// The query is owner- and record-scoped on purpose: rules are not filters,
+  /// so an unfiltered recommendation query is rejected outright.
+  Future<void> deleteSqiRecordWithRecommendations({
+    required String recordId,
+    required String userId,
+  }) async {
+    final recommendations = await _firestore
+        .collection('recommendations')
+        .where('userId', isEqualTo: userId)
+        .where('recordId', isEqualTo: recordId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in recommendations.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_firestore.collection('sqiRecords').doc(recordId));
+    await batch.commit();
   }
 
   // Settings operations

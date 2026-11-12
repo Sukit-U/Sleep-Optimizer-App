@@ -74,17 +74,42 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  Future<void> _deleteSQIRecord(String recordId) async {
-    try {
-      await _firestoreService.deleteSQIRecord(recordId);
-      _recsCache.remove(recordId);
-      _loadHistory();
-    } catch (e) {
-      if (!mounted) return;
+  Future<void> _deleteSQIRecord(SQIRecord record) async {
+    // The parent and its recommendations must be deleted in one atomic batch:
+    // the delete rules require the parent to still exist for each
+    // recommendation, so a parent-first delete would orphan them forever.
+    final userId = context.read<AuthService>().uid;
+    if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete record: ${e.toString()}')),
+        const SnackBar(
+          content: Text('Could not sign in. Check your connection and try again.'),
+        ),
       );
+      return;
     }
+
+    try {
+      await _firestoreService.deleteSqiRecordWithRecommendations(
+        recordId: record.recordId,
+        userId: userId,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      // The batch is atomic, so nothing was removed: report the failure and
+      // leave the row in place instead of implying a successful delete.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not delete this assessment. Nothing was removed — please try again.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    _recsCache.remove(record.recordId);
+    await _loadHistory();
   }
 
   Future<void> _deleteSleepPlan(String planId) async {
@@ -242,7 +267,7 @@ class _HistoryPageState extends State<HistoryPage> {
         return SQIRecordCard(
           record: record,
           onTap: () => _openRecommendations(record),
-          onDelete: () => _deleteSQIRecord(record.recordId),
+          onDelete: () => _deleteSQIRecord(record),
         );
       },
     );
