@@ -12,6 +12,7 @@ import 'package:snoozemate/shared/widgets/history_sleep_plan_card.dart';
 import 'package:snoozemate/shared/widgets/empty_state_card.dart';
 import 'package:snoozemate/shared/widgets/error_state_widget.dart';
 import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
+import 'package:snoozemate/features/history/presentation/widgets/delete_sqi_record_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -75,6 +76,11 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _deleteSQIRecord(SQIRecord record) async {
+    // Ask first, and treat anything but an explicit confirmation as "no": the
+    // dialog also deletes the recommendations that belong to this assessment.
+    final confirmed = await confirmDeleteSqiRecord(context);
+    if (!confirmed || !mounted) return;
+
     // The parent and its recommendations must be deleted in one atomic batch:
     // the delete rules require the parent to still exist for each
     // recommendation, so a parent-first delete would orphan them forever.
@@ -88,6 +94,10 @@ class _HistoryPageState extends State<HistoryPage> {
       return;
     }
 
+    // Captured before the async gap so the message still has a messenger if
+    // this page is disposed mid-delete.
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       await _firestoreService.deleteSqiRecordWithRecommendations(
         recordId: record.recordId,
@@ -95,13 +105,13 @@ class _HistoryPageState extends State<HistoryPage> {
       );
     } catch (_) {
       if (!mounted) return;
-      // The batch is atomic, so nothing was removed: report the failure and
-      // leave the row in place instead of implying a successful delete.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not delete this assessment. Nothing was removed — please try again.',
-          ),
+      // The outcome is unknown, not "nothing happened": a commit whose reply
+      // was lost may still have been applied. Tell the user to check the list
+      // instead of promising the data is untouched.
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(sqiDeleteUnconfirmedMessage),
+          action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
         ),
       );
       return;
