@@ -319,6 +319,61 @@ describe('recommendations', () => {
       assert.equal(orphan.exists, true);
     });
   });
+
+  // The app writes an assessment in two steps: the record by a fixed ID first,
+  // then its recommendations in their own batch with IDs derived from that
+  // record. These cases prove the current rules support that flow and that the
+  // single-batch alternative is genuinely rejected.
+  it('accepts a record-by-ID followed by its recommendations, twice', async () => {
+    const db = alice();
+    const recordRef = db.collection('sqiRecords').doc('fixed-record');
+    const recommendationIds = ['fixed-record-r0', 'fixed-record-r1'];
+
+    const writeRecommendations = async () => {
+      const batch = db.batch();
+      for (const id of recommendationIds) {
+        batch.set(
+          db.collection('recommendations').doc(id),
+          validRec('fixed-record', ALICE),
+        );
+      }
+      await assertSucceeds(batch.commit());
+    };
+
+    // First attempt: create.
+    await assertSucceeds(recordRef.set(validRecord(ALICE)));
+    await writeRecommendations();
+
+    // Retry with the same IDs: the record is an update and the recommendations
+    // are overwritten, so nothing is duplicated.
+    await assertSucceeds(recordRef.set(validRecord(ALICE)));
+    await writeRecommendations();
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const admin = context.firestore();
+      const recommendations = await admin.collection('recommendations').get();
+      assert.equal(recommendations.size, 2);
+      const parent = await admin
+        .collection('sqiRecords')
+        .doc('fixed-record')
+        .get();
+      assert.equal(parent.exists, true);
+    });
+  });
+
+  it('rejects creating a record and its recommendation in one batch', async () => {
+    const db = alice();
+    const batch = db.batch();
+    batch.set(db.collection('sqiRecords').doc('batch-parent'), validRecord(ALICE));
+    batch.set(
+      db.collection('recommendations').doc('batch-child'),
+      validRec('batch-parent', ALICE),
+    );
+
+    // exists(parent) is evaluated against the pre-batch state, so the parent
+    // written in the same batch is not visible to the child's create rule.
+    await assertFails(batch.commit());
+  });
 });
 
 describe('settings', () => {

@@ -3,23 +3,48 @@ import 'package:provider/provider.dart';
 
 import '../../../../app/app.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../../../services/firestore_service.dart';
 import '../../../../shared/widgets/section_title.dart';
 import '../../../../shared/widgets/sqi_question_card.dart';
 import '../../data/repositories/sqi_repository.dart';
 import '../../domain/usecases/calculate_sqi.dart';
-import '../../../recommendation/domain/usecases/generate_recommendations.dart';
+import '../../domain/usecases/submit_sqi_assessment.dart';
 import '../../../recommendation/presentation/pages/recommendation_page.dart';
 
 class SleepQualityPage extends StatefulWidget {
-  const SleepQualityPage({super.key});
+  const SleepQualityPage({super.key, this.repository, this.ensureSignedIn});
+
+  /// Injectable for tests; production uses [FirestoreSqiRepository].
+  final SqiRepository? repository;
+
+  /// Injectable for tests; production signs in through [AuthService].
+  final Future<String?> Function()? ensureSignedIn;
 
   @override
   State<SleepQualityPage> createState() => _SleepQualityPageState();
 }
 
 class _SleepQualityPageState extends State<SleepQualityPage> {
-  final _sqiRepository = FirestoreSqiRepository();
+  late final SqiRepository _sqiRepository =
+      widget.repository ?? FirestoreSqiRepository();
+
+  /// Owns the record ID and createdAt of the assessment currently being
+  /// written, so Retry reuses them instead of creating a second record.
+  late final _submitAssessment = SubmitSqiAssessment(
+    newRecordId: _sqiRepository.newRecordId,
+    writeRecord: _sqiRepository.saveRecord,
+    writeRecommendations: _sqiRepository.saveRecommendations,
+  );
+
+  bool _isSubmitting = false;
+
+  /// Production path reads the signed-in user from [AuthService]; tests inject
+  /// [SleepQualityPage.ensureSignedIn] instead. Called before the first await,
+  /// so reading the context here is safe.
+  Future<String?> _ensureSignedIn() {
+    final injected = widget.ensureSignedIn;
+    if (injected != null) return injected();
+    return context.read<AuthService>().ensureSignedIn();
+  }
 
   static const _questions = [
     _Question(label: 'Sleep duration', helper: 'How many hours did you sleep?'),
@@ -85,9 +110,9 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             )),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: _submit,
+              onPressed: _isSubmitting ? null : _submit,
               icon: const Icon(Icons.assessment_rounded),
-              label: const Text('Calculate SQI'),
+              label: Text(_isSubmitting ? 'Saving…' : 'Calculate SQI'),
             ),
           ],
         ),
@@ -97,82 +122,98 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
   }
 
   Future<void> _submit() async {
-    final auth = context.read<AuthService>();
+    // In-flight guard, taken before the first await. Setting the flag after
+    // signing in left a window where the button stayed enabled, and a duplicate
+    // tap from that window then cleared the flag while the first submission was
+    // still writing — re-enabling the button mid-save.
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+
     final messenger = ScaffoldMessenger.of(context);
 
-    final userId = await auth.ensureSignedIn();
-    if (userId == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
-      );
-      return;
-    }
-
-    if (_responses.length != _questions.length) {
-      final unanswered =
-          _questions.where((q) => !_responses.containsKey(q.label)).toList();
-      setState(() {
-        _unansweredTouched.addAll(unanswered.map((q) => q.label));
-      });
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please answer every SQI question before submitting.')),
-      );
-      return;
-    }
-
-    final result = const CalculateSqi().call(responses: _responses);
-    final firestoreService = FirestoreService();
-
     try {
-      final recordId = await _sqiRepository.saveRecord(
-        {
-          'userId': userId,
-          'sqiScore': result.score,
-          'sleepQualityLevel': result.level.name,
-          'questionnaireResponses': _responses,
-          'createdAt': DateTime.now(),
-        },
-      );
-
-      final recommendations = const GenerateRecommendations().call(
-        weakFactors: result.weakFactors,
-        level: result.level.name,
-        recordId: recordId,
-        userId: userId,
-      );
-      for (final rec in recommendations) {
-        await firestoreService.addRecommendation(rec);
+      final userId = await _ensureSignedIn();
+      if (userId == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+        );
+        return;
       }
 
-      await appStorage?.saveHistoryEntry(
-        'sqi_history',
-        {
-          'title': 'SQI Score',
-          'subtitle': 'Score ${result.score} · Level ${result.level.name.toUpperCase()}',
-          'dateLabel': DateTime.now().toIso8601String(),
-        },
-      );
-    } catch (e) {
+      if (_responses.length != _questions.length) {
+        final unanswered =
+            _questions.where((q) => !_responses.containsKey(q.label)).toList();
+        if (!mounted) return;
+        setState(() {
+          _unansweredTouched.addAll(unanswered.map((q) => q.label));
+        });
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Please answer every SQI question before submitting.')),
+        );
+        return;
+      }
+
+      final result = const CalculateSqi().call(responses: _responses);
+      final outcome = await _submitAssessment(userId: userId, result: result);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not save results. Check your connection and try again.'),
-          action: SnackBarAction(
-            label: 'Retry',
-            onPressed: _submit,
-          ),
-        ),
-      );
-      return;
+
+      switch (outcome) {
+        case SubmitSqiOutcome.busy:
+          // Another submission is running; this tap was a duplicate.
+          return;
+
+        case SubmitSqiOutcome.saved:
+          // The attempt is complete: a later submission is a new assessment and
+          // must get its own record.
+          _submitAssessment.reset();
+          await appStorage?.saveHistoryEntry(
+            'sqi_history',
+            {
+              'title': 'SQI Score',
+              'subtitle':
+                  'Score ${result.score} · Level ${result.level.name.toUpperCase()}',
+              'dateLabel': DateTime.now().toIso8601String(),
+            },
+          );
+          if (!mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RecommendationPage(result: result),
+            ),
+          );
+          return;
+
+        case SubmitSqiOutcome.recordSavedRecommendationsNotConfirmed:
+          // The record is in Firestore; only the recommendations are missing.
+          // Retry re-sends them with the same IDs, so nothing is duplicated.
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Your assessment was saved, but its recommendations could not be confirmed. Retry to finish it.',
+              ),
+              action: SnackBarAction(label: 'Retry', onPressed: _submit),
+            ),
+          );
+          return;
+
+        case SubmitSqiOutcome.unconfirmed:
+          // Never claim the assessment was not saved: a write whose reply was
+          // lost may still have been applied.
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Could not confirm the save. Check History before retrying — the assessment may already be there.',
+              ),
+              action: SnackBarAction(label: 'Retry', onPressed: _submit),
+            ),
+          );
+          return;
+      }
+    } finally {
+      // Only the call that took the lock reaches here, so only it releases it,
+      // and never after the widget is gone.
+      if (mounted) setState(() => _isSubmitting = false);
     }
-
-    if (!mounted) return;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RecommendationPage(result: result),
-      ),
-    );
   }
 }
 

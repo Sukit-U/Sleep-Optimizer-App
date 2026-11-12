@@ -26,11 +26,24 @@ class FirestoreService {
   }
 
   // SQIRecord operations
-  Future<String> addSQIRecord(SQIRecord sqiRecord) async {
-    final docRef = await _firestore
+
+  /// Allocates a document ID without writing anything, so a submission that is
+  /// retried can reuse the same record instead of creating a second one.
+  String newSqiRecordId() => _firestore.collection('sqiRecords').doc().id;
+
+  /// Creates or overwrites the record with its already-allocated ID.
+  ///
+  /// `set()` on a fixed ID makes the write idempotent. Retrying with the same
+  /// payload (same `createdAt`) is accepted by the rules as an update, because
+  /// none of the immutable fields change.
+  Future<void> saveSqiRecord(SQIRecord record) async {
+    if (record.recordId.isEmpty) {
+      throw ArgumentError('SQIRecord.recordId is required');
+    }
+    await _firestore
         .collection('sqiRecords')
-        .add(sqiRecord.toFirestore());
-    return docRef.id;
+        .doc(record.recordId)
+        .set(record.toFirestore());
   }
 
   Future<List<SQIRecord>> getSQIRecords(String userId) async {
@@ -45,17 +58,33 @@ class FirestoreService {
   }
 
   // Recommendation operations
-  Future<String> addRecommendation(Recommendation recommendation) async {
-    // Recommendations inherit the owner of their parent SQI record. Writing
-    // without it would be rejected by the rules after the SQI record has
-    // already been saved, so fail fast here instead.
-    if (recommendation.userId.isEmpty) {
-      throw ArgumentError('Recommendation.userId is required');
+
+  /// Writes every recommendation of one assessment in a single batch, keyed by
+  /// their own document IDs.
+  ///
+  /// Fixed IDs are what make a retry safe: re-sending the same list overwrites
+  /// the same documents instead of appending duplicates. The parent record must
+  /// already exist (the rules check `exists()` on create), which is why this is
+  /// a separate step from [saveSqiRecord] rather than one combined batch.
+  Future<void> saveRecommendations(List<Recommendation> recommendations) async {
+    if (recommendations.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final recommendation in recommendations) {
+      if (recommendation.recommendationId.isEmpty) {
+        throw ArgumentError('Recommendation.recommendationId is required');
+      }
+      if (recommendation.userId.isEmpty) {
+        throw ArgumentError('Recommendation.userId is required');
+      }
+      batch.set(
+        _firestore
+            .collection('recommendations')
+            .doc(recommendation.recommendationId),
+        recommendation.toFirestore(),
+      );
     }
-    final docRef = await _firestore
-        .collection('recommendations')
-        .add(recommendation.toFirestore());
-    return docRef.id;
+    await batch.commit();
   }
 
   // Firestore rules do not filter query results: the query itself must be
