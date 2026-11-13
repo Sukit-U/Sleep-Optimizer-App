@@ -125,3 +125,47 @@ workflows:
         auth: integration
         submit_to_testflight: false
         submit_to_app_store: false
+  # Proves the archive guard on real macOS/Xcode without signing or publishing:
+  # `xcodebuild` runs shell build phases even with --no-codesign, so the
+  # "Verify APP_ENV" phase is exercised without a keychain, a certificate or any
+  # secret. No publishing block, and it is scoped to the branch under review.
+  ios-verify-archive-guard:
+    name: iOS verify APP_ENV guard (unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'feat/ios-release-path'
+          include: true
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: "Positive case: release build with APP_ENV=prod passes the phase"
+        script: |
+          flutter build ios --release --no-codesign --dart-define=APP_ENV=prod
+      - name: "Negative case: release build with no APP_ENV fails the Xcode phase"
+        script: |
+          flutter clean
+          flutter pub get
+          set +e
+          flutter build ios --release --no-codesign > no-app-env.log 2>&1
+          status=$?
+          set -e
+          tail -60 no-app-env.log
+          if [ "$status" -eq 0 ]; then
+            echo "error: Verify APP_ENV did not fail the unsigned release build"
+            exit 1
+          fi
+          if ! grep -qE "no --dart-define=APP_ENV|Verify APP_ENV" no-app-env.log; then
+            echo "error: the build failed, but not in the Verify APP_ENV phase"
+            exit 1
+          fi
+    artifacts:
+      - no-app-env.log
