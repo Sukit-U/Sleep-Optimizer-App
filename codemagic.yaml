@@ -5,13 +5,24 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       android_signing:
-        - keystore_reference
+        # Must match the name the keystore was uploaded under in Codemagic
+        # (App settings → Code signing identities → Android keystore).
+        - snoozefriend_upload
       groups:
         - google_play
       vars:
         PACKAGE_NAME: "com.snoozefriend.snoozemate"
         GOOGLE_PLAY_TRACK: "internal"
-      flutter: stable
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
+    triggering:
+      # This workflow publishes to Play, so it runs on release tags only, the
+      # same rule as .github/workflows/release.yml. A push or pull_request
+      # trigger would also publish, once per commit.
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
     scripts:
       - name: Set up local.properties
         script: |
@@ -64,10 +75,21 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.snoozefriend.snoozemate
       vars:
-        APP_STORE_APPLE_ID: 1555555551
-      flutter: stable
+        # App Store Connect → App → General → App Information → Apple ID.
+        # Nothing in this workflow reads it yet (no build-number increment and
+        # submit_to_testflight/submit_to_app_store are false); uncomment with
+        # the real number before enabling submission.
+        # APP_STORE_APPLE_ID: <10-digit Apple ID>
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
       xcode: latest
       cocoapods: default
+    triggering:
+      # Publishes to App Store Connect, so release tags only.
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
     scripts:
       - name: Set up code signing settings on Xcode project
         script: |
