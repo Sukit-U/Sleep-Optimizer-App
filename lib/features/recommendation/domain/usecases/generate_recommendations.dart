@@ -74,16 +74,21 @@ class GenerateRecommendations {
   /// - Good SQI → recommendation only for the single lowest-scoring factor
   /// - Fair/Poor SQI → up to 3 recommendations, prioritised by severity
   /// - Max 3 recommendations total
+  ///
+  /// [userId] is the owner of the parent SQI record; it is persisted with each
+  /// recommendation so Firestore rules can scope reads to that owner.
   List<Recommendation> call({
     required List<String> weakFactors,
     required String level,
     String recordId = '',
+    String userId = '',
   }) {
     // Excellent → positive reinforcement only
     if (level == 'excellent') {
       return [
         Recommendation(
           recommendationId: '',
+          userId: userId,
           recordId: recordId,
           factor: 'General',
           title: _positiveReinforcement.title,
@@ -102,6 +107,7 @@ class GenerateRecommendations {
       return [
         Recommendation(
           recommendationId: '',
+          userId: userId,
           recordId: recordId,
           factor: factor,
           title: config.title,
@@ -123,6 +129,7 @@ class GenerateRecommendations {
       recommendations.add(
         Recommendation(
           recommendationId: '',
+          userId: userId,
           recordId: recordId,
           factor: factor,
           title: config.title,

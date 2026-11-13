@@ -12,16 +12,21 @@ import 'package:snoozemate/shared/widgets/history_sleep_plan_card.dart';
 import 'package:snoozemate/shared/widgets/empty_state_card.dart';
 import 'package:snoozemate/shared/widgets/error_state_widget.dart';
 import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
+import 'package:snoozemate/features/history/presentation/widgets/delete_sqi_record_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  const HistoryPage({super.key, this.firestoreService});
+
+  /// Injected by tests; production falls back to the real service.
+  final FirestoreService? firestoreService;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService =
+      widget.firestoreService ?? FirestoreService();
   String _selectedTab = 'sqi';
   List<SQIRecord> _sqiRecords = [];
   List<SleepPlan> _sleepPlans = [];
@@ -74,17 +79,51 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  Future<void> _deleteSQIRecord(String recordId) async {
-    try {
-      await _firestoreService.deleteSQIRecord(recordId);
-      _recsCache.remove(recordId);
-      _loadHistory();
-    } catch (e) {
-      if (!mounted) return;
+  Future<void> _deleteSQIRecord(SQIRecord record) async {
+    // Ask first, and treat anything but an explicit confirmation as "no": the
+    // dialog also deletes the recommendations that belong to this assessment.
+    final confirmed = await confirmDeleteSqiRecord(context);
+    if (!confirmed || !mounted) return;
+
+    // The parent and its recommendations must be deleted in one atomic batch:
+    // the delete rules require the parent to still exist for each
+    // recommendation, so a parent-first delete would orphan them forever.
+    final userId = context.read<AuthService>().uid;
+    if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete record: ${e.toString()}')),
+        const SnackBar(
+          content: Text('Could not sign in. Check your connection and try again.'),
+        ),
       );
+      return;
     }
+
+    // Captured before the async gap so the message still has a messenger if
+    // this page is disposed mid-delete.
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _firestoreService.deleteSqiRecordWithRecommendations(
+        recordId: record.recordId,
+        userId: userId,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      // The outcome is unknown, not "nothing happened": a commit whose reply
+      // was lost may still have been applied. Tell the user to check the list
+      // instead of promising the data is untouched.
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(sqiDeleteUnconfirmedMessage),
+          action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    _recsCache.remove(record.recordId);
+    await _loadHistory();
   }
 
   Future<void> _deleteSleepPlan(String planId) async {
@@ -110,7 +149,10 @@ class _HistoryPageState extends State<HistoryPage> {
     if (!mounted) return;
 
     try {
-      final recs = await _firestoreService.getRecommendations(recordId);
+      final recs = await _firestoreService.getRecommendations(
+        recordId,
+        record.userId,
+      );
       _recsCache[recordId] = recs;
       if (!mounted) return;
       showRecommendationSheet(context, recs: recs);
@@ -239,7 +281,7 @@ class _HistoryPageState extends State<HistoryPage> {
         return SQIRecordCard(
           record: record,
           onTap: () => _openRecommendations(record),
-          onDelete: () => _deleteSQIRecord(record.recordId),
+          onDelete: () => _deleteSQIRecord(record),
         );
       },
     );

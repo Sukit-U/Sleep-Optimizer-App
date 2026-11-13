@@ -43,7 +43,8 @@ const validRecord = (uid) => ({
   createdAt: NOW,
 });
 
-const validRec = (recordId) => ({
+const validRec = (recordId, uid) => ({
+  userId: uid,
   recordId,
   factor: 'Stress',
   title: 'Create a simple wind-down routine',
@@ -135,47 +136,243 @@ describe('sqiRecords', () => {
 });
 
 describe('recommendations', () => {
-  let recordRef;
+  let aliceRecord;
+
+  const ownerQuery = (db, uid, recordId) =>
+    db
+      .collection('recommendations')
+      .where('userId', '==', uid)
+      .where('recordId', '==', recordId)
+      .orderBy('createdAt', 'desc')
+      .get();
 
   beforeEach(async () => {
-    recordRef = await assertSucceeds(
+    aliceRecord = await assertSucceeds(
       alice().collection('sqiRecords').add(validRecord(ALICE)),
     );
   });
 
   it('owner creates a recommendation for their own record', async () => {
     await assertSucceeds(
-      alice().collection('recommendations').add(validRec(recordRef.id)),
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+  });
+
+  it('rejects a recommendation without an owner field', async () => {
+    const { userId, ...unowned } = validRec(aliceRecord.id, ALICE);
+    await assertFails(alice().collection('recommendations').add(unowned));
+  });
+
+  it('rejects a recommendation carrying another user’s userId', async () => {
+    await assertFails(
+      bob().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
     );
   });
 
   it('rejects a recommendation pointing at another user’s record', async () => {
     await assertFails(
-      bob().collection('recommendations').add(validRec(recordRef.id)),
+      bob().collection('recommendations').add(validRec(aliceRecord.id, BOB)),
     );
   });
 
   it('rejects a recommendation pointing at a nonexistent record', async () => {
     await assertFails(
-      alice().collection('recommendations').add(validRec('no-such-record')),
+      alice().collection('recommendations').add(validRec('no-such-record', ALICE)),
     );
   });
 
-  // Reads cannot inspect the where('recordId', ...) query parameter, so the
-  // deployed rule allows any authenticated read (write paths still enforce
-  // parent-record ownership). This test proves reads are not accidentally
-  // re-broken by a rule referencing request.resource.data on reads.
-  it('authenticated users can read recommendations (deliberate relaxation)', async () => {
-    await assertSucceeds(
-      alice().collection('recommendations').add(validRec(recordRef.id)),
+  it('owner reads their own recommendation document', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
     );
+    await assertSucceeds(alice().collection('recommendations').doc(ref.id).get());
+  });
+
+  it('owner lists their recommendations with an owner-scoped query', async () => {
     await assertSucceeds(
-      bob()
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    const snapshot = await assertSucceeds(ownerQuery(alice(), ALICE, aliceRecord.id));
+    assert.equal(snapshot.size, 1);
+  });
+
+  it('rejects unauthenticated reads and queries', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(anon().collection('recommendations').doc(ref.id).get());
+    await assertFails(ownerQuery(anon(), ALICE, aliceRecord.id));
+  });
+
+  it('rejects another user’s direct read of a recommendation', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(bob().collection('recommendations').doc(ref.id).get());
+  });
+
+  it('rejects another user’s query for the owner’s recommendations', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    // Same recordId, but the rule requires the query to be scoped to the caller.
+    await assertFails(ownerQuery(bob(), ALICE, aliceRecord.id));
+  });
+
+  it('returns nothing for another user’s own-scoped query (rules are not filters)', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    const snapshot = await assertSucceeds(ownerQuery(bob(), BOB, aliceRecord.id));
+    assert.equal(snapshot.size, 0);
+  });
+
+  it('rejects an unfiltered collection-wide query', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    await assertFails(alice().collection('recommendations').get());
+  });
+
+  it('rejects reads of legacy documents that carry no owner field', async () => {
+    const legacy = validRec(aliceRecord.id, ALICE);
+    delete legacy.userId;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
         .collection('recommendations')
-        .where('recordId', '==', recordRef.id)
-        .orderBy('createdAt', 'desc')
-        .get(),
+        .doc('legacy-recommendation')
+        .set(legacy);
+    });
+
+    // No fallback: the owner cannot read it either, and the scoped query skips it.
+    await assertFails(
+      alice().collection('recommendations').doc('legacy-recommendation').get(),
     );
+    const snapshot = await assertSucceeds(ownerQuery(alice(), ALICE, aliceRecord.id));
+    assert.equal(snapshot.size, 0);
+  });
+
+  // Deleting an assessment must remove the record and every recommendation
+  // that belongs to it. The rules allow a recommendation delete only while its
+  // parent record still exists, so the app deletes both sides in one WriteBatch
+  // (see FirestoreService.deleteSqiRecordWithRecommendations). These two cases
+  // pin the ordering contract the app relies on.
+  it('owner deletes a record with all its recommendations in one batch', async () => {
+    const owned = [
+      validRec(aliceRecord.id, ALICE),
+      { ...validRec(aliceRecord.id, ALICE), factor: 'Caffeine' },
+      { ...validRec(aliceRecord.id, ALICE), factor: 'Screen time' },
+    ];
+    for (const rec of owned) {
+      await assertSucceeds(alice().collection('recommendations').add(rec));
+    }
+
+    const db = alice();
+    const scoped = await assertSucceeds(ownerQuery(db, ALICE, aliceRecord.id));
+    assert.equal(scoped.size, 3);
+
+    const batch = db.batch();
+    for (const doc of scoped.docs) {
+      batch.delete(doc.ref);
+    }
+    batch.delete(db.collection('sqiRecords').doc(aliceRecord.id));
+    await assertSucceeds(batch.commit());
+
+    // Both sides are really gone, not just hidden from the client.
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const admin = context.firestore();
+      const remainingRecs = await admin.collection('recommendations').get();
+      assert.equal(remainingRecs.size, 0);
+      const parent = await admin
+        .collection('sqiRecords')
+        .doc(aliceRecord.id)
+        .get();
+      assert.equal(parent.exists, false);
+    });
+
+    // And the owner no longer sees the assessment in History.
+    const remainingRecords = await assertSucceeds(
+      alice().collection('sqiRecords').where('userId', '==', ALICE).get(),
+    );
+    assert.equal(remainingRecords.size, 0);
+  });
+
+  it('a recommendation cannot be deleted once its parent record is gone', async () => {
+    const ref = await assertSucceeds(
+      alice().collection('recommendations').add(validRec(aliceRecord.id, ALICE)),
+    );
+    // Deletes the parent only - the ordering the app must never use again.
+    await assertSucceeds(
+      alice().collection('sqiRecords').doc(aliceRecord.id).delete(),
+    );
+
+    // The child survives and can no longer be removed from the client: this is
+    // the permanent orphan the batch in the previous case prevents.
+    await assertFails(alice().collection('recommendations').doc(ref.id).delete());
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const orphan = await context
+        .firestore()
+        .collection('recommendations')
+        .doc(ref.id)
+        .get();
+      assert.equal(orphan.exists, true);
+    });
+  });
+
+  // The app writes an assessment in two steps: the record by a fixed ID first,
+  // then its recommendations in their own batch with IDs derived from that
+  // record. These cases prove the current rules support that flow and that the
+  // single-batch alternative is genuinely rejected.
+  it('accepts a record-by-ID followed by its recommendations, twice', async () => {
+    const db = alice();
+    const recordRef = db.collection('sqiRecords').doc('fixed-record');
+    const recommendationIds = ['fixed-record-r0', 'fixed-record-r1'];
+
+    const writeRecommendations = async () => {
+      const batch = db.batch();
+      for (const id of recommendationIds) {
+        batch.set(
+          db.collection('recommendations').doc(id),
+          validRec('fixed-record', ALICE),
+        );
+      }
+      await assertSucceeds(batch.commit());
+    };
+
+    // First attempt: create.
+    await assertSucceeds(recordRef.set(validRecord(ALICE)));
+    await writeRecommendations();
+
+    // Retry with the same IDs: the record is an update and the recommendations
+    // are overwritten, so nothing is duplicated.
+    await assertSucceeds(recordRef.set(validRecord(ALICE)));
+    await writeRecommendations();
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const admin = context.firestore();
+      const recommendations = await admin.collection('recommendations').get();
+      assert.equal(recommendations.size, 2);
+      const parent = await admin
+        .collection('sqiRecords')
+        .doc('fixed-record')
+        .get();
+      assert.equal(parent.exists, true);
+    });
+  });
+
+  it('rejects creating a record and its recommendation in one batch', async () => {
+    const db = alice();
+    const batch = db.batch();
+    batch.set(db.collection('sqiRecords').doc('batch-parent'), validRecord(ALICE));
+    batch.set(
+      db.collection('recommendations').doc('batch-child'),
+      validRec('batch-parent', ALICE),
+    );
+
+    // exists(parent) is evaluated against the pre-batch state, so the parent
+    // written in the same batch is not visible to the child's create rule.
+    await assertFails(batch.commit());
   });
 });
 

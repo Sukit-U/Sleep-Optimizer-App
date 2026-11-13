@@ -26,11 +26,24 @@ class FirestoreService {
   }
 
   // SQIRecord operations
-  Future<String> addSQIRecord(SQIRecord sqiRecord) async {
-    final docRef = await _firestore
+
+  /// Allocates a document ID without writing anything, so a submission that is
+  /// retried can reuse the same record instead of creating a second one.
+  String newSqiRecordId() => _firestore.collection('sqiRecords').doc().id;
+
+  /// Creates or overwrites the record with its already-allocated ID.
+  ///
+  /// `set()` on a fixed ID makes the write idempotent. Retrying with the same
+  /// payload (same `createdAt`) is accepted by the rules as an update, because
+  /// none of the immutable fields change.
+  Future<void> saveSqiRecord(SQIRecord record) async {
+    if (record.recordId.isEmpty) {
+      throw ArgumentError('SQIRecord.recordId is required');
+    }
+    await _firestore
         .collection('sqiRecords')
-        .add(sqiRecord.toFirestore());
-    return docRef.id;
+        .doc(record.recordId)
+        .set(record.toFirestore());
   }
 
   Future<List<SQIRecord>> getSQIRecords(String userId) async {
@@ -45,16 +58,44 @@ class FirestoreService {
   }
 
   // Recommendation operations
-  Future<String> addRecommendation(Recommendation recommendation) async {
-    final docRef = await _firestore
-        .collection('recommendations')
-        .add(recommendation.toFirestore());
-    return docRef.id;
+
+  /// Writes every recommendation of one assessment in a single batch, keyed by
+  /// their own document IDs.
+  ///
+  /// Fixed IDs are what make a retry safe: re-sending the same list overwrites
+  /// the same documents instead of appending duplicates. The parent record must
+  /// already exist (the rules check `exists()` on create), which is why this is
+  /// a separate step from [saveSqiRecord] rather than one combined batch.
+  Future<void> saveRecommendations(List<Recommendation> recommendations) async {
+    if (recommendations.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final recommendation in recommendations) {
+      if (recommendation.recommendationId.isEmpty) {
+        throw ArgumentError('Recommendation.recommendationId is required');
+      }
+      if (recommendation.userId.isEmpty) {
+        throw ArgumentError('Recommendation.userId is required');
+      }
+      batch.set(
+        _firestore
+            .collection('recommendations')
+            .doc(recommendation.recommendationId),
+        recommendation.toFirestore(),
+      );
+    }
+    await batch.commit();
   }
 
-  Future<List<Recommendation>> getRecommendations(String recordId) async {
+  // Firestore rules do not filter query results: the query itself must be
+  // scoped to the owner, or the whole request is rejected.
+  Future<List<Recommendation>> getRecommendations(
+    String recordId,
+    String userId,
+  ) async {
     final snapshot = await _firestore
         .collection('recommendations')
+        .where('userId', isEqualTo: userId)
         .where('recordId', isEqualTo: recordId)
         .orderBy('createdAt', descending: true)
         .get();
@@ -67,8 +108,36 @@ class FirestoreService {
     await _firestore.collection('sleepPlans').doc(planId).delete();
   }
 
-  Future<void> deleteSQIRecord(String recordId) async {
-    await _firestore.collection('sqiRecords').doc(recordId).delete();
+  /// Deletes an SQI record together with every recommendation that belongs to
+  /// it, in a single atomic batch.
+  ///
+  /// The rules allow a recommendation delete only while its parent SQI record
+  /// still exists (`firestore.rules`, recommendations delete). Deleting the
+  /// parent on its own therefore orphans its recommendations permanently: the
+  /// client can no longer delete them, because the delete rule's parent
+  /// ownership lookup fails, and nothing in the app ever revisits them again.
+  /// Children and parent
+  /// must travel together, and the batch keeps them consistent — if it fails,
+  /// nothing is removed.
+  ///
+  /// The query is owner- and record-scoped on purpose: rules are not filters,
+  /// so an unfiltered recommendation query is rejected outright.
+  Future<void> deleteSqiRecordWithRecommendations({
+    required String recordId,
+    required String userId,
+  }) async {
+    final recommendations = await _firestore
+        .collection('recommendations')
+        .where('userId', isEqualTo: userId)
+        .where('recordId', isEqualTo: recordId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in recommendations.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_firestore.collection('sqiRecords').doc(recordId));
+    await batch.commit();
   }
 
   // Settings operations

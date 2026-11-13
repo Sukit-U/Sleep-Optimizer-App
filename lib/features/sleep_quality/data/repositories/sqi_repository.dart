@@ -1,8 +1,17 @@
-import '../../../../services/firestore_service.dart';
+import '../../../../models/recommendation_model.dart';
 import '../../../../models/sqi_record_model.dart';
+import '../../../../services/firestore_service.dart';
 
 abstract class SqiRepository {
-  Future<String> saveRecord(Map<String, dynamic> payload);
+  /// Allocates the record ID up front, so a retried submission reuses it
+  /// instead of creating a second record.
+  String newRecordId();
+
+  /// Creates or overwrites the record with its already-allocated ID.
+  Future<void> saveRecord(SQIRecord record);
+
+  /// Writes an assessment's recommendations in one batch, by their own IDs.
+  Future<void> saveRecommendations(List<Recommendation> recommendations);
 }
 
 class FirestoreSqiRepository implements SqiRepository {
@@ -12,16 +21,13 @@ class FirestoreSqiRepository implements SqiRepository {
   final FirestoreService _firestoreService;
 
   @override
-  Future<String> saveRecord(Map<String, dynamic> payload) async {
-    final docId = await _firestoreService.addSQIRecord(SQIRecord(
-      recordId: '',
-      userId: payload['userId'] as String,
-      sqiScore: payload['sqiScore'] as int,
-      sleepQualityLevel: payload['sleepQualityLevel'] as String,
-      questionnaireResponses:
-          Map<String, dynamic>.from(payload['questionnaireResponses'] as Map),
-      createdAt: payload['createdAt'] as DateTime,
-    ));
-    return docId;
-  }
+  String newRecordId() => _firestoreService.newSqiRecordId();
+
+  @override
+  Future<void> saveRecord(SQIRecord record) =>
+      _firestoreService.saveSqiRecord(record);
+
+  @override
+  Future<void> saveRecommendations(List<Recommendation> recommendations) =>
+      _firestoreService.saveRecommendations(recommendations);
 }

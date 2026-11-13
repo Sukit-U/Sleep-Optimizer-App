@@ -59,6 +59,17 @@ android {
             signingConfig = if (hasKeystore) signingConfigs.getByName("release") else null
         }
     }
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+        }
+        create("prod") {
+            dimension = "environment"
+        }
+    }
 }
 
 kotlin {

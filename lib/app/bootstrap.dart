@@ -9,8 +9,8 @@ import '../core/providers/theme_provider.dart';
 import '../core/services/auth_service.dart';
 import '../core/services/storage_service.dart';
 import '../core/theme/app_theme.dart';
-import '../firebase_options.dart';
 import '../shared/widgets/error_state_widget.dart';
+import 'firebase_environment.dart';
 import 'app.dart';
 
 /// Everything the widget tree needs that can only exist after booting.
@@ -98,7 +98,9 @@ class _AppBootstrapState extends State<AppBootstrap> {
 }
 
 Future<AppDependencies> _bootFirebase() async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // The Firebase project is fixed at build time: --dart-define=APP_ENV=dev|prod
+  // (default dev) picks lib/firebase_options_dev.dart or firebase_options.dart.
+  await Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv));
 
   // Local development: run against the Firestore/Auth emulators, e.g.
   //   flutter run --dart-define=USE_FIREBASE_EMULATOR=true
