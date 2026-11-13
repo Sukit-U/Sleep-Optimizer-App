@@ -170,3 +170,27 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # iOS compile check only. `--no-codesign` keeps signing material and every
+  # credential out of CI, so this proves the Xcode project, the Podfile and the
+  # Firebase options compile on a macOS host — not that a signed build is
+  # shippable. It builds APP_ENV=prod because that is the only iOS Firebase app
+  # this repository has config for; a dev iOS build stops at startup until the
+  # dev iOS app is registered (docs/ENVIRONMENTS.md).
+  build-ios:
+    name: Build iOS (unsigned, prod config)
+    needs: [analyze-and-test, rules]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS release without code signing
+        run: flutter build ios --release --no-codesign --dart-define=APP_ENV=prod

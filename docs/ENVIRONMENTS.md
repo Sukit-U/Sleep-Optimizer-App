@@ -17,6 +17,10 @@ to a real project. There is deliberately **no** `android/app/google-services.jso
 file at that path is used for every flavor and would silently override the per-flavor
 config with the wrong project.
 
+The `--flavor` half of each flag pair is Android-only: Gradle reads it to pick the
+`google-services.json`. iOS has no flavors and is selected by `--dart-define=APP_ENV`
+alone — see *iOS: running and building* below.
+
 `.firebaserc`:
 
 ```json
@@ -97,16 +101,47 @@ than from the CLI:
 | `lib/firebase_options_dev.dart` → `android` | `sleep-optimizer-dev` |
 | `lib/firebase_options.dart` → `android` | `1:790423794853:android:b834a222cb28203f1fc94c` |
 | `firebase.json` → `flutter.platforms` | android `b834…`, dart android `b834…`, dart ios `1:790423794853:ios:618f0814255930491fc94c` |
-| `ios/Runner.xcodeproj` `PRODUCT_BUNDLE_IDENTIFIER` | `com.example.snoozemate` |
-| `lib/firebase_options.dart` → `ios.iosBundleId` | `com.example.snoozemate` |
+| `ios/Runner.xcodeproj` `PRODUCT_BUNDLE_IDENTIFIER` (Debug, Profile, Release) | `com.snoozefriend.snoozemate` |
+| `lib/firebase_options.dart` → `ios.appId` | `1:790423794853:ios:618f0814255930491fc94c` (same as `firebase.json`) |
+| `lib/firebase_options.dart` → `ios.iosBundleId` | `com.example.snoozemate` — **does not match** the Xcode bundle id |
+| `lib/firebase_options_dev.dart` → iOS | **absent** — no iOS app is recorded for the dev project |
+| `ios/Runner/GoogleService-Info.plist` | **not committed, gitignored** — one path shared by every iOS build |
 
-Android is consistent end to end. **iOS is not part of the rename yet:** it still uses
-`com.example.snoozemate`, and its config matches that old bundle id, so the app builds and
-runs — but iOS does not share the new Android id. Closing the gap is a human step: register
-an iOS app for `com.snoozefriend.snoozemate` in the Console, change
-`PRODUCT_BUNDLE_IDENTIFIER` in Xcode, then regenerate `lib/firebase_options.dart` with
-`flutterfire configure`. Do not hand-edit `iosBundleId`: a bundle id with no registered
-iOS app breaks sign-in.
+Android is consistent end to end. **iOS is not verified end to end**, and the files in
+this repository disagree:
+
+- `ios/Runner.xcodeproj` sets `PRODUCT_BUNDLE_IDENTIFIER = com.snoozefriend.snoozemate`
+  for Debug, Profile and Release, but
+- `lib/firebase_options.dart` still carries `iosBundleId: 'com.example.snoozemate'` for
+  the iOS app id `1:790423794853:ios:618f0814255930491fc94c`, and
+- `lib/firebase_options_dev.dart` has **no iOS entry at all**, so a `dev` iOS build
+  cannot start (it stops with a `StateError` that names the owner steps).
+
+Both Dart files are generated, and only the Console knows which bundle id an app id is
+registered under. That is not recorded here, so **whether `…:ios:618f…` belongs to
+`com.example.snoozemate` or to the new `com.snoozefriend.snoozemate` is unknown in this
+repository**. Do not hand-edit `iosBundleId` and do not invent an app id: a bundle id
+with no registered iOS app breaks Firebase Auth at runtime.
+
+Owner actions (Console, human only) before iOS can be called ready:
+
+1. **Dev iOS app.** In `sleep-optimizer-dev` → Project settings → Your apps →
+   *Add app* → iOS, bundle ID `com.snoozefriend.snoozemate.dev` (mirrors the Android
+   `.dev` suffix; the exact id is your choice as long as Xcode uses the same one).
+2. **Prod iOS app.** In `sleep-optimizer-59c83`, either register a new iOS app for
+   `com.snoozefriend.snoozemate`, or point Xcode back at `com.example.snoozemate`. Pick
+   one: the Xcode bundle id and the Firebase iOS app must name the same id.
+3. **Regenerate**, one target at a time, never overwriting the other file:
+   ```bash
+   flutterfire configure --yes --project=sleep-optimizer-dev --platforms=android,ios \
+     --out=lib/firebase_options_dev.dart \
+     --android-out=android/app/src/dev/google-services.json
+   flutterfire configure --yes --project=sleep-optimizer-59c83 --platforms=android,ios \
+     --out=lib/firebase_options.dart \
+     --android-out=android/app/src/prod/google-services.json
+   ```
+4. Re-run `flutter test`: `test/ios_release_config_test.dart` pins the Xcode bundle id
+   and both app ids, and checks that a dev iOS entry, once it exists, matches both.
 
 ### How the Dart side picks a project
 
@@ -132,6 +167,45 @@ Do not hardcode a project id in `lib/`; the generated `firebase_options_*.dart` 
 the only place ids live. `test/android_app_id_test.dart` keeps the Gradle application ids
 and both `google-services.json` files in agreement, and
 `test/firebase_environment_test.dart` pins the dev project and the `dev` default.
+
+### iOS: running and building
+
+iOS has a single Xcode scheme (`Runner`) and a single bundle id, so it has no flavors to
+select an environment with. Passing `--flavor` to an iOS command makes Flutter look for
+an Xcode scheme of that name and fail, so the two platforms cannot share one command:
+
+| Task | Command |
+| --- | --- |
+| Run on a device/simulator against prod | `flutter run --dart-define=APP_ENV=prod` |
+| Run on a device/simulator against dev | blocked — no iOS Firebase app in `sleep-optimizer-dev` yet; the app stops with a `StateError` naming the owner steps |
+| Release build without signing | `flutter build ios --release --no-codesign --dart-define=APP_ENV=prod` |
+| Archive from Xcode | `flutter build ios --config-only --release --dart-define=APP_ENV=prod`, then `open ios/Runner.xcworkspace` → Product → Archive |
+
+Android commands keep `--flavor dev|prod` (Gradle uses it to pick the
+`google-services.json`); iOS commands must not carry it, because `APP_ENV` alone selects
+the Dart config there.
+
+Xcode does not see `--dart-define` directly. The value reaches it only through
+`ios/Flutter/Generated.xcconfig` (`DART_DEFINES`), which `flutter build ios` rewrites, so
+archiving straight from Xcode embeds whatever the last build left there — including the
+`dev` default. Always run the `--config-only` command above with the intended `APP_ENV`
+before archiving, and confirm it landed:
+
+```bash
+grep DART_DEFINES ios/Flutter/Generated.xcconfig
+```
+
+If the archive was never given `APP_ENV`, the app stops on its error screen at launch
+with a `StateError` naming the missing define, instead of quietly using the `dev` project.
+
+No `ios/Runner/GoogleService-Info.plist` is committed: it is one path shared by every iOS
+build, so a committed copy would pin either dev or prod for all of them. The app boots
+from the Dart options, so a local copy downloaded from the Console does not leak into a
+prod build — but never commit it. `test/ios_release_config_test.dart` fails if the path
+stops being gitignored, or if a local copy names another bundle id or another project.
+
+Signing, provisioning profiles and App Store Connect upload stay human steps; see
+[`RELEASE_SIGNING.md`](RELEASE_SIGNING.md). CI only compiles iOS unsigned.
 
 ## Running against the emulator
 

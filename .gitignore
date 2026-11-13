@@ -74,3 +74,8 @@ scripts/node_modules/
 # deleted in this change, and kept out by its exact anchored path. A real .zip
 # elsewhere in the tree is still tracked and still scanned.
 /github-mcp-server.zip
+
+# iOS: the app boots from the Dart FirebaseOptions, never from a plist. This
+# path is one file shared by every iOS build, so a committed plist would pin
+# dev or prod for all of them. Keep it ignored and local.
+/ios/Runner/GoogleService-Info.plist

@@ -83,9 +83,12 @@ Add both the upload-key fingerprint and, after the first Play release, the
 ## 5. CI/CD (GitHub Actions)
 
 Branch and PR checks live in `.github/workflows/ci.yml` (push to `main`,
-`pull_request`, manual dispatch): analyze + test, the Firestore rules tests, and a
-**dev** debug APK built with `--flavor dev --dart-define=APP_ENV=dev`. It never builds
-or signs a release artifact.
+`pull_request`, manual dispatch): analyze + test, the Firestore rules tests, a **dev**
+debug APK built with `--flavor dev --dart-define=APP_ENV=dev`, and an unsigned iOS
+release compile on `macos-latest`
+(`flutter build ios --release --no-codesign --dart-define=APP_ENV=prod`). None of these
+jobs signs anything, and the iOS job needs no credentials: it proves the Xcode project
+and Pods compile, not that a signed build is shippable.
 
 Release artifacts come from `.github/workflows/release.yml`, which runs on `v*` tags and
 on manual dispatch only:
