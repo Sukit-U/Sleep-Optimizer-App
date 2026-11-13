@@ -192,5 +192,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The Xcode phase cannot run here (no Xcode), but its check is plain
+      # shell: prove it fails an app-less Release build and passes Debug and
+      # an explicit APP_ENV=prod before trusting the behaviour above.
+      - name: Check the archive guard
+        run: |
+          if CONFIGURATION=Release sh ios/scripts/verify_app_env.sh; then
+            echo "::error::the archive guard passed without --dart-define=APP_ENV"
+            exit 1
+          fi
+          CONFIGURATION=Release DART_DEFINES=QVBQX0VOVj1wcm9k \
+            sh ios/scripts/verify_app_env.sh
+          CONFIGURATION=Debug sh ios/scripts/verify_app_env.sh
+
       - name: Build iOS release without code signing
         run: flutter build ios --release --no-codesign --dart-define=APP_ENV=prod

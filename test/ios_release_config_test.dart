@@ -118,4 +118,32 @@ void main() {
     };
     expect(senderIds, contains(value('GOOGLE_APP_ID').split(':')[1]));
   });
+
+  test('Xcode checks APP_ENV before Flutter builds a Release/Profile app', () {
+    final phase = RegExp(
+      r'([0-9A-F]{24}) /\* Verify APP_ENV \*/ = \{\n\t*isa = PBXShellScriptBuildPhase;[\s\S]*?shellScript = ("[^\n]*");\n\t*\};\n',
+    ).firstMatch(xcodeProject);
+    expect(phase, isNotNull, reason: 'the Verify APP_ENV phase is missing');
+    final phaseId = phase!.group(1)!;
+    expect(phase.group(2), contains('scripts/verify_app_env.sh'));
+
+    // Attached to the Runner target, ahead of Flutter's own script phase, so a
+    // Release/Profile archive stops before any Dart code is built.
+    final runnerTarget = RegExp(
+      r'97C146ED1CF9000F007C117D /\* Runner \*/ = \{\n\t*isa = PBXNativeTarget;[\s\S]*?\n\t*\};\n',
+    ).firstMatch(xcodeProject);
+    expect(runnerTarget, isNotNull, reason: 'the Runner target is missing');
+    final target = runnerTarget!.group(0)!;
+    expect(target, contains(phaseId));
+    expect(
+      target.indexOf(phaseId),
+      lessThan(target.indexOf('/* Run Script */')),
+    );
+
+    final script = File('ios/scripts/verify_app_env.sh');
+    expect(script.existsSync(), isTrue);
+    final body = script.readAsStringSync();
+    expect(body, contains('DART_DEFINES'));
+    expect(body, contains('Release | Profile'));
+  });
 }

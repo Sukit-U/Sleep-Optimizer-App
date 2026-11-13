@@ -181,6 +181,12 @@ an Xcode scheme of that name and fail, so the two platforms cannot share one com
 | Release build without signing | `flutter build ios --release --no-codesign --dart-define=APP_ENV=prod` |
 | Archive from Xcode | `flutter build ios --config-only --release --dart-define=APP_ENV=prod`, then `open ios/Runner.xcworkspace` → Product → Archive |
 
+The Runner target carries a **Verify APP_ENV** build phase ahead of Flutter's own script
+phase: it reads `DART_DEFINES` from `ios/Flutter/Generated.xcconfig` and fails a Release
+or Profile build that names no `APP_ENV`, so the archive itself stops instead of shipping
+a binary that dies at launch. The launch-time guard in
+`lib/app/firebase_environment.dart` stays as the second line of defence.
+
 Android commands keep `--flavor dev|prod` (Gradle uses it to pick the
 `google-services.json`); iOS commands must not carry it, because `APP_ENV` alone selects
 the Dart config there.
