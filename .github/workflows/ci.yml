@@ -207,3 +207,25 @@ jobs:
 
       - name: Build iOS release without code signing
         run: flutter build ios --release --no-codesign --dart-define=APP_ENV=prod
+
+      # Negative case: the same Release build with no APP_ENV must fail inside the
+      # Xcode "Verify APP_ENV" phase, not only at launch. `flutter clean` first so
+      # no cached output can stand in for a rebuilt app, and the failure message is
+      # asserted so a different breakage cannot pass for a working guard.
+      - name: Prove an iOS release build without APP_ENV fails the Xcode phase
+        run: |
+          flutter clean
+          flutter pub get
+          set +e
+          flutter build ios --release --no-codesign > "$RUNNER_TEMP/no-app-env.log" 2>&1
+          status=$?
+          set -e
+          tail -60 "$RUNNER_TEMP/no-app-env.log"
+          if [ "$status" -eq 0 ]; then
+            echo "::error::Verify APP_ENV did not fail the unsigned release build"
+            exit 1
+          fi
+          if ! grep -qE "no --dart-define=APP_ENV|Verify APP_ENV" "$RUNNER_TEMP/no-app-env.log"; then
+            echo "::error::the build failed, but not in the Verify APP_ENV phase"
+            exit 1
+          fi
