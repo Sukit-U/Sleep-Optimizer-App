@@ -15,14 +15,18 @@ import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
 import 'package:snoozemate/features/history/presentation/widgets/delete_sqi_record_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  const HistoryPage({super.key, this.firestoreService});
+
+  /// Injected by tests; production falls back to the real service.
+  final FirestoreService? firestoreService;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService =
+      widget.firestoreService ?? FirestoreService();
   String _selectedTab = 'sqi';
   List<SQIRecord> _sqiRecords = [];
   List<SleepPlan> _sleepPlans = [];
