@@ -93,30 +93,30 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
-          children: [
-            const SectionTitle(title: 'Sleep Quality Check-In'),
-            const SizedBox(height: 8),
-            ..._questions.map((question) => SQIQuestionCard(
-              label: question.label,
-              helper: question.helper,
-              selectedValue: _responses[question.label],
-              hasError: _unansweredTouched.contains(question.label),
-              onSelected: (value) {
-                setState(() {
-                  _responses[question.label] = value;
-                  _unansweredTouched.remove(question.label);
-                });
-              },
-            )),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _isSubmitting ? null : _submit,
-              icon: const Icon(Icons.assessment_rounded),
-              label: Text(_isSubmitting ? 'Saving…' : 'Calculate SQI'),
-            ),
-          ],
+            children: [
+              const SectionTitle(title: 'Sleep Quality Check-In'),
+              const SizedBox(height: 8),
+              ..._questions.map((question) => SQIQuestionCard(
+                label: question.label,
+                helper: question.helper,
+                selectedValue: _responses[question.label],
+                hasError: _unansweredTouched.contains(question.label),
+                onSelected: (value) {
+                  setState(() {
+                    _responses[question.label] = value;
+                    _unansweredTouched.remove(question.label);
+                  });
+                },
+              )),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _isSubmitting ? null : _submit,
+                icon: const Icon(Icons.assessment_rounded),
+                label: Text(_isSubmitting ? 'Saving…' : 'Calculate SQI'),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

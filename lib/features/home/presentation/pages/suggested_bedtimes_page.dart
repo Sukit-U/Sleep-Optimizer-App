@@ -41,7 +41,7 @@ class _BedtimeCard extends StatelessWidget {
           children: [
             Text('Bedtime #$index', style: AppTypography.h2),
             const SizedBox(height: AppSpacing.xs),
-            Text('7:00 PM – 7:30 PM', style: AppTypography.body),
+            Text('7:00 PM – 7:30 PM', style: AppTypography.body),
           ],
         ),
       ),
