@@ -37,6 +37,11 @@ void main() {
     expect(runnerBundleIds.toSet(), {xcodeBundleId});
     expect(xcodeBundleId, isNot(startsWith('com.example')));
 
+    // iosBundleId is what the Dart config claims the app is registered under,
+    // so every recorded iOS app must name the bundle id Xcode signs with.
+    expect(prod.DefaultFirebaseOptions.ios.iosBundleId, xcodeBundleId);
+    expect(dev.DefaultFirebaseOptions.ios.iosBundleId, xcodeBundleId);
+
     // iOS and Android ship as one product, so the bundle id root must match.
     final androidApplicationId = RegExp(r'applicationId = "([^"]+)"')
         .firstMatch(androidGradle)!

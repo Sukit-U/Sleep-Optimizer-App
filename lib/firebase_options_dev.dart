@@ -26,10 +26,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -58,5 +55,14 @@ class DefaultFirebaseOptions {
     messagingSenderId: '564363714331',
     projectId: 'sleep-optimizer-dev',
     storageBucket: 'sleep-optimizer-dev.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBWblo9a8gnO6zCR5y6yZgq2YtBJ1pR8PY',
+    appId: '1:564363714331:ios:e2ce6881627757da3f7dbe',
+    messagingSenderId: '564363714331',
+    projectId: 'sleep-optimizer-dev',
+    storageBucket: 'sleep-optimizer-dev.firebasestorage.app',
+    iosBundleId: 'com.snoozefriend.snoozemate',
   );
 }

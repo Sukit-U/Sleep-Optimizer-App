@@ -70,6 +70,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '790423794853',
     projectId: 'sleep-optimizer-59c83',
     storageBucket: 'sleep-optimizer-59c83.firebasestorage.app',
-    iosBundleId: 'com.example.snoozemate',
+    iosBundleId: 'com.snoozefriend.snoozemate',
   );
 }
