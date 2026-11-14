@@ -41,4 +41,7 @@ regexes = [
   '''^AIzaSyAsuQd3yRFW3s1wfOnZVzNFuSH5-5r6Xhc$''',
   '''^AIzaSyCgtA4hogbsbEqohgODRw2e9lLTE9eI0yE$''',
   '''^AIzaSyDAsvbUUJo2ZxigAASsAjonK-7euzUkMKs$''',
+  # The dev iOS app (1:564363714331:ios:e2ce6881627757da3f7dbe); recorded in
+  # lib/firebase_options_dev.dart from that project's own GoogleService-Info.plist.
+  '''^AIzaSyBWblo9a8gnO6zCR5y6yZgq2YtBJ1pR8PY$''',
 ]
