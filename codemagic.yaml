@@ -1,0 +1,171 @@
+workflows:
+  android-workflow:
+    name: Android Workflow
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      android_signing:
+        # Must match the name the keystore was uploaded under in Codemagic
+        # (App settings → Code signing identities → Android keystore).
+        - snoozefriend_upload
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: "com.snoozefriend.snoozemate"
+        GOOGLE_PLAY_TRACK: "internal"
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
+    triggering:
+      # This workflow publishes to Play, so it runs on release tags only, the
+      # same rule as .github/workflows/release.yml. A push or pull_request
+      # trigger would also publish, once per commit.
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Set up Android signing
+        script: |
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storeFile=$CM_KEYSTORE_PATH
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          keyPassword=$CM_KEY_PASSWORD
+          EOF
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+      - name: Flutter unit tests
+        script: |
+          flutter test
+      - name: Build Android App Bundle (prod)
+        script: |
+          flutter build appbundle --flavor prod --release --dart-define=APP_ENV=prod
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - kaka040352@gmail.com
+        notify:
+          success: true
+          failure: false
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: $GOOGLE_PLAY_TRACK
+        submit_as_draft: true
+
+  ios-workflow:
+    name: iOS Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.snoozefriend.snoozemate
+      vars:
+        # App Store Connect → App → General → App Information → Apple ID.
+        # Nothing in this workflow reads it yet (no build-number increment and
+        # submit_to_testflight/submit_to_app_store are false); uncomment with
+        # the real number before enabling submission.
+        # APP_STORE_APPLE_ID: <10-digit Apple ID>
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
+      xcode: latest
+      cocoapods: default
+    triggering:
+      # Publishes to App Store Connect, so release tags only.
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+      - name: Flutter unit tests
+        script: |
+          flutter test
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release --dart-define=APP_ENV=prod \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - kaka040352@gmail.com
+        notify:
+          success: true
+          failure: false
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
+  # Proves the archive guard on real macOS/Xcode without signing or publishing:
+  # `xcodebuild` runs shell build phases even with --no-codesign, so the
+  # "Verify APP_ENV" phase is exercised without a keychain, a certificate or any
+  # secret. No publishing block, and it is scoped to the branch under review.
+  ios-verify-archive-guard:
+    name: iOS verify APP_ENV guard (unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'feat/ios-release-path'
+          include: true
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: "Positive case: release build with APP_ENV=prod passes the phase"
+        script: |
+          flutter build ios --release --no-codesign --dart-define=APP_ENV=prod
+      - name: "Negative case: release build with no APP_ENV fails the Xcode phase"
+        script: |
+          flutter clean
+          flutter pub get
+          set +e
+          flutter build ios --release --no-codesign > no-app-env.log 2>&1
+          status=$?
+          set -e
+          tail -60 no-app-env.log
+          if [ "$status" -eq 0 ]; then
+            echo "error: Verify APP_ENV did not fail the unsigned release build"
+            exit 1
+          fi
+          if ! grep -qE "no --dart-define=APP_ENV|Verify APP_ENV" no-app-env.log; then
+            echo "error: the build failed, but not in the Verify APP_ENV phase"
+            exit 1
+          fi
+    artifacts:
+      - no-app-env.log

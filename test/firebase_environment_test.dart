@@ -35,4 +35,66 @@ void main() {
       expect(() => firebaseOptionsForEnv('staging'), throwsStateError);
     });
   });
+
+  group('iOS release builds must name their environment', () {
+    test('an implicit APP_ENV fails an iOS release build', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      expect(
+        () => rejectImplicitEnvOnIos(
+          env: 'dev',
+          envWasProvided: false,
+          isReleaseBuild: true,
+        ),
+        throwsA(isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('--dart-define=APP_ENV=prod'),
+        )),
+      );
+    });
+
+    test('an explicit APP_ENV=prod is accepted', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      expect(
+        () => rejectImplicitEnvOnIos(
+          env: 'prod',
+          envWasProvided: true,
+          isReleaseBuild: true,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('debug iOS builds keep the dev default', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      expect(
+        () => rejectImplicitEnvOnIos(
+          env: 'dev',
+          envWasProvided: false,
+          isReleaseBuild: false,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('Android release builds are untouched', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      expect(
+        () => rejectImplicitEnvOnIos(
+          env: 'dev',
+          envWasProvided: false,
+          isReleaseBuild: true,
+        ),
+        returnsNormally,
+      );
+    });
+  });
 }
