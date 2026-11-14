@@ -66,7 +66,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCgtA4hogbsbEqohgODRw2e9lLTE9eI0yE',
-    appId: '1:790423794853:ios:618f0814255930491fc94c',
+    appId: '1:790423794853:ios:6d0bdd4fa56c8f5f1fc94c',
     messagingSenderId: '790423794853',
     projectId: 'sleep-optimizer-59c83',
     storageBucket: 'sleep-optimizer-59c83.firebasestorage.app',
