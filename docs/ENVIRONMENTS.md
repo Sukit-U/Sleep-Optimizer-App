@@ -149,6 +149,55 @@ Owner actions (Console, human only) before iOS can be called ready:
 4. Re-run `flutter test`: `test/ios_release_config_test.dart` pins the Xcode bundle id,
    both app ids, and the `iosBundleId` of both Dart configs.
 
+### One bundle id for both environments (deliberate)
+
+iOS uses **one bundle id, `com.snoozefriend.snoozemate`, for every configuration and both
+environments**. Only the Firebase project changes, chosen at compile time by `APP_ENV`.
+This is a decision, not an oversight, and it differs from Android on purpose:
+
+- iOS has a single Xcode configuration set (`Debug`, `Release`, `Profile`) and a single
+  scheme (`ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme`). There are no iOS
+  flavors, so nothing in the build selects a second app identity.
+- Firebase does not require unique bundle ids across projects: `sleep-optimizer-dev` and
+  `sleep-optimizer-59c83` each hold an iOS app registered under the same bundle id, and
+  the `appId` inside `firebase_options*.dart` is what routes a build to a project.
+- Android keeps `applicationIdSuffix = ".dev"`, so the two Android apps *are* distinct
+  installs. That asymmetry is intended: Android has flavors, iOS does not.
+
+**Trade-off, accepted:** to iOS the dev build and the prod build are the same app.
+
+- Both **cannot be installed on one device or simulator at the same time** — installing
+  one replaces the other, including its local storage and Keychain items.
+- No side-by-side comparison of dev and prod on a single device; switch builds, or use a
+  second device/simulator.
+- Push (APNs), Keychain groups and any future Associated Domains identity are shared
+  between the two environments on that device.
+
+**If this ever needs to change**, do it as its own change, never as a drive-by edit, and
+register the extra app in the Console first (that step is human-only):
+
+- **Option B — bundle id per configuration.** Move `PRODUCT_BUNDLE_IDENTIFIER` out of the
+  Runner target into `ios/Flutter/Debug.xcconfig` (`.dev`) and
+  `ios/Flutter/Release.xcconfig` (prod, also used by `Profile`); prefix the `RunnerTests`
+  ids with `$(PRODUCT_BUNDLE_IDENTIFIER)`. CI stays unchanged (`--release` is already
+  prod). Cost: a `dev` **release/profile** build becomes impossible, because the
+  environment is then tied to the configuration.
+- **Option C — real iOS flavors, mirroring Android.** Add six configurations
+  (`Debug/Profile/Release` × `dev/prod`), a `dev` and a `prod` scheme, and pass
+  `--flavor <env>` in `ci.yml` (both iOS steps), both `codemagic.yaml` workflows and the
+  `ios-verify-archive-guard` workflow. `ios/scripts/verify_app_env.sh` and
+  `test/ios_release_config_test.dart` have to learn the flavor → `APP_ENV` mapping.
+
+Either option also touches `lib/firebase_options_dev.dart` (`iosBundleId` plus the new
+`appId`/`apiKey`), the `.gitleaks.toml` key allowlist, and the tables above. The **prod**
+bundle id must stay `com.snoozefriend.snoozemate` forever: it is the App Store identity
+and cannot be renamed after release.
+
+Today `test/ios_release_config_test.dart` enforces the single-id policy: it fails if the
+three Runner configurations, the two `iosBundleId` values and the Android application id
+ever drift apart, so separating the environments cannot happen by accident.
+
+
 ### How the Dart side picks a project
 
 `lib/app/bootstrap.dart` calls `Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv))`.
