@@ -78,4 +78,9 @@ scripts/node_modules/
 # iOS: the app boots from the Dart FirebaseOptions, never from a plist. This
 # path is one file shared by every iOS build, so a committed plist would pin
 # dev or prod for all of them. Keep it ignored and local.
+#
+# Per-environment copies downloaded from the Console (the prod app's plist, for
+# example) are parked next to it only long enough to read an app id, so they are
+# ignored under any suffix as well.
 /ios/Runner/GoogleService-Info.plist
+/ios/Runner/GoogleService-Info.*.plist
