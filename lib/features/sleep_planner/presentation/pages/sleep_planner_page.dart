@@ -10,14 +10,18 @@ import '../../../../shared/widgets/bedtime_option_card.dart';
 import '../../../../shared/widgets/planner_save_button.dart';
 
 class SleepPlannerPage extends StatefulWidget {
-  const SleepPlannerPage({super.key});
+  const SleepPlannerPage({super.key, this.firestoreService});
+
+  /// Injected by tests; the app passes nothing and gets the real service.
+  final FirestoreService? firestoreService;
 
   @override
   State<SleepPlannerPage> createState() => _SleepPlannerPageState();
 }
 
 class _SleepPlannerPageState extends State<SleepPlannerPage> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService =
+      widget.firestoreService ?? FirestoreService();
 
   DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
   double _latency = 15; // default 15 mins
@@ -35,6 +39,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   bool _showWakeUpTimeError = false;
   int? _chosenCycles;
   bool _saved = false;
+  bool _isSaving = false;
 
   bool get _isDirty => _hasSelectedWakeUpTime || _chosenCycles != null;
 
@@ -98,6 +103,17 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   }
 
   Future<void> _handleSave() async {
+    // A second tap while the write is in flight would create a second plan.
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    try {
+      await _save();
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _save() async {
     final colors = Theme.of(context).colorScheme;
     final auth = context.read<AuthService>();
     final messenger = ScaffoldMessenger.of(context);
@@ -324,7 +340,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 // ── Save Button ──
                 PlannerSaveButton(
                   saved: _saved,
-                  onPressed: _handleSave,
+                  saving: _isSaving,
+                  onPressed: _isSaving ? null : _handleSave,
                 ),
                 const SizedBox(height: 48),
               ],

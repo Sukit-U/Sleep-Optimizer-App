@@ -4,7 +4,9 @@ import '../models/sqi_record_model.dart';
 import '../models/recommendation_model.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // A getter, not a field: a test subclass can then exist without a
+  // Firebase.initializeApp() call.
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   // SleepPlan operations
   Future<String> addSleepPlan(SleepPlan sleepPlan) async {

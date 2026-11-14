@@ -4,23 +4,31 @@ import 'package:google_fonts/google_fonts.dart';
 /// A full-width save button for the sleep planner.
 ///
 /// Shows a bookmark icon by default, or a checkmark when [saved] is true.
+/// While [saving] is true the label reads "Saving…" and the button is dead.
 class PlannerSaveButton extends StatelessWidget {
   final bool saved;
+  final bool saving;
   final VoidCallback? onPressed;
 
   const PlannerSaveButton({
     super.key,
     this.saved = false,
+    this.saving = false,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final label = saving
+        ? 'Saving…'
+        : saved
+        ? 'Saved to history'
+        : 'Save plan';
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
-        onTap: onPressed,
+        onTap: saving ? null : onPressed,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
@@ -45,7 +53,7 @@ class PlannerSaveButton extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                saved ? 'Saved to history' : 'Save plan',
+                label,
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
