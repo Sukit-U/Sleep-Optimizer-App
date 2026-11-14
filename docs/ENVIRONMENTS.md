@@ -103,34 +103,40 @@ than from the CLI:
 | `firebase.json` → `flutter.platforms` | android `b834…`, dart android `b834…`, dart ios `1:790423794853:ios:618f0814255930491fc94c` |
 | `ios/Runner.xcodeproj` `PRODUCT_BUNDLE_IDENTIFIER` (Debug, Profile, Release) | `com.snoozefriend.snoozemate` |
 | `lib/firebase_options.dart` → `ios.appId` | `1:790423794853:ios:618f0814255930491fc94c` (same as `firebase.json`) |
-| `lib/firebase_options.dart` → `ios.iosBundleId` | `com.example.snoozemate` — **does not match** the Xcode bundle id |
-| `lib/firebase_options_dev.dart` → iOS | **absent** — no iOS app is recorded for the dev project |
+| `lib/firebase_options.dart` → `ios.iosBundleId` | `com.snoozefriend.snoozemate` — matches the Xcode bundle id |
+| `lib/firebase_options_dev.dart` → `ios` | `sleep-optimizer-dev` → `1:564363714331:ios:e2ce6881627757da3f7dbe` → bundle id `com.snoozefriend.snoozemate` |
 | `ios/Runner/GoogleService-Info.plist` | **not committed, gitignored** — one path shared by every iOS build |
 
-Android is consistent end to end. **iOS is not verified end to end**, and the files in
-this repository disagree:
+Android is consistent end to end. **iOS now names the same bundle id everywhere, with
+one owner-only check left**:
 
 - `ios/Runner.xcodeproj` sets `PRODUCT_BUNDLE_IDENTIFIER = com.snoozefriend.snoozemate`
-  for Debug, Profile and Release, but
-- `lib/firebase_options.dart` still carries `iosBundleId: 'com.example.snoozemate'` for
-  the iOS app id `1:790423794853:ios:618f0814255930491fc94c`, and
-- `lib/firebase_options_dev.dart` has **no iOS entry at all**, so a `dev` iOS build
-  cannot start (it stops with a `StateError` that names the owner steps).
+  for Debug, Profile and Release,
+- `lib/firebase_options.dart` claims the same id as `ios.iosBundleId`, for the prod iOS app
+  `1:790423794853:ios:618f0814255930491fc94c`, and
+- `lib/firebase_options_dev.dart` now has an `ios` entry built from the dev project's own
+  `GoogleService-Info.plist` (`1:564363714331:ios:e2ce6881627757da3f7dbe`, bundle id
+  `com.snoozefriend.snoozemate`), so a `dev` iOS build starts instead of stopping at a
+  `StateError`.
 
-Both Dart files are generated, and only the Console knows which bundle id an app id is
-registered under. That is not recorded here, so **whether `…:ios:618f…` belongs to
-`com.example.snoozemate` or to the new `com.snoozefriend.snoozemate` is unknown in this
-repository**. Do not hand-edit `iosBundleId` and do not invent an app id: a bundle id
-with no registered iOS app breaks Firebase Auth at runtime.
+`iosBundleId` does not choose the project — `appId` does — so a stale value misleads
+rather than switching a build to a different project. What this repository still cannot
+prove is **which bundle id the Console holds the prod app `…:ios:618f…` under**; the entry
+now claims the id Xcode signs with. Verify that once in the Console, and never invent an
+app id: a bundle id with no registered iOS app breaks Firebase Auth at runtime.
 
 Owner actions (Console, human only) before iOS can be called ready:
 
-1. **Dev iOS app.** In `sleep-optimizer-dev` → Project settings → Your apps →
-   *Add app* → iOS, bundle ID `com.snoozefriend.snoozemate.dev` (mirrors the Android
-   `.dev` suffix; the exact id is your choice as long as Xcode uses the same one).
-2. **Prod iOS app.** In `sleep-optimizer-59c83`, either register a new iOS app for
-   `com.snoozefriend.snoozemate`, or point Xcode back at `com.example.snoozemate`. Pick
-   one: the Xcode bundle id and the Firebase iOS app must name the same id.
+1. **Dev iOS app — recorded.** `sleep-optimizer-dev` already holds an iOS app for
+   `com.snoozefriend.snoozemate` (`1:564363714331:ios:e2ce6881627757da3f7dbe`), and
+   `lib/firebase_options_dev.dart` carries it. If the Console ever re-registers that app
+   under a different bundle id (say `com.snoozefriend.snoozemate.dev`), change Xcode and
+   both Dart files in one commit.
+2. **Prod iOS app — verify once.** In `sleep-optimizer-59c83` → Project settings → Your
+   apps, confirm `1:790423794853:ios:618f0814255930491fc94c` is the app registered for
+   `com.snoozefriend.snoozemate`. If it belongs to `com.example.snoozemate`, either
+   register a new iOS app for `com.snoozefriend.snoozemate` and regenerate, or point Xcode
+   back — the Xcode bundle id and the Firebase iOS app must name the same id.
 3. **Regenerate**, one target at a time, never overwriting the other file:
    ```bash
    flutterfire configure --yes --project=sleep-optimizer-dev --platforms=android,ios \
@@ -140,8 +146,8 @@ Owner actions (Console, human only) before iOS can be called ready:
      --out=lib/firebase_options.dart \
      --android-out=android/app/src/prod/google-services.json
    ```
-4. Re-run `flutter test`: `test/ios_release_config_test.dart` pins the Xcode bundle id
-   and both app ids, and checks that a dev iOS entry, once it exists, matches both.
+4. Re-run `flutter test`: `test/ios_release_config_test.dart` pins the Xcode bundle id,
+   both app ids, and the `iosBundleId` of both Dart configs.
 
 ### How the Dart side picks a project
 
