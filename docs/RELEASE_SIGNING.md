@@ -3,13 +3,17 @@
 How Android release builds are signed, and the steps left for you because the
 keystore itself must be created and owned by you.
 
-> **Current state (2026-11-08):** `android/app/build.gradle.kts` reads
-> `android/key.properties` and signs the `release` build type with a `release`
-> signing config built from it. **No keystore has been generated yet**, so until
-> you do §1–§2, `flutter build apk --release --flavor prod --dart-define=APP_ENV=prod`
-> produces an *unsigned* artifact and Gradle prints
+> **Current state:** `android/app/build.gradle.kts` reads `android/key.properties`
+> and signs the `release` build type with a `release` signing config built from it.
+> **No keystore has been generated yet**, so a local
+> `flutter build apk --release --flavor prod --dart-define=APP_ENV=prod` produces an
+> *unsigned* artifact and Gradle prints
 > `android/key.properties not found — release builds will be UNSIGNED`.
 > Release builds are never signed with the debug key.
+>
+> The tag-driven release workflow in §5 does **not** tolerate that: without the
+> keystore secrets it fails before building, and it re-verifies the signature of
+> every artifact before uploading it.
 
 ## 1. Generate the upload keystore
 
@@ -90,16 +94,46 @@ release compile on `macos-latest`
 jobs signs anything, and the iOS job needs no credentials: it proves the Xcode project
 and Pods compile, not that a signed build is shippable.
 
-Release artifacts come from `.github/workflows/release.yml`, which runs on `v*` tags and
-on manual dispatch only:
+Release artifacts come from `.github/workflows/release.yml`, which runs on `v*` tags (and
+on a manual dispatch, but only when the dispatch targets a tag ref). The tag is the only
+source of truth for the version.
 
 | Job | What it does |
 |---|---|
-| `verify` | `flutter analyze` + `flutter test` |
-| `build-android` (needs `verify`) | prod AAB + APK, uploaded as `app-prod-release-aab` / `app-prod-release-apk` |
+| `verify` | `flutter analyze`, `flutter test`, and the release-version self-test |
+| `build-android` (needs `verify`) | derives the version from the tag, checks the signing secrets, builds prod AAB + APK, verifies both signatures, uploads `app-prod-release-aab` / `app-prod-release-apk` |
 
-That job recreates the two local files above from repository secrets
-(Settings → Secrets and variables → Actions):
+### Version comes from the tag
+
+`scripts/android-release-version.sh` turns the tag into the Android version fields:
+
+| Tag | versionName | versionCode |
+|---|---|---|
+| `v1.0.0` | `1.0.0` | `10000` |
+| `v1.2.3` | `1.2.3` | `10203` |
+| `v2.4.99` | `2.4.99` | `20499` |
+
+`versionCode = MAJOR * 10000 + MINOR * 100 + PATCH`, so a higher semver is always a
+higher code and two releases never share one. The script rejects anything that is not
+`vMAJOR.MINOR.PATCH`: no missing prefix, no `-rc1`/`+2` suffix, no two- or four-part
+tags, no leading zeros. It also enforces the Android/Play limits: `MINOR` and `PATCH`
+below 100 (so the code keeps semver order) and `MAJOR` below 210000 (Play caps
+versionCode at 2100000000).
+
+Rules that follow from that:
+
+- **A fix ships as a new tag.** Re-running the same tag produces the same versionCode,
+  and Play rejects a second upload that reuses a code it already holds.
+- **A dispatch from a branch fails.** There is no tag to take a version from, so the
+  workflow stops with an error instead of inventing one. Dispatch from the tag:
+  `gh workflow run release.yml --ref v1.2.3`.
+- `pubspec.yaml`'s `version:` is not consulted for releases; `--build-name` and
+  `--build-number` override it for the build.
+
+### Signing is required, not optional
+
+`build-android` recreates the two local files above from repository secrets
+(Settings → Secrets and variables → Actions). All three are required:
 
 | Secret | Value |
 |---|---|
@@ -107,31 +141,22 @@ That job recreates the two local files above from repository secrets
 | `ANDROID_KEYSTORE_PASSWORD` | `storePassword` |
 | `ANDROID_KEY_PASSWORD` | `keyPassword` |
 
-The alias is fixed to `upload` in the workflow, so generate the keystore with
-`-alias upload` (§1) or update the workflow. Without the secrets the job still runs,
-prints a warning annotation, and produces an **unsigned** bundle and APK — it never
-falls back to the debug key. The signing and build steps in `release.yml`:
+Before building, the job restores the keystore and runs
+`keytool -list -keystore android/upload-keystore.jks -alias upload -storepass:env …`,
+so a wrong alias or store password fails there. The alias is fixed to `upload`
+(generate the keystore with `-alias upload`, §1, or update the workflow).
 
-```yaml
-- name: Restore upload keystore
-  if: env.ANDROID_KEYSTORE_BASE64 != ''
-  run: |
-    printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
-    cat > android/key.properties <<PROPERTIES
-    storeFile=upload-keystore.jks
-    keyAlias=upload
-    storePassword=$ANDROID_KEYSTORE_PASSWORD
-    keyPassword=$ANDROID_KEY_PASSWORD
-    PROPERTIES
+After building, it verifies the artifacts instead of trusting Gradle:
 
-- name: Build App Bundle
-  run: flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
+- fails if Gradle produced any `*unsigned*` APK;
+- `jarsigner -verify` must report `jar verified` for the AAB;
+- `apksigner verify --print-certs` must accept the APK, and its signer certificate
+  SHA-256 must equal the `upload` key's fingerprint from the restored keystore;
+- `aapt dump badging` must report the tag's `versionCode` and `versionName`.
 
-- name: Build APK
-  run: flutter build apk --release --flavor prod --dart-define=APP_ENV=prod
-```
+The upload steps use exact paths (no `*-unsigned*` glob) and `if-no-files-found: error`,
+so a missing or unsigned artifact fails the run rather than being published.
 
-The keystore written into the workspace is gitignored, and CI runners are disposable.
 
 ## 6. Play App Signing
 
@@ -144,8 +169,8 @@ own app signing key and lose it, the app can never be updated again.
 
 | Symptom | Cause / fix |
 |---|---|
-| `android/key.properties not found — release builds will be UNSIGNED` | Expected until §2 is done. Create the file. |
+| `android/key.properties not found — release builds will be UNSIGNED` | Local build without §2. Create the file; the release workflow refuses to run unsigned instead. |
 | `Keystore was tampered with, or password was incorrect` | Wrong `storePassword`/`keyPassword`, or `storeFile` points at a different keystore. |
 | `Failed to read key upload from store` | `keyAlias` does not match the alias used in `keytool -genkey` (`upload` above). |
 | `You must specify a --flavor` | Flavored build without a flavor; add `--flavor prod --dart-define=APP_ENV=prod`. |
-| Play rejects the upload | The AAB was unsigned (no `key.properties`) or signed with a different upload key than the one Play has on file. |
+| Play rejects the upload | Signed with a different upload key than the one Play has on file, or the versionCode was already used by an earlier tag. |
