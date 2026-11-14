@@ -1,10 +1,17 @@
 name: Release
 
-# Production artifacts only. Every build here is tagged `v*` and produces the
-# prod flavor; branch/PR checks live in ci.yml.
+# Production artifacts only. Every build here is tagged `vMAJOR.MINOR.PATCH` and
+# produces the prod flavor; branch/PR checks live in ci.yml.
+#
+# A release is never published unsigned: the signing secrets are required, and
+# the built artifacts are verified to carry the upload key's certificate before
+# they are uploaded. See docs/RELEASE_SIGNING.md §5.
 on:
   push:
     tags: ['v*']
+  # Manual runs must be dispatched from a tag ref (the UI asks for it):
+  #   gh workflow run release.yml --ref v1.2.3
+  # A dispatch from a branch has no tag to take the version from and fails.
   workflow_dispatch:
 
 concurrency:
@@ -46,15 +53,24 @@ jobs:
       - name: Test
         run: flutter test
 
+      # The version rules are plain shell, so they are proven here before a tag
+      # that breaks them can produce an artifact.
+      - name: Check the release version rules
+        run: sh scripts/android-release-version.sh --self-test
+
   build-android:
-    name: Build prod AAB + APK
+    name: Build signed prod AAB + APK
     needs: [verify]
     runs-on: ubuntu-latest
     env:
       # Repository secrets (Settings → Secrets and variables → Actions).
-      # See docs/RELEASE_SIGNING.md §5; without them the artifacts are unsigned.
+      # See docs/RELEASE_SIGNING.md §5. The first three are required: a run
+      # without them fails here instead of uploading an unsigned artifact.
+      # ANDROID_KEY_PASSWORD is optional and defaults to the store password,
+      # which is what most upload keystores use.
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
@@ -73,29 +89,176 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Warn when signing secrets are missing
-        if: env.ANDROID_KEYSTORE_BASE64 == ''
-        run: echo "::warning::ANDROID_KEYSTORE_BASE64 is not set — these artifacts will be UNSIGNED"
-
-      - name: Restore upload keystore
-        if: env.ANDROID_KEYSTORE_BASE64 != ''
+      # The tag decides the version, so a dispatch from a branch stops here
+      # rather than inventing one.
+      - name: Derive the version from the release tag
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
+          if [ "$REF_TYPE" != "tag" ]; then
+            echo "::error::release builds run from a vMAJOR.MINOR.PATCH tag, but this run is on $REF_TYPE '$REF_NAME'. Dispatch it from the tag instead (gh workflow run release.yml --ref vX.Y.Z)."
+            exit 1
+          fi
+          # The outputs are read by the build steps below; the summary job
+          # record prints them once the artifacts exist.
+          sh scripts/android-release-version.sh "$REF_NAME" >> "$GITHUB_OUTPUT"
+
+      # The tag decides the version, so a stale pubspec must not ride along
+      # silently: the artifact would say one version and the source another.
+      - name: Check pubspec matches the tag
+        env:
+          EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          declared=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -1 | tr -d '\r')
+          declared_name=${declared%%+*}
+          if [ "$declared_name" != "$EXPECTED_NAME" ]; then
+            echo "::error::pubspec.yaml declares version $declared_name but the tag is v$EXPECTED_NAME; bump pubspec.yaml (or retag) so both name the same version."
+            exit 1
+          fi
+
+      - name: Require the signing secrets
+        run: |
+          missing=""
+          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ]; then missing="$missing ANDROID_KEYSTORE_BASE64"; fi
+          if [ -z "${ANDROID_KEYSTORE_PASSWORD:-}" ]; then missing="$missing ANDROID_KEYSTORE_PASSWORD"; fi
+          if [ -z "${ANDROID_KEYSTORE_ALIAS:-}" ]; then missing="$missing ANDROID_KEYSTORE_ALIAS"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::missing repository secrets:$missing. A release is never published unsigned; set them per docs/RELEASE_SIGNING.md §5. (ANDROID_KEY_PASSWORD is optional and falls back to ANDROID_KEYSTORE_PASSWORD.)"
+            exit 1
+          fi
+
+      # Restores the upload keystore and proves the alias, store password and
+      # key password actually work, so a bad secret fails here instead of at
+      # Gradle time or, worse, at Play upload time.
+      - name: Restore and check the upload keystore
+        env:
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          alias_name="$ANDROID_KEYSTORE_ALIAS"
+          key_password="${KEY_PASSWORD:-${ANDROID_KEYSTORE_PASSWORD}}"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          if [ ! -s android/upload-keystore.jks ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 decoded to an empty file; check the secret."
+            exit 1
+          fi
+          if ! keytool -list -keystore android/upload-keystore.jks -alias "$alias_name" \
+              -storepass:env ANDROID_KEYSTORE_PASSWORD > /dev/null; then
+            echo "::error::no usable '$alias_name' alias in the keystore with ANDROID_KEYSTORE_PASSWORD; check ANDROID_KEYSTORE_ALIAS and ANDROID_KEYSTORE_PASSWORD (docs/RELEASE_SIGNING.md §5)."
+            exit 1
+          fi
+          # Using the private key is what Gradle needs; a wrong key password is
+          # rejected here rather than surfacing as an unsigned artifact.
+          export RESOLVED_KEY_PASSWORD="$key_password"
+          if ! keytool -certreq -keystore android/upload-keystore.jks -alias "$alias_name" \
+              -storepass:env ANDROID_KEYSTORE_PASSWORD \
+              -keypass:env RESOLVED_KEY_PASSWORD > /dev/null; then
+            echo "::error::the key password for '$alias_name' is wrong; set ANDROID_KEY_PASSWORD, or leave it empty when it equals ANDROID_KEYSTORE_PASSWORD."
+            exit 1
+          fi
           cat > android/key.properties <<PROPERTIES
           storeFile=upload-keystore.jks
-          keyAlias=upload
+          keyAlias=$alias_name
           storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyPassword=$ANDROID_KEY_PASSWORD
+          keyPassword=$key_password
           PROPERTIES
 
       - name: Build App Bundle
-        run: flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
+        run: >-
+          flutter build appbundle --release --flavor prod
+          --dart-define=APP_ENV=prod
+          --build-name=${{ steps.version.outputs.version_name }}
+          --build-number=${{ steps.version.outputs.version_code }}
 
       - name: Build APK
-        run: flutter build apk --release --flavor prod --dart-define=APP_ENV=prod
+        run: >-
+          flutter build apk --release --flavor prod
+          --dart-define=APP_ENV=prod
+          --build-name=${{ steps.version.outputs.version_name }}
+          --build-number=${{ steps.version.outputs.version_code }}
+
+      # Gradle silently emits app-prod-release-unsigned.apk when the signing
+      # config is missing, so the artifacts are checked, not assumed: the AAB
+      # must verify as a signed JAR, the APK must verify with apksigner, the
+      # signing certificate must be the one in the restored keystore, and the
+      # version inside the APK must be the tag's.
+      - name: Verify the artifacts are signed with the upload key
+        env:
+          EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_CODE: ${{ steps.version.outputs.version_code }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          aab="build/app/outputs/bundle/prodRelease/app-prod-release.aab"
+          apk="build/app/outputs/flutter-apk/app-prod-release.apk"
+          logs="$RUNNER_TEMP/signing-check"
+          mkdir -p "$logs"
+
+          if ls build/app/outputs/flutter-apk/*unsigned* > /dev/null 2>&1; then
+            echo "::error::Gradle produced an unsigned APK, so the signing configuration was not applied."
+            exit 1
+          fi
+          for artifact in "$aab" "$apk"; do
+            if [ ! -f "$artifact" ]; then
+              echo "::error::expected artifact $artifact is missing."
+              exit 1
+            fi
+          done
+
+          if ! jarsigner -verify "$aab" > "$logs/aab.txt" 2>&1 || ! grep -q "jar verified" "$logs/aab.txt"; then
+            echo "::error::the AAB is not signed (jarsigner -verify did not report 'jar verified')."
+            tail -20 "$logs/aab.txt"
+            exit 1
+          fi
+
+          sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          build_tools=$(ls -d "$sdk"/build-tools/*/ 2>/dev/null | sort -V | tail -1)
+          if [ -z "$build_tools" ]; then
+            echo "::error::no Android build-tools found under '$sdk'; cannot verify the APK signature."
+            exit 1
+          fi
+          "${build_tools}apksigner" verify --print-certs "$apk" > "$logs/apk.txt" 2>&1 || {
+            echo "::error::apksigner rejected the APK signature."
+            tail -20 "$logs/apk.txt"
+            exit 1
+          }
+
+          # Certificate the restored keystore holds, normalised to lowercase hex.
+          export RESOLVED_KEY_PASSWORD="${KEY_PASSWORD:-${ANDROID_KEYSTORE_PASSWORD}}"
+          expected=$(keytool -list -v -keystore android/upload-keystore.jks -alias "$ANDROID_KEYSTORE_ALIAS" \
+            -storepass:env ANDROID_KEYSTORE_PASSWORD \
+            | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':' | tr 'A-F' 'a-f')
+          actual=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$logs/apk.txt" | tr 'A-F' 'a-f')
+          if [ -z "$expected" ]; then
+            echo "::error::could not read the SHA-256 fingerprint of the '$ANDROID_KEYSTORE_ALIAS' key."
+            exit 1
+          fi
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::the APK is signed, but not with the 'upload' key from ANDROID_KEYSTORE_BASE64."
+            exit 1
+          fi
+
+          # What Play reads as versionCode/versionName, straight from the APK.
+          "${build_tools}aapt2" dump badging "$apk" > "$logs/badging.txt" 2>/dev/null \
+            || "${build_tools}aapt" dump badging "$apk" > "$logs/badging.txt"
+          first=$(head -1 "$logs/badging.txt")
+          case $first in
+            *"versionCode='$EXPECTED_CODE'"*) ;;
+            *) echo "::error::APK versionCode is not $EXPECTED_CODE: $first"; exit 1 ;;
+          esac
+          case $first in
+            *"versionName='$EXPECTED_NAME'"*) ;;
+            *) echo "::error::APK versionName is not $EXPECTED_NAME: $first"; exit 1 ;;
+          esac
+          echo "signed by the upload key, version $EXPECTED_NAME ($EXPECTED_CODE)"
 
       # Flavored outputs are named app-<flavor>-<buildType>.* and live under a
-      # <flavor><BuildType> directory.
+      # <flavor><BuildType> directory. Exact paths, no glob: an unsigned build
+      # must fail here instead of being uploaded under the signed name.
       - name: Upload App Bundle
         uses: actions/upload-artifact@v7
         with:
@@ -108,8 +271,23 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: app-prod-release-apk
-          # Glob, because Gradle appends "-unsigned" when the signing secrets
-          # are absent (see docs/RELEASE_SIGNING.md).
-          path: build/app/outputs/flutter-apk/app-prod-release*.apk
+          path: build/app/outputs/flutter-apk/app-prod-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Write the build summary
+        env:
+          EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_CODE: ${{ steps.version.outputs.version_code }}
+        run: |
+          {
+            echo "### Release $GITHUB_REF_NAME"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| versionName | \`$EXPECTED_NAME\` |"
+            echo "| versionCode | \`$EXPECTED_CODE\` |"
+            echo "| flavor / APP_ENV | \`prod\` / \`prod\` |"
+            echo "| signing | verified against the upload key in \`ANDROID_KEYSTORE_BASE64\` |"
+            echo "| Upload to Play | not performed by this workflow |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -43,6 +43,11 @@ jobs:
       - name: Test
         run: flutter test
 
+      # Release builds take their version from a tag; these rules decide
+      # versionName/versionCode, so a broken one must fail before it ships.
+      - name: Check the release version rules
+        run: sh scripts/android-release-version.sh --self-test
+
   # Fails the build when a real credential is committed — in the working tree
   # or in any commit the pull request adds. The scanner is pinned and checksum
   # verified, and every finding is printed with --redact so a live secret never
