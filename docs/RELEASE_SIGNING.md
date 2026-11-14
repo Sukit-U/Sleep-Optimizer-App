@@ -127,24 +127,28 @@ Rules that follow from that:
 - **A dispatch from a branch fails.** There is no tag to take a version from, so the
   workflow stops with an error instead of inventing one. Dispatch from the tag:
   `gh workflow run release.yml --ref v1.2.3`.
-- `pubspec.yaml`'s `version:` is not consulted for releases; `--build-name` and
-  `--build-number` override it for the build.
+- **`pubspec.yaml` must name the same version.** The workflow reads `version:` (ignoring
+  its `+build` part) and fails when it differs from the tag, so the source and the
+  artifact never disagree. The build number is not read from pubspec at all; `--build-name`
+  and `--build-number` come from the tag.
 
 ### Signing is required, not optional
 
 `build-android` recreates the two local files above from repository secrets
 (Settings → Secrets and variables → Actions). All three are required:
 
-| Secret | Value |
-|---|---|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -w 0 android/upload-keystore.jks` |
-| `ANDROID_KEYSTORE_PASSWORD` | `storePassword` |
-| `ANDROID_KEY_PASSWORD` | `keyPassword` |
+| Secret | Required | Value |
+|---|---|---|
+| `ANDROID_KEYSTORE_BASE64` | yes | the keystore file, base64 encoded in one line |
+| `ANDROID_KEYSTORE_PASSWORD` | yes | `storePassword` |
+| `ANDROID_KEYSTORE_ALIAS` | yes | `keyAlias` |
+| `ANDROID_KEY_PASSWORD` | no | `keyPassword`; when unset it falls back to `ANDROID_KEYSTORE_PASSWORD` |
 
-Before building, the job restores the keystore and runs
-`keytool -list -keystore android/upload-keystore.jks -alias upload -storepass:env …`,
-so a wrong alias or store password fails there. The alias is fixed to `upload`
-(generate the keystore with `-alias upload`, §1, or update the workflow).
+Before building, the job restores the keystore and opens it with `keytool -list`, using
+`ANDROID_KEYSTORE_ALIAS` and `ANDROID_KEYSTORE_PASSWORD` through `-storepass:env` so no
+password reaches the log. It then requests a certificate signing request for that alias,
+which is the only way to prove `keyPassword` works without exporting the key: a wrong key
+password fails there instead of turning into an unsigned artifact.
 
 After building, it verifies the artifacts instead of trusting Gradle:
 
