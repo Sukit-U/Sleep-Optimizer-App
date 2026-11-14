@@ -119,6 +119,26 @@ void main() {
     expect(senderIds, contains(value('GOOGLE_APP_ID').split(':')[1]));
   });
 
+  test('the storyboards Xcode compiles are well-formed XIB documents', () {
+    // `flutter build ios` fails inside Xcode with "Extra content at the end of
+    // the document" when a storyboard carries a duplicated closing tag, and
+    // nothing else in the repository parses these files.
+    for (final path in [
+      'ios/Runner/Base.lproj/Main.storyboard',
+      'ios/Runner/Base.lproj/LaunchScreen.storyboard',
+    ]) {
+      final body = read(path);
+      expect('<document'.allMatches(body), hasLength(1), reason: path);
+      expect('</document>'.allMatches(body), hasLength(1), reason: path);
+      expect(body.trimRight(), endsWith('</document>'), reason: path);
+
+      // `resources` is a sibling of `scenes`, never a child of it.
+      final scenes = RegExp(r'<scenes>[\s\S]*?</scenes>').firstMatch(body);
+      expect(scenes, isNotNull, reason: path);
+      expect(scenes!.group(0), isNot(contains('<resources')), reason: path);
+    }
+  });
+
   test('Xcode checks APP_ENV before Flutter builds a Release/Profile app', () {
     final phase = RegExp(
       r'([0-9A-F]{24}) /\* Verify APP_ENV \*/ = \{\n\t*isa = PBXShellScriptBuildPhase;[\s\S]*?shellScript = ("[^\n]*");\n\t*\};\n',
