@@ -76,4 +76,10 @@ jobs:
           fi
 
           keytool -list -v -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS 2>/dev/null \
-            | sed -n 's/^[[:space:]]*SHA256: /PROBE cert_sha256=/p' | tr -d ':' | tr 'A-F' 'a-f' || true
+            | grep -i 'SHA256' | head -1 | tr -d ':' | tr 'A-F' 'a-f' | sed 's/^[[:space:]]*/PROBE cert_/' || report 'cert_fingerprint=unreadable'
+          if keytool -exportcert -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS \
+              -file /tmp/cert.der > /dev/null 2>&1; then
+            report "cert_der_sha256=$(sha256sum /tmp/cert.der | cut -d' ' -f1)"
+          else
+            report "cert_der_sha256=unreadable"
+          fi
