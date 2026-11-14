@@ -1,0 +1,79 @@
+# TEMPORARY diagnostic: proves whether the repository signing secrets match a
+# keystore, without printing any secret value. Delete after use.
+name: Verify signing secrets
+
+on:
+  push:
+    paths:
+      - .github/workflows/verify-signing.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe the signing secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe the signing secrets
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -uo pipefail
+          report() { echo "PROBE $1"; }
+
+          if [ -z "${KS_B64:-}" ]; then report "base64=missing"; exit 0; fi
+          printf '%s' "$KS_B64" | base64 --decode > /tmp/ks.jks 2>/dev/null || true
+          if [ ! -s /tmp/ks.jks ]; then report "base64=undecodable"; exit 0; fi
+          report "decoded_bytes=$(wc -c < /tmp/ks.jks)"
+          report "decoded_sha256=$(sha256sum /tmp/ks.jks | cut -d' ' -f1)"
+
+          if [ -z "${KS_PASS:-}" ]; then report "store_password=missing"; exit 0; fi
+          if keytool -list -keystore /tmp/ks.jks -storepass:env KS_PASS > /tmp/list.txt 2>/dev/null; then
+            report "store_password=opens_keystore"
+          else
+            report "store_password=rejected"
+            exit 0
+          fi
+
+          count=$(grep -c 'PrivateKeyEntry' /tmp/list.txt || true)
+          report "private_key_entries=$count"
+          if [ -n "${KS_ALIAS:-}" ]; then
+            report "alias_length=${#KS_ALIAS}"
+            if [ "$KS_ALIAS" = "upload" ]; then report "alias_is_upload=yes"; else report "alias_is_upload=no"; fi
+            if keytool -list -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS > /dev/null 2>&1; then
+              report "alias_present=yes"
+            else
+              report "alias_present=no"
+              exit 0
+            fi
+          else
+            report "alias=missing"
+            exit 0
+          fi
+
+          if [ -n "${KEY_PASS:-}" ]; then report "key_password_secret=set"; else report "key_password_secret=unset"; fi
+
+          # A CSR needs the private key, so it proves which password unlocks it.
+          if keytool -certreq -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS \
+              -keypass:env KS_PASS -file /tmp/a.csr > /dev/null 2>&1; then
+            report "store_password_also_unlocks_key=yes"
+          else
+            report "store_password_also_unlocks_key=no"
+          fi
+
+          if [ -n "${KEY_PASS:-}" ]; then
+            if keytool -certreq -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS \
+                -keypass:env KEY_PASS -file /tmp/b.csr > /dev/null 2>&1; then
+              report "key_password_unlocks_key=yes"
+            else
+              report "key_password_unlocks_key=no"
+            fi
+          fi
+
+          keytool -list -v -keystore /tmp/ks.jks -alias "$KS_ALIAS" -storepass:env KS_PASS 2>/dev/null \
+            | sed -n 's/^[[:space:]]*SHA256: /PROBE cert_sha256=/p' | tr -d ':' | tr 'A-F' 'a-f' || true
