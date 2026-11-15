@@ -12,6 +12,7 @@ import 'package:snoozemate/shared/widgets/history_sleep_plan_card.dart';
 import 'package:snoozemate/shared/widgets/empty_state_card.dart';
 import 'package:snoozemate/shared/widgets/error_state_widget.dart';
 import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
+import 'package:snoozemate/features/history/presentation/widgets/delete_sleep_plan_dialog.dart';
 import 'package:snoozemate/features/history/presentation/widgets/delete_sqi_record_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -127,15 +128,32 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _deleteSleepPlan(String planId) async {
+    // A plan delete is permanent and there is no undo, so ask first and treat
+    // anything but an explicit confirmation as "no".
+    final confirmed = await confirmDeleteSleepPlan(context);
+    if (!confirmed || !mounted) return;
+
+    // Captured before the async gap so the message still has a messenger if
+    // this page is disposed mid-delete.
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       await _firestoreService.deleteSleepPlan(planId);
-      _loadHistory();
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete plan: ${e.toString()}')),
+      // The outcome is unknown, not "nothing happened", so the message points
+      // at the list. The exception stays out of the UI.
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(sleepPlanDeleteUnconfirmedMessage),
+          action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
+        ),
       );
+      return;
     }
+
+    if (!mounted) return;
+    await _loadHistory();
   }
 
   Future<void> _openRecommendations(SQIRecord record) async {
