@@ -10,6 +10,7 @@ import '../core/services/auth_service.dart';
 import '../core/services/storage_service.dart';
 import '../core/theme/app_theme.dart';
 import '../shared/widgets/error_state_widget.dart';
+import 'app_check.dart';
 import 'firebase_environment.dart';
 import 'app.dart';
 
@@ -101,6 +102,11 @@ Future<AppDependencies> _bootFirebase() async {
   // The Firebase project is fixed at build time: --dart-define=APP_ENV=dev|prod
   // (default dev) picks lib/firebase_options_dev.dart or firebase_options.dart.
   await Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv));
+
+  // Before the first Firestore or Auth call, so those requests carry a token.
+  // Enforcement stays off in the console until the metrics look right; see
+  // docs/APP_CHECK.md.
+  await activateAppCheck(env: appEnv, isDebugBuild: kDebugMode);
 
   // Local development: run against the Firestore/Auth emulators, e.g.
   //   flutter run --dart-define=USE_FIREBASE_EMULATOR=true
