@@ -8,14 +8,18 @@ workflows:
         # Must match the name the keystore was uploaded under in Codemagic
         # (App settings → Code signing identities → Android keystore).
         - snoozefriend_upload
-      groups:
-        - google_play
+      # `google_play` group (service account) temporarily disabled while the
+      # Play Console account/app is being set up. Re-enable by restoring the
+      # group and the `publishing.google_play` block below.
+      # groups:
+      #   - google_play
       vars:
         # Non-secret value, kept in repo per Codemagic guidance. Secrets
-        # (keystore, Play service account) come from the group above.
+        # (keystore) come from the uploaded Android keystore; Play service
+        # account is disabled temporarily (see above).
         APP_ENV: "prod"
         PACKAGE_NAME: "com.snoozefriend.snoozemate"
-        GOOGLE_PLAY_TRACK: "internal"
+        # GOOGLE_PLAY_TRACK: "internal"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
     triggering:
       # This workflow publishes to Play, so it runs on release tags only, the
@@ -62,10 +66,11 @@ workflows:
         notify:
           success: true
           failure: false
-      google_play:
-        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
-        track: $GOOGLE_PLAY_TRACK
-        submit_as_draft: true
+      # Temporarily disabled: no Play service account configured yet.
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: $GOOGLE_PLAY_TRACK
+      #   submit_as_draft: true
 
   ios-workflow:
     name: iOS Workflow
