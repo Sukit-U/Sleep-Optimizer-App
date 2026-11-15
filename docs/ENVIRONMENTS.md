@@ -236,7 +236,7 @@ an Xcode scheme of that name and fail, so the two platforms cannot share one com
 | Task | Command |
 | --- | --- |
 | Run on a device/simulator against prod | `flutter run --dart-define=APP_ENV=prod` |
-| Run on a device/simulator against dev | blocked — no iOS Firebase app in `sleep-optimizer-dev` yet; the app stops with a `StateError` naming the owner steps |
+| Run on a device/simulator against dev | `flutter run --dart-define=APP_ENV=dev` |
 | Release build without signing | `flutter build ios --release --no-codesign --dart-define=APP_ENV=prod` |
 | Archive from Xcode | `flutter build ios --config-only --release --dart-define=APP_ENV=prod`, then `open ios/Runner.xcworkspace` → Product → Archive |
 
