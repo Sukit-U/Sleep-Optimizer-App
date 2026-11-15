@@ -11,6 +11,9 @@ workflows:
       groups:
         - google_play
       vars:
+        # Non-secret value, kept in repo per Codemagic guidance. Secrets
+        # (keystore, Play service account) come from the group above.
+        APP_ENV: "prod"
         PACKAGE_NAME: "com.snoozefriend.snoozemate"
         GOOGLE_PLAY_TRACK: "internal"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
@@ -46,7 +49,7 @@ workflows:
           flutter test
       - name: Build Android App Bundle (prod)
         script: |
-          flutter build appbundle --flavor prod --release --dart-define=APP_ENV=prod
+          flutter build appbundle --flavor prod --release --dart-define=APP_ENV=$APP_ENV
     artifacts:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/*.apk
@@ -75,6 +78,10 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.snoozefriend.snoozemate
       vars:
+        # Non-secret value, kept in repo per Codemagic guidance. App Store
+        # Connect credentials come from the `codemagic` integration above,
+        # not from YAML.
+        APP_ENV: "prod"
         # App Store Connect → App → General → App Information → Apple ID.
         # Nothing in this workflow reads it yet (no build-number increment and
         # submit_to_testflight/submit_to_app_store are false); uncomment with
@@ -108,7 +115,7 @@ workflows:
           flutter test
       - name: Build iOS IPA
         script: |
-          flutter build ipa --release --dart-define=APP_ENV=prod \
+          flutter build ipa --release --dart-define=APP_ENV=$APP_ENV \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
@@ -134,6 +141,9 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
+      vars:
+        # Non-secret value, kept in repo per Codemagic guidance.
+        APP_ENV: "prod"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
       xcode: latest
       cocoapods: default
@@ -149,7 +159,7 @@ workflows:
           flutter pub get
       - name: "Positive case: release build with APP_ENV=prod passes the phase"
         script: |
-          flutter build ios --release --no-codesign --dart-define=APP_ENV=prod
+          flutter build ios --release --no-codesign --dart-define=APP_ENV=$APP_ENV
       - name: "Negative case: release build with no APP_ENV fails the Xcode phase"
         script: |
           flutter clean
