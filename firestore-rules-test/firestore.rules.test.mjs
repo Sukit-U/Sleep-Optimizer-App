@@ -39,7 +39,7 @@ const validRecord = (uid) => ({
   sqiScore: 73,
   // The app persists SleepQualityLevel enum names, which are lowercase.
   sleepQualityLevel: 'good',
-  questionnaireResponses: { 'Sleep duration': 4, Stress: 3, Caffeine: 2 },
+  questionnaireResponses: { 'Sleep duration': 4, 'Sleep regularity': 3, 'Screen time': 2, Exercise: 5, Stress: 1, Caffeine: 4 },
   createdAt: NOW,
 });
 
@@ -450,5 +450,246 @@ describe('default deny', () => {
   it('blocks unknown collections', async () => {
     await assertFails(alice().collection('users').doc(ALICE).set({ x: 1 }));
     await assertFails(alice().collection('users').doc(ALICE).get());
+  });
+});
+// ===========================================================================
+// Category A: Existing Rules Regression Tests
+// These tests must pass against the current firestore.rules.
+// ===========================================================================
+
+describe('sqiRecords - Category A regression', () => {
+  it('rejects unauthenticated reads and lists', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('sqiRecords').doc('sqi-a').set(validRecord(ALICE));
+    });
+    await assertFails(anon().collection('sqiRecords').doc('sqi-a').get());
+    await assertFails(
+      anon().collection('sqiRecords').where('userId', '==', ALICE).orderBy('createdAt', 'desc').get(),
+    );
+  });
+
+  it('allows a valid update by the owner', async () => {
+    const db = alice();
+    await db.collection('sqiRecords').doc('sqi-a').set(validRecord(ALICE));
+    await assertSucceeds(
+      db.collection('sqiRecords').doc('sqi-a').update({
+        sqiScore: 80,
+        sleepQualityLevel: 'fair',
+        questionnaireResponses: {
+          'Sleep duration': 5,
+          'Sleep regularity': 4,
+          'Screen time': 3,
+          Exercise: 2,
+          Stress: 1,
+          Caffeine: 5,
+        },
+      }),
+    );
+  });
+
+  it('rejects an update changing userId', async () => {
+    const db = alice();
+    await db.collection('sqiRecords').doc('sqi-a').set(validRecord(ALICE));
+    await assertFails(db.collection('sqiRecords').doc('sqi-a').update({ userId: BOB }));
+  });
+
+  it('rejects an update changing createdAt', async () => {
+    const db = alice();
+    await db.collection('sqiRecords').doc('sqi-a').set(validRecord(ALICE));
+    await assertFails(
+      db.collection('sqiRecords').doc('sqi-a').update({
+        createdAt: new Date('2026-09-26T22:00:00Z'),
+      }),
+    );
+  });
+
+  it('rejects an update by another user', async () => {
+    const db = alice();
+    await db.collection('sqiRecords').doc('sqi-a').set(validRecord(ALICE));
+    await assertFails(bob().collection('sqiRecords').doc('sqi-a').update({ sqiScore: 10 }));
+  });
+});
+
+describe('sleepPlans - Category A regression', () => {
+  it('rejects unauthenticated reads and lists', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('sleepPlans').doc('plan-a').set(validPlan(ALICE));
+    });
+    await assertFails(anon().collection('sleepPlans').doc('plan-a').get());
+    await assertFails(
+      anon().collection('sleepPlans').where('userId', '==', ALICE).orderBy('createdAt', 'desc').get(),
+    );
+  });
+
+  it('accepts a list with one suggestedBedtime', async () => {
+    await assertSucceeds(
+      alice().collection('sleepPlans').add({ ...validPlan(ALICE), suggestedBedtimes: ['10:30 PM'] }),
+    );
+  });
+
+  it('accepts a list with ten suggestedBedtimes', async () => {
+    const bedtimes = Array.from({ length: 10 }, (_, i) => `Bedtime ${i + 1}`);
+    await assertSucceeds(
+      alice().collection('sleepPlans').add({ ...validPlan(ALICE), suggestedBedtimes: bedtimes }),
+    );
+  });
+
+  it('rejects invalid wakeUpTime type', async () => {
+    await assertFails(
+      alice().collection('sleepPlans').add({ ...validPlan(ALICE), wakeUpTime: 'not-a-timestamp' }),
+    );
+  });
+
+  it('rejects invalid createdAt type', async () => {
+    await assertFails(
+      alice().collection('sleepPlans').add({ ...validPlan(ALICE), createdAt: 'not-a-timestamp' }),
+    );
+  });
+
+  it('allows a valid update by the owner', async () => {
+    const db = alice();
+    await db.collection('sleepPlans').doc('plan-a').set(validPlan(ALICE));
+    await assertSucceeds(
+      db.collection('sleepPlans').doc('plan-a').update({
+        wakeUpTime: new Date('2026-09-26T07:00:00Z'),
+        sleepCycles: 7,
+        suggestedBedtimes: ['11:00 PM', '12:30 AM'],
+      }),
+    );
+  });
+
+  it('rejects an update changing userId', async () => {
+    const db = alice();
+    await db.collection('sleepPlans').doc('plan-a').set(validPlan(ALICE));
+    await assertFails(db.collection('sleepPlans').doc('plan-a').update({ userId: BOB }));
+  });
+
+  it('rejects an update changing createdAt', async () => {
+    const db = alice();
+    await db.collection('sleepPlans').doc('plan-a').set(validPlan(ALICE));
+    await assertFails(
+      db.collection('sleepPlans').doc('plan-a').update({
+        createdAt: new Date('2026-09-26T22:00:00Z'),
+      }),
+    );
+  });
+
+  it('rejects an update by another user', async () => {
+    const db = alice();
+    await db.collection('sleepPlans').doc('plan-a').set(validPlan(ALICE));
+    await assertFails(bob().collection('sleepPlans').doc('plan-a').update({ sleepCycles: 2 }));
+  });
+});
+
+describe('recommendations - Category A regression', () => {
+  let aliceRecord;
+
+  beforeEach(async () => {
+    aliceRecord = await assertSucceeds(
+      alice().collection('sqiRecords').doc('sqi-parent').set(validRecord(ALICE)),
+    );
+  });
+
+  it('allows a valid update by the owner', async () => {
+    const db = alice();
+    await db.collection('recommendations').doc('rec-a').set(validRec('sqi-parent', ALICE));
+    await assertSucceeds(
+      db.collection('recommendations').doc('rec-a').update({
+        factor: 'Exercise',
+        title: 'Updated title',
+        description: 'Updated description',
+        action: 'Updated action',
+        priority: 'low',
+      }),
+    );
+  });
+
+  it('rejects an update changing userId', async () => {
+    const db = alice();
+    await db.collection('recommendations').doc('rec-a').set(validRec('sqi-parent', ALICE));
+    await assertFails(db.collection('recommendations').doc('rec-a').update({ userId: BOB }));
+  });
+
+  it('rejects an update changing recordId', async () => {
+    const db = alice();
+    await db.collection('recommendations').doc('rec-a').set(validRec('sqi-parent', ALICE));
+    await assertFails(db.collection('recommendations').doc('rec-a').update({ recordId: 'other-record' }));
+  });
+
+  it('rejects an update by another user', async () => {
+    const db = alice();
+    await db.collection('recommendations').doc('rec-a').set(validRec('sqi-parent', ALICE));
+    await assertFails(bob().collection('recommendations').doc('rec-a').update({ factor: 'Exercise' }));
+  });
+
+  it('rejects an invalid priority', async () => {
+    await assertFails(
+      alice().collection('recommendations').add({ ...validRec('sqi-parent', ALICE), priority: 'urgent' }),
+    );
+  });
+
+  it('documents currently allowed mixed-case priority behavior', async () => {
+    await assertSucceeds(
+      alice().collection('recommendations').add({ ...validRec('sqi-parent', ALICE), priority: 'High' }),
+    );
+  });
+
+  it('rejects a factor longer than 200 characters', async () => {
+    await assertFails(
+      alice().collection('recommendations').add({
+        ...validRec('sqi-parent', ALICE),
+        factor: 'x'.repeat(201),
+      }),
+    );
+  });
+
+  it('rejects an update after the parent record is deleted', async () => {
+    const db = alice();
+    await db.collection('recommendations').doc('rec-a').set(validRec('sqi-parent', ALICE));
+    await assertSucceeds(db.collection('sqiRecords').doc('sqi-parent').delete());
+    await assertFails(db.collection('recommendations').doc('rec-a').update({ factor: 'Exercise' }));
+  });
+});
+
+describe('settings - Category A regression', () => {
+  it('rejects unauthenticated reads', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('settings').doc(ALICE).set(validSettings(ALICE));
+    });
+    await assertFails(anon().collection('settings').doc(ALICE).get());
+  });
+
+  it('rejects unauthenticated writes', async () => {
+    await assertFails(anon().collection('settings').doc(ALICE).set(validSettings(ALICE)));
+  });
+
+  it('rejects extra fields', async () => {
+    await assertFails(
+      alice().collection('settings').doc(ALICE).set({ ...validSettings(ALICE), extra: true }),
+    );
+  });
+
+  it('allows a valid update by the owner', async () => {
+    const db = alice();
+    await db.collection('settings').doc(ALICE).set(validSettings(ALICE));
+    await assertSucceeds(db.collection('settings').doc(ALICE).update({ theme: 'light' }));
+  });
+
+  it('rejects an invalid theme update', async () => {
+    const db = alice();
+    await db.collection('settings').doc(ALICE).set(validSettings(ALICE));
+    await assertFails(db.collection('settings').doc(ALICE).update({ theme: 'blue' }));
+  });
+
+  it('rejects a cross-user update', async () => {
+    const db = alice();
+    await db.collection('settings').doc(ALICE).set(validSettings(ALICE));
+    await assertFails(bob().collection('settings').doc(ALICE).update({ theme: 'light' }));
+  });
+
+  it('rejects an update changing userId', async () => {
+    const db = alice();
+    await db.collection('settings').doc(ALICE).set(validSettings(ALICE));
+    await assertFails(db.collection('settings').doc(ALICE).update({ userId: BOB }));
   });
 });

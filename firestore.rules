@@ -132,10 +132,22 @@ service cloud.firestore {
         isTimestamp('createdAt') &&
         // sleepCycles: integer between 1 and 10
         isIntInRange('sleepCycles', 1, 10) &&
-        // suggestedBedtimes: list with max 10 items
+        // suggestedBedtimes: list of 1-10 non-empty strings, max 100 chars
         data.suggestedBedtimes is list &&
         data.suggestedBedtimes.size() >= 1 &&
-        data.suggestedBedtimes.size() <= 10;
+        data.suggestedBedtimes.size() <= 10 &&
+        data.suggestedBedtimes[0] is string &&
+        data.suggestedBedtimes[0].size() >= 1 &&
+        data.suggestedBedtimes[0].size() <= 100 &&
+        (data.suggestedBedtimes.size() <= 1 || (data.suggestedBedtimes[1] is string && data.suggestedBedtimes[1].size() >= 1 && data.suggestedBedtimes[1].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 2 || (data.suggestedBedtimes[2] is string && data.suggestedBedtimes[2].size() >= 1 && data.suggestedBedtimes[2].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 3 || (data.suggestedBedtimes[3] is string && data.suggestedBedtimes[3].size() >= 1 && data.suggestedBedtimes[3].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 4 || (data.suggestedBedtimes[4] is string && data.suggestedBedtimes[4].size() >= 1 && data.suggestedBedtimes[4].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 5 || (data.suggestedBedtimes[5] is string && data.suggestedBedtimes[5].size() >= 1 && data.suggestedBedtimes[5].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 6 || (data.suggestedBedtimes[6] is string && data.suggestedBedtimes[6].size() >= 1 && data.suggestedBedtimes[6].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 7 || (data.suggestedBedtimes[7] is string && data.suggestedBedtimes[7].size() >= 1 && data.suggestedBedtimes[7].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 8 || (data.suggestedBedtimes[8] is string && data.suggestedBedtimes[8].size() >= 1 && data.suggestedBedtimes[8].size() <= 100)) &&
+        (data.suggestedBedtimes.size() <= 9 || (data.suggestedBedtimes[9] is string && data.suggestedBedtimes[9].size() >= 1 && data.suggestedBedtimes[9].size() <= 100));
     }
 
     // Validate SQIRecord document data
@@ -155,9 +167,29 @@ service cloud.firestore {
         // sleepQualityLevel: one of the valid enum values
         data.sleepQualityLevel is string &&
         data.sleepQualityLevel in validLevels &&
-        // questionnaireResponses: must be a map, max 20 keys
+        // questionnaireResponses: exact six-key schema, integer values 1-5
         data.questionnaireResponses is map &&
-        data.questionnaireResponses.keys().size() <= 20 &&
+        data.questionnaireResponses.keys().hasOnly(['Sleep duration', 'Sleep regularity', 'Screen time', 'Exercise', 'Stress', 'Caffeine']) &&
+        data.questionnaireResponses.keys().hasAll(['Sleep duration', 'Sleep regularity', 'Screen time', 'Exercise', 'Stress', 'Caffeine']) &&
+        data.questionnaireResponses.keys().size() == 6 &&
+        data.questionnaireResponses['Sleep duration'] is int &&
+        data.questionnaireResponses['Sleep duration'] >= 1 &&
+        data.questionnaireResponses['Sleep duration'] <= 5 &&
+        data.questionnaireResponses['Sleep regularity'] is int &&
+        data.questionnaireResponses['Sleep regularity'] >= 1 &&
+        data.questionnaireResponses['Sleep regularity'] <= 5 &&
+        data.questionnaireResponses['Screen time'] is int &&
+        data.questionnaireResponses['Screen time'] >= 1 &&
+        data.questionnaireResponses['Screen time'] <= 5 &&
+        data.questionnaireResponses['Exercise'] is int &&
+        data.questionnaireResponses['Exercise'] >= 1 &&
+        data.questionnaireResponses['Exercise'] <= 5 &&
+        data.questionnaireResponses['Stress'] is int &&
+        data.questionnaireResponses['Stress'] >= 1 &&
+        data.questionnaireResponses['Stress'] <= 5 &&
+        data.questionnaireResponses['Caffeine'] is int &&
+        data.questionnaireResponses['Caffeine'] >= 1 &&
+        data.questionnaireResponses['Caffeine'] <= 5 &&
         // createdAt: must be a timestamp
         isTimestamp('createdAt');
     }
