@@ -17,31 +17,44 @@ class AppColors {
   // === ACCENT COLORS ===
   /// Muted purple accent - #C47FD9 (oklch 0.68 0.18 300)
   static const Color accent = Color(0xFFC47FD9);
-  static const Color secondary = Color(0xFFC47FD9); // Alias for accent (Material Design compatibility)
+  static const Color secondary = Color(
+    0xFFC47FD9,
+  ); // Alias for accent (Material Design compatibility)
   static const Color accentLight = Color(0xFFD694E4);
   static const Color accentDark = Color(0xFFA664BB);
 
   // === BACKGROUND COLORS ===
   /// Dark background - #252830 (oklch 0.18 0.008 260)
   static const Color background = Color(0xFF252830);
-  static const Color backgroundLight = Color(0xFF30333D); // This is the new card/surface color
+  static const Color backgroundLight = Color(
+    0xFF30333D,
+  ); // This is the new card/surface color
 
   /// Card/Surface background - #30333D (oklch 0.235 0.01 260)
   static const Color card = Color(0xFF30333D);
   static const Color surface = Color(0xFF30333D);
-  static const Color surfaceElevated = Color(0xFF3B3E4A); // Slightly lighter for elevated surfaces
+  static const Color surfaceElevated = Color(
+    0xFF3B3E4A,
+  ); // Slightly lighter for elevated surfaces
 
   // === FOREGROUND COLORS ===
   /// Primary text color - #fafafa
   static const Color foreground = Color(0xFFFAFAFA);
+
   /// Muted foreground - #AEB2BE (oklch 0.74 0.02 260)
   static const Color mutedForeground = Color(0xFFAEB2BE);
 
   // === MUTED COLORS ===
   /// Muted background - for progress bars, etc.
-  static const Color muted = Color(0xFF333333); // Keep as a general muted, though design might specify a background for it.
-  static const Color mutedLight = Color(0xFF404040); // Keep for consistency if needed.
-  static const Color mutedBackground = Color(0xFF2A2A2A); // Keep for consistency if needed.
+  static const Color muted = Color(
+    0xFF333333,
+  ); // Keep as a general muted, though design might specify a background for it.
+  static const Color mutedLight = Color(
+    0xFF404040,
+  ); // Keep for consistency if needed.
+  static const Color mutedBackground = Color(
+    0xFF2A2A2A,
+  ); // Keep for consistency if needed.
 
   // === BORDER COLORS ===
   /// Border color - #454850 (oklch 0.32 0.012 260)
@@ -74,13 +87,15 @@ class AppColors {
 
   // === GRADIENT COLORS ===
   /// Ambient orb purple for background
-  static const Color orbPurple = Color(0xFF6E9EF5); // Primary color for orb effect
+  static const Color orbPurple = Color(
+    0xFF6E9EF5,
+  ); // Primary color for orb effect
   /// Ambient orb blue for background
   static const Color orbBlue = Color(0xFFC47FD9); // Accent color for orb effect
 
   // === Primary glow effect
   static const Color primaryGlow = Color(0xFF6E9EF5);
-   
+
   /// Moon icon color
   static const Color moon = Color(0xFFFAFAFA); // White for Moon icon
   /// Star icon color
@@ -100,7 +115,9 @@ class AppColors {
   static const Color overlayLight = Color(0x40000000);
 
   // === RING COLOR ===
-  static const Color ring = Color(0xFF6E9EF5); // Use primary for ring as per Lovable
+  static const Color ring = Color(
+    0xFF6E9EF5,
+  ); // Use primary for ring as per Lovable
 
   // === LIGHT THEME VARIANTS ===
   // For future light theme support
@@ -109,8 +126,10 @@ class AppColors {
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightBorder = Color(0xFFE5E5E5);
   static const Color lightMuted = Color(0xFFF5F5F5);
+
   /// Light muted foreground - medium gray for light theme
   static const Color lightMutedForeground = Color(0xFF6B7280);
+
   /// Light on-secondary - dark text on purple accent
   static const Color lightOnSecondary = Color(0xFF1A1A1A);
 }

@@ -26,14 +26,25 @@ void main() {
 
   test('keystore passwords can come from the environment, not a file', () {
     expect(gradle, contains('System.getenv(envName)'));
-    expect(gradle, contains('signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")'));
-    expect(gradle, contains('signingValue("ANDROID_KEY_PASSWORD", "keyPassword")'));
+    expect(
+      gradle,
+      contains('signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")'),
+    );
+    expect(
+      gradle,
+      contains('signingValue("ANDROID_KEY_PASSWORD", "keyPassword")'),
+    );
     expect(gradle, isNot(contains('storePassword = keystoreProperties')));
     expect(gradle, isNot(contains('keyPassword = keystoreProperties')));
   });
 
   test('a keystore without a password stays unsigned', () {
-    expect(gradle, contains('keystoreProperties["storeFile"] != null && storePasswordValue != null'));
+    expect(
+      gradle,
+      contains(
+        'keystoreProperties["storeFile"] != null && storePasswordValue != null',
+      ),
+    );
   });
 
   test('signing material can never be committed', () {

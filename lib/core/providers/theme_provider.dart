@@ -6,10 +6,10 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode;
 
   ThemeProvider({required StorageService storageService})
-      : _storageService = storageService,
-        _themeMode = storageService.loadTheme() == 'light'
-            ? ThemeMode.light
-            : ThemeMode.dark;
+    : _storageService = storageService,
+      _themeMode = storageService.loadTheme() == 'light'
+          ? ThemeMode.light
+          : ThemeMode.dark;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -20,7 +20,9 @@ class ThemeProvider with ChangeNotifier {
   }
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode = _themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
     _storageService.saveTheme(_themeMode == ThemeMode.light ? 'light' : 'dark');
     notifyListeners();
   }

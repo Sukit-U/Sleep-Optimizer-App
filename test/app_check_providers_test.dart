@@ -12,18 +12,23 @@ void main() {
 
   test('no production build registers a debug provider', () {
     for (final isDebugBuild in [true, false]) {
-      final providers =
-          appCheckProvidersFor(env: 'prod', isDebugBuild: isDebugBuild);
+      final providers = appCheckProvidersFor(
+        env: 'prod',
+        isDebugBuild: isDebugBuild,
+      );
 
       expect(
         providers.usesDebugProvider,
         isFalse,
-        reason: 'a production build must never accept a copyable debug token '
+        reason:
+            'a production build must never accept a copyable debug token '
             '(isDebugBuild: $isDebugBuild)',
       );
       expect(providers.android, isA<AndroidPlayIntegrityProvider>());
-      expect(providers.apple,
-          isA<AppleAppAttestWithDeviceCheckFallbackProvider>());
+      expect(
+        providers.apple,
+        isA<AppleAppAttestWithDeviceCheckFallbackProvider>(),
+      );
     }
   });
 
@@ -32,7 +37,9 @@ void main() {
 
     expect(providers.usesDebugProvider, isFalse);
     expect(providers.android, isA<AndroidPlayIntegrityProvider>());
-    expect(providers.apple,
-        isA<AppleAppAttestWithDeviceCheckFallbackProvider>());
+    expect(
+      providers.apple,
+      isA<AppleAppAttestWithDeviceCheckFallbackProvider>(),
+    );
   });
 }

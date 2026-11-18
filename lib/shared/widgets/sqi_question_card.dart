@@ -48,7 +48,9 @@ class SQIQuestionCard extends StatelessWidget {
                 return ChoiceChip(
                   label: Text('$value'),
                   selected: selected,
-                  onSelected: onSelected != null ? (_) => onSelected!(value) : null,
+                  onSelected: onSelected != null
+                      ? (_) => onSelected!(value)
+                      : null,
                 );
               }),
             ),

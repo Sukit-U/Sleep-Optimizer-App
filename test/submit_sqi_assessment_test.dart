@@ -26,7 +26,9 @@ class _FakeWriter {
     recordWrites.add(record);
   }
 
-  Future<void> writeRecommendations(List<Recommendation> recommendations) async {
+  Future<void> writeRecommendations(
+    List<Recommendation> recommendations,
+  ) async {
     // Record the attempt even when it throws, so a test can prove a retry
     // targets the same document IDs instead of minting new ones.
     recommendationAttempts.add(
@@ -41,18 +43,18 @@ class _FakeWriter {
 }
 
 SqiResult _fairResult() => const SqiResult(
-      score: 42,
-      level: SleepQualityLevel.fair,
-      weakFactors: ['Caffeine', 'Sleep regularity'],
-      factorScores: {'Caffeine': 3, 'Sleep regularity': 4},
-      responses: {'Sleep duration': 2, 'Stress': 2, 'Caffeine': 1},
-    );
+  score: 42,
+  level: SleepQualityLevel.fair,
+  weakFactors: ['Caffeine', 'Sleep regularity'],
+  factorScores: {'Caffeine': 3, 'Sleep regularity': 4},
+  responses: {'Sleep duration': 2, 'Stress': 2, 'Caffeine': 1},
+);
 
 SubmitSqiAssessment _submitWith(_FakeWriter writer) => SubmitSqiAssessment(
-      newRecordId: writer.newRecordId,
-      writeRecord: writer.writeRecord,
-      writeRecommendations: writer.writeRecommendations,
-    );
+  newRecordId: writer.newRecordId,
+  writeRecord: writer.writeRecord,
+  writeRecommendations: writer.writeRecommendations,
+);
 
 void main() {
   group('in-flight guard', () {
@@ -69,8 +71,11 @@ void main() {
       writer.blockRecord!.complete();
       expect(await first, SubmitSqiOutcome.saved);
 
-      expect(writer.recordWrites, hasLength(1),
-          reason: 'a duplicate tap must not create a second record');
+      expect(
+        writer.recordWrites,
+        hasLength(1),
+        reason: 'a duplicate tap must not create a second record',
+      );
       expect(writer.recommendationWrites, hasLength(1));
     });
   });
@@ -93,44 +98,61 @@ void main() {
         SubmitSqiOutcome.saved,
       );
 
-      expect(writer.recordWrites, hasLength(1),
-          reason: 'the record must not be written again');
+      expect(
+        writer.recordWrites,
+        hasLength(1),
+        reason: 'the record must not be written again',
+      );
       expect(writer.recordWrites.single.recordId, recordId);
       expect(writer.recommendationAttempts, hasLength(2));
-      expect(writer.recommendationAttempts[1], firstAttempt,
-          reason: 'a retry must reuse the same recommendation documents');
-      expect(writer.attemptedRecommendationIds.toSet(), hasLength(2),
-          reason: 'recommendation IDs must be derived from the record ID');
+      expect(
+        writer.recommendationAttempts[1],
+        firstAttempt,
+        reason: 'a retry must reuse the same recommendation documents',
+      );
+      expect(
+        writer.attemptedRecommendationIds.toSet(),
+        hasLength(2),
+        reason: 'recommendation IDs must be derived from the record ID',
+      );
       expect(writer.attemptedRecommendationIds.first, '$recordId-r0');
       expect(writer.recommendationWrites.single, hasLength(2));
     });
   });
 
   group('retry after the record write failed', () {
-    test('reports an unconfirmed save and then reuses the same record ID',
-        () async {
-      final writer = _FakeWriter()..failRecord = true;
-      final submit = _submitWith(writer);
+    test(
+      'reports an unconfirmed save and then reuses the same record ID',
+      () async {
+        final writer = _FakeWriter()..failRecord = true;
+        final submit = _submitWith(writer);
 
-      expect(
-        await submit(userId: 'owner', result: _fairResult()),
-        SubmitSqiOutcome.unconfirmed,
-      );
-      expect(writer.recordWrites, isEmpty);
-      expect(writer.recommendationAttempts, isEmpty,
-          reason: 'no recommendation may be written before its parent exists');
+        expect(
+          await submit(userId: 'owner', result: _fairResult()),
+          SubmitSqiOutcome.unconfirmed,
+        );
+        expect(writer.recordWrites, isEmpty);
+        expect(
+          writer.recommendationAttempts,
+          isEmpty,
+          reason: 'no recommendation may be written before its parent exists',
+        );
 
-      final pendingId = submit.recordId;
-      writer.failRecord = false;
-      expect(
-        await submit(userId: 'owner', result: _fairResult()),
-        SubmitSqiOutcome.saved,
-      );
+        final pendingId = submit.recordId;
+        writer.failRecord = false;
+        expect(
+          await submit(userId: 'owner', result: _fairResult()),
+          SubmitSqiOutcome.saved,
+        );
 
-      expect(writer.recordWrites, hasLength(1));
-      expect(writer.recordWrites.single.recordId, pendingId,
-          reason: 'the retry must target the record ID allocated first');
-    });
+        expect(writer.recordWrites, hasLength(1));
+        expect(
+          writer.recordWrites.single.recordId,
+          pendingId,
+          reason: 'the retry must target the record ID allocated first',
+        );
+      },
+    );
   });
 
   group('attempt lifecycle', () {
@@ -148,25 +170,30 @@ void main() {
       submit.reset();
       await submit(userId: 'owner', result: _fairResult());
       expect(writer.recordWrites, hasLength(2));
-      expect(writer.recordWrites.last.recordId, isNot(firstId),
-          reason: 'a new assessment needs a new record');
-    });
-
-    test('a partial failure keeps its record until it is retried to success',
-        () async {
-      final writer = _FakeWriter()..failRecommendations = true;
-      final submit = _submitWith(writer);
-
-      await submit(userId: 'owner', result: _fairResult());
-      expect(submit.recordSaved, isTrue);
-      expect(submit.recordId, writer.recordWrites.single.recordId);
-
-      writer.failRecommendations = false;
       expect(
-        await submit(userId: 'owner', result: _fairResult()),
-        SubmitSqiOutcome.saved,
+        writer.recordWrites.last.recordId,
+        isNot(firstId),
+        reason: 'a new assessment needs a new record',
       );
-      expect(writer.recordWrites, hasLength(1));
     });
+
+    test(
+      'a partial failure keeps its record until it is retried to success',
+      () async {
+        final writer = _FakeWriter()..failRecommendations = true;
+        final submit = _submitWith(writer);
+
+        await submit(userId: 'owner', result: _fairResult());
+        expect(submit.recordSaved, isTrue);
+        expect(submit.recordId, writer.recordWrites.single.recordId);
+
+        writer.failRecommendations = false;
+        expect(
+          await submit(userId: 'owner', result: _fairResult()),
+          SubmitSqiOutcome.saved,
+        );
+        expect(writer.recordWrites, hasLength(1));
+      },
+    );
   });
 }

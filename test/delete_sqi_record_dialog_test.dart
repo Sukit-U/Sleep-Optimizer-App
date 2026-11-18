@@ -37,8 +37,9 @@ Future<({bool? confirmed, int deleted})> _runFlow(
 }
 
 void main() {
-  testWidgets('dialog names the assessment and its recommendations',
-      (tester) async {
+  testWidgets('dialog names the assessment and its recommendations', (
+    tester,
+  ) async {
     await _runFlow(tester, () async {
       expect(find.text('Delete this assessment?'), findsOneWidget);
       expect(find.textContaining('assessment'), findsWidgets);

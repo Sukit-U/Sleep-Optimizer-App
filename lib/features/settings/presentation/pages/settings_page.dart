@@ -49,11 +49,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [BoxShadow(
-                    color: colors.shadow,
-                    blurRadius: AppSpacing.cardShadow,
-                    offset: const Offset(0, 2),
-                  )],
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: AppSpacing.cardShadow,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -69,11 +71,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         children: [
                           Text(
                             'Dark mode',
-                            style: AppTypography.h3.copyWith(color: colors.onSurface),
+                            style: AppTypography.h3.copyWith(
+                              color: colors.onSurface,
+                            ),
                           ),
                           Text(
                             'Use the app\'s dark-first visual style.',
-                            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                            style: AppTypography.caption.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -89,23 +95,33 @@ class _SettingsPageState extends State<SettingsPage> {
                         final userId = await auth.ensureSignedIn();
                         if (userId == null) {
                           messenger.showSnackBar(
-                            const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+                            const SnackBar(
+                              content: Text(
+                                'Could not sign in. Check your connection and try again.',
+                              ),
+                            ),
                           );
                           return;
                         }
-                        final nextMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+                        final nextMode = isDarkMode
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
                         themeProvider.setTheme(nextMode);
                         try {
-                          await FirestoreSettingsRepository().saveSettings(
-                            {
-                              'userId': userId,
-                              'theme': nextMode == ThemeMode.light ? 'light' : 'dark',
-                            },
-                          );
+                          await FirestoreSettingsRepository().saveSettings({
+                            'userId': userId,
+                            'theme': nextMode == ThemeMode.light
+                                ? 'light'
+                                : 'dark',
+                          });
                         } catch (e) {
                           // Repository already fell back to local storage.
                           messenger.showSnackBar(
-                            const SnackBar(content: Text('Theme saved on this device only (offline).')),
+                            const SnackBar(
+                              content: Text(
+                                'Theme saved on this device only (offline).',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -122,11 +138,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [BoxShadow(
-                    color: colors.shadow,
-                    blurRadius: AppSpacing.cardShadow,
-                    offset: const Offset(0, 2),
-                  )],
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: AppSpacing.cardShadow,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +156,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Snoozefriend helps students improve sleep habits through a planner, SQI, and personalized guidance.',
-                      style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                      style: AppTypography.body.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

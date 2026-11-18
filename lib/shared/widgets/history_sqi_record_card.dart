@@ -60,19 +60,25 @@ class SQIRecordCard extends StatelessWidget {
                     children: [
                       Text(
                         '${record.sqiScore}',
-                        style: AppTypography.h2.copyWith(color: colors.onSurface),
+                        style: AppTypography.h2.copyWith(
+                          color: colors.onSurface,
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         '· ${record.sleepQualityLevel}',
-                        style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                        style: AppTypography.caption.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.spacingXs),
                   Text(
                     _formatDate(record.createdAt),
-                    style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                    style: AppTypography.caption.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

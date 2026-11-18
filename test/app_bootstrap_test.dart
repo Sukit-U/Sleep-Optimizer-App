@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:snoozemate/app/bootstrap.dart';
 
 void main() {
-  testWidgets('shows progress while booting, never the error screen',
-      (tester) async {
+  testWidgets('shows progress while booting, never the error screen', (
+    tester,
+  ) async {
     final boot = Completer<AppDependencies>();
 
     await tester.pumpWidget(AppBootstrap(boot: () => boot.future));
@@ -26,27 +27,29 @@ void main() {
     expect(find.textContaining('firebase exploded'), findsOneWidget);
   });
 
-  testWidgets('a failed boot shows the error screen and Retry runs boot again',
-      (tester) async {
-    var attempts = 0;
+  testWidgets(
+    'a failed boot shows the error screen and Retry runs boot again',
+    (tester) async {
+      var attempts = 0;
 
-    await tester.pumpWidget(
-      AppBootstrap(
-        boot: () async {
-          attempts++;
-          throw Exception('firebase exploded');
-        },
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        AppBootstrap(
+          boot: () async {
+            attempts++;
+            throw Exception('firebase exploded');
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text("Snoozefriend couldn't start"), findsOneWidget);
-    expect(find.textContaining('firebase exploded'), findsOneWidget);
-    expect(attempts, 1);
+      expect(find.text("Snoozefriend couldn't start"), findsOneWidget);
+      expect(find.textContaining('firebase exploded'), findsOneWidget);
+      expect(attempts, 1);
 
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
 
-    expect(attempts, 2);
-  });
+      expect(attempts, 2);
+    },
+  );
 }

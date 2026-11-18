@@ -10,17 +10,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:snoozemate/core/theme/app_theme.dart';
 
 void main() {
-  testWidgets('SleepOptimizerApp renders MaterialApp with correct theme',
-      (WidgetTester tester) async {
+  testWidgets('SleepOptimizerApp renders MaterialApp with correct theme', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         title: 'Sleep Optimizer',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-        home: const Scaffold(
-          body: Center(child: Text('SleepSci')),
-        ),
+        home: const Scaffold(body: Center(child: Text('SleepSci'))),
       ),
     );
 

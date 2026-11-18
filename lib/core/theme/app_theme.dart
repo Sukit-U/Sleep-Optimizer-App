@@ -117,9 +117,15 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary, size: AppSpacing.iconMd);
+            return const IconThemeData(
+              color: AppColors.primary,
+              size: AppSpacing.iconMd,
+            );
           }
-          return const IconThemeData(color: AppColors.mutedForeground, size: AppSpacing.iconMd);
+          return const IconThemeData(
+            color: AppColors.mutedForeground,
+            size: AppSpacing.iconMd,
+          );
         }),
       ),
 
@@ -185,7 +191,10 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: AppColors.foreground,
-          minimumSize: const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
+          minimumSize: const Size(
+            AppSpacing.iconButtonSize,
+            AppSpacing.iconButtonSize,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
@@ -255,9 +264,7 @@ class AppTheme {
         }),
         checkColor: WidgetStateProperty.all(AppColors.primaryForeground),
         side: const BorderSide(color: AppColors.border, width: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
 
       // Radio
@@ -357,7 +364,9 @@ class AppTheme {
 
       // List Tile
       listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.defaultSpacing),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.defaultSpacing,
+        ),
         tileColor: Colors.transparent,
         textColor: AppColors.foreground,
         iconColor: AppColors.mutedForeground,
@@ -560,9 +569,15 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary, size: AppSpacing.iconMd);
+            return const IconThemeData(
+              color: AppColors.primary,
+              size: AppSpacing.iconMd,
+            );
           }
-          return const IconThemeData(color: AppColors.lightMutedForeground, size: AppSpacing.iconMd);
+          return const IconThemeData(
+            color: AppColors.lightMutedForeground,
+            size: AppSpacing.iconMd,
+          );
         }),
       ),
 
@@ -628,7 +643,10 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: AppColors.lightForeground,
-          minimumSize: const Size(AppSpacing.iconButtonSize, AppSpacing.iconButtonSize),
+          minimumSize: const Size(
+            AppSpacing.iconButtonSize,
+            AppSpacing.iconButtonSize,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
@@ -698,9 +716,7 @@ class AppTheme {
         }),
         checkColor: WidgetStateProperty.all(AppColors.primaryForeground),
         side: const BorderSide(color: AppColors.lightBorder, width: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
 
       // Radio
@@ -800,7 +816,9 @@ class AppTheme {
 
       // List Tile
       listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.defaultSpacing),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.defaultSpacing,
+        ),
         tileColor: Colors.transparent,
         textColor: AppColors.lightForeground,
         iconColor: AppColors.lightMutedForeground,

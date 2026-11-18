@@ -37,8 +37,9 @@ Future<({bool? confirmed, int deleted})> _runFlow(
 }
 
 void main() {
-  testWidgets('dialog asks about the plan and warns there is no undo',
-      (tester) async {
+  testWidgets('dialog asks about the plan and warns there is no undo', (
+    tester,
+  ) async {
     await _runFlow(tester, () async {
       expect(find.text('Delete this plan?'), findsOneWidget);
       expect(find.textContaining('cannot be undone'), findsOneWidget);

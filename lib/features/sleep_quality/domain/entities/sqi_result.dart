@@ -1,9 +1,4 @@
-enum SleepQualityLevel {
-  excellent,
-  good,
-  fair,
-  poor,
-}
+enum SleepQualityLevel { excellent, good, fair, poor }
 
 class SqiResult {
   const SqiResult({

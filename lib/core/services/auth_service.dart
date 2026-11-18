@@ -48,7 +48,9 @@ class AuthService {
         final user = await signInAnonymously();
         return user.uid;
       } catch (e) {
-        debugPrint('Anonymous sign-in attempt $attempt/$maxAttempts failed: $e');
+        debugPrint(
+          'Anonymous sign-in attempt $attempt/$maxAttempts failed: $e',
+        );
         if (attempt < maxAttempts) {
           await Future<void>.delayed(const Duration(seconds: 2));
         }

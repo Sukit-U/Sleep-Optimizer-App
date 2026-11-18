@@ -48,7 +48,10 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
 
   static const _questions = [
     _Question(label: 'Sleep duration', helper: 'How many hours did you sleep?'),
-    _Question(label: 'Sleep regularity', helper: 'How consistent was your bedtime?'),
+    _Question(
+      label: 'Sleep regularity',
+      helper: 'How consistent was your bedtime?',
+    ),
     _Question(label: 'Screen time', helper: 'How much screen time before bed?'),
     _Question(label: 'Exercise', helper: 'How active were you during the day?'),
     _Question(label: 'Stress', helper: 'How stressed did you feel before bed?'),
@@ -68,7 +71,9 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Discard answers?'),
-            content: const Text('You have unanswered questions. Do you want to discard your answers?'),
+            content: const Text(
+              'You have unanswered questions. Do you want to discard your answers?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -96,18 +101,20 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             children: [
               const SectionTitle(title: 'Sleep Quality Check-In'),
               const SizedBox(height: 8),
-              ..._questions.map((question) => SQIQuestionCard(
-                label: question.label,
-                helper: question.helper,
-                selectedValue: _responses[question.label],
-                hasError: _unansweredTouched.contains(question.label),
-                onSelected: (value) {
-                  setState(() {
-                    _responses[question.label] = value;
-                    _unansweredTouched.remove(question.label);
-                  });
-                },
-              )),
+              ..._questions.map(
+                (question) => SQIQuestionCard(
+                  label: question.label,
+                  helper: question.helper,
+                  selectedValue: _responses[question.label],
+                  hasError: _unansweredTouched.contains(question.label),
+                  onSelected: (value) {
+                    setState(() {
+                      _responses[question.label] = value;
+                      _unansweredTouched.remove(question.label);
+                    });
+                  },
+                ),
+              ),
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
@@ -135,20 +142,29 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       final userId = await _ensureSignedIn();
       if (userId == null) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+          const SnackBar(
+            content: Text(
+              'Could not sign in. Check your connection and try again.',
+            ),
+          ),
         );
         return;
       }
 
       if (_responses.length != _questions.length) {
-        final unanswered =
-            _questions.where((q) => !_responses.containsKey(q.label)).toList();
+        final unanswered = _questions
+            .where((q) => !_responses.containsKey(q.label))
+            .toList();
         if (!mounted) return;
         setState(() {
           _unansweredTouched.addAll(unanswered.map((q) => q.label));
         });
         messenger.showSnackBar(
-          const SnackBar(content: Text('Please answer every SQI question before submitting.')),
+          const SnackBar(
+            content: Text(
+              'Please answer every SQI question before submitting.',
+            ),
+          ),
         );
         return;
       }
@@ -166,15 +182,12 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           // The attempt is complete: a later submission is a new assessment and
           // must get its own record.
           _submitAssessment.reset();
-          await appStorage?.saveHistoryEntry(
-            'sqi_history',
-            {
-              'title': 'SQI Score',
-              'subtitle':
-                  'Score ${result.score} · Level ${result.level.name.toUpperCase()}',
-              'dateLabel': DateTime.now().toIso8601String(),
-            },
-          );
+          await appStorage?.saveHistoryEntry('sqi_history', {
+            'title': 'SQI Score',
+            'subtitle':
+                'Score ${result.score} · Level ${result.level.name.toUpperCase()}',
+            'dateLabel': DateTime.now().toIso8601String(),
+          });
           if (!mounted) return;
           Navigator.of(context).push(
             MaterialPageRoute(

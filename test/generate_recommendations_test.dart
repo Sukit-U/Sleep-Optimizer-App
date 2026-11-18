@@ -17,12 +17,18 @@ void main() {
     String recordId,
   ) {
     for (final rec in recommendations) {
-      expect(rec.recordId, recordId,
-          reason: 'every recommendation must carry the recordId');
+      expect(
+        rec.recordId,
+        recordId,
+        reason: 'every recommendation must carry the recordId',
+      );
     }
     final factors = recommendations.map((rec) => rec.factor).toList();
-    expect(factors.toSet().length, factors.length,
-        reason: 'recommendation factors must not be duplicated');
+    expect(
+      factors.toSet().length,
+      factors.length,
+      reason: 'recommendation factors must not be duplicated',
+    );
   }
 
   group('GenerateRecommendations — per SQI level', () {
@@ -229,10 +235,16 @@ void main() {
 
       boundaryCases.forEach((key, responses) {
         final result = CalculateSqi().call(responses: responses);
-        expect(result.score, expectedScores[key],
-            reason: '$key must produce exactly ${expectedScores[key]}');
-        expect(result.level, expectedLevels[key],
-            reason: '$key must map to ${expectedLevels[key]}');
+        expect(
+          result.score,
+          expectedScores[key],
+          reason: '$key must produce exactly ${expectedScores[key]}',
+        );
+        expect(
+          result.level,
+          expectedLevels[key],
+          reason: '$key must map to ${expectedLevels[key]}',
+        );
       });
     });
 
@@ -258,9 +270,7 @@ void main() {
     });
 
     test('good boundary: only the weakest factor is recommended', () {
-      final result = CalculateSqi().call(
-        responses: boundaryCases['good@60']!,
-      );
+      final result = CalculateSqi().call(responses: boundaryCases['good@60']!);
 
       // Deterministic weakest factors: Caffeine (3) and Stress (6).
       expect(result.weakFactors, ['Caffeine', 'Stress']);
@@ -278,9 +288,7 @@ void main() {
     });
 
     test('fair boundary: recommendations for the weak factors', () {
-      final result = CalculateSqi().call(
-        responses: boundaryCases['fair@40']!,
-      );
+      final result = CalculateSqi().call(responses: boundaryCases['fair@40']!);
 
       // Deterministic weakest factors: Caffeine (3) and Sleep duration (4).
       expect(result.weakFactors, ['Caffeine', 'Sleep duration']);
@@ -301,9 +309,7 @@ void main() {
     });
 
     test('poor boundary: recommendations for the weak factors', () {
-      final result = CalculateSqi().call(
-        responses: boundaryCases['poor@39']!,
-      );
+      final result = CalculateSqi().call(responses: boundaryCases['poor@39']!);
 
       // Deterministic weakest factors: Caffeine (3) and Sleep duration (4).
       expect(result.weakFactors, ['Caffeine', 'Sleep duration']);

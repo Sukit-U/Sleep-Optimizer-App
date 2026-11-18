@@ -8,10 +8,7 @@ import 'package:snoozemate/core/theme/app_spacing.dart';
 class TonightSuggestionCard extends StatelessWidget {
   final VoidCallback? onPlanTonight;
 
-  const TonightSuggestionCard({
-    super.key,
-    this.onPlanTonight,
-  });
+  const TonightSuggestionCard({super.key, this.onPlanTonight});
 
   @override
   Widget build(BuildContext context) {

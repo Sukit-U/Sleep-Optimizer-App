@@ -41,8 +41,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SplashPage());
       case AppRoutes.suggestedBedtimes:
         return MaterialPageRoute(builder: (_) => const SuggestedBedtimesPage());
-        default:
-          return MaterialPageRoute(builder: (_) => const HomePage());
+      default:
+        return MaterialPageRoute(builder: (_) => const HomePage());
     }
   }
 }
