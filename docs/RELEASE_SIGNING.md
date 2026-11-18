@@ -49,6 +49,36 @@ keyPassword=<your key password>
 `key.properties`), so `upload-keystore.jks` means `android/upload-keystore.jks`.
 Note `.properties` files treat `\` as an escape character — use forward slashes.
 
+### Keep the passwords out of the file
+
+Gradle reads `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_PASSWORD` from the
+environment before it reads `key.properties`. So the file can name the keystore
+and alias with no secret in it:
+
+```properties
+storeFile=upload-keystore.jks
+keyAlias=upload
+```
+
+```bash
+export ANDROID_KEYSTORE_PASSWORD="$(pass show android/upload)"
+export ANDROID_KEY_PASSWORD="$ANDROID_KEYSTORE_PASSWORD"
+flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
+```
+
+When `ANDROID_KEY_PASSWORD` is unset it falls back to
+`ANDROID_KEYSTORE_PASSWORD`, the same rule the release workflow uses. A
+keystore without a password stays unsigned instead of signing with the debug
+key.
+
+A password that was ever stored in plaintext must be rotated. Run
+`keytool -genkey` again with a new password and delete the old keystore, then
+repeat §4 because the certificate changes. Check every copy of the old file,
+including backups and other checkouts.
+
+`.github/workflows/release.yml` exports these two names at job level from
+repository secrets, and its temporary `key.properties` holds no password.
+
 ## 3. Build
 
 Android builds are flavored, so a release build names the prod flavor *and*

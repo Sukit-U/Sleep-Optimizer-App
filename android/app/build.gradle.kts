@@ -15,9 +15,19 @@ val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val hasKeystore = keystoreProperties["storeFile"] != null
-if (!hasKeystore) {
+// Passwords come from the environment first, so no build needs a secret in a
+// file. key.properties only fills the gaps for a local build.
+fun signingValue(envName: String, propertyName: String): String? =
+    System.getenv(envName)?.takeIf { it.isNotBlank() }
+        ?: (keystoreProperties[propertyName] as String?)?.takeIf { it.isNotBlank() }
+
+val storePasswordValue = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
+val keyPasswordValue = signingValue("ANDROID_KEY_PASSWORD", "keyPassword") ?: storePasswordValue
+val hasKeystore = keystoreProperties["storeFile"] != null && storePasswordValue != null
+if (keystoreProperties["storeFile"] == null) {
     logger.warn("android/key.properties not found — release builds will be UNSIGNED. See docs/RELEASE_SIGNING.md")
+} else if (storePasswordValue == null) {
+    logger.warn("No keystore password: set ANDROID_KEYSTORE_PASSWORD — release builds will be UNSIGNED. See docs/RELEASE_SIGNING.md")
 }
 
 android {
@@ -45,9 +55,9 @@ android {
             create("release") {
                 // Paths are resolved from android/, the dir holding key.properties.
                 storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+                storePassword = storePasswordValue
                 keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
+                keyPassword = keyPasswordValue
             }
         }
     }

@@ -18,9 +18,22 @@ void main() {
 
   test('release signing config is built from android/key.properties', () {
     expect(gradle, contains('rootProject.file("key.properties")'));
-    for (final key in ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']) {
-      expect(gradle, contains('keystoreProperties["$key"]'), reason: 'missing $key');
-    }
+    expect(gradle, contains('keystoreProperties["storeFile"]'));
+    expect(gradle, contains('keystoreProperties["keyAlias"]'));
+    expect(gradle, contains('storePassword = storePasswordValue'));
+    expect(gradle, contains('keyPassword = keyPasswordValue'));
+  });
+
+  test('keystore passwords can come from the environment, not a file', () {
+    expect(gradle, contains('System.getenv(envName)'));
+    expect(gradle, contains('signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")'));
+    expect(gradle, contains('signingValue("ANDROID_KEY_PASSWORD", "keyPassword")'));
+    expect(gradle, isNot(contains('storePassword = keystoreProperties')));
+    expect(gradle, isNot(contains('keyPassword = keystoreProperties')));
+  });
+
+  test('a keystore without a password stays unsigned', () {
+    expect(gradle, contains('keystoreProperties["storeFile"] != null && storePasswordValue != null'));
   });
 
   test('signing material can never be committed', () {

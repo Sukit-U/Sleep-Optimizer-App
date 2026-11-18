@@ -160,11 +160,12 @@ jobs:
             echo "::error::the key password for '$alias_name' is wrong; set ANDROID_KEY_PASSWORD, or leave it empty when it equals ANDROID_KEYSTORE_PASSWORD."
             exit 1
           fi
+          # No password goes in the file: Gradle reads
+          # ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_PASSWORD from the
+          # environment set at job level.
           cat > android/key.properties <<PROPERTIES
           storeFile=upload-keystore.jks
           keyAlias=$alias_name
-          storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyPassword=$key_password
           PROPERTIES
 
       - name: Build App Bundle

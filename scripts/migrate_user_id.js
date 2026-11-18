@@ -37,6 +37,18 @@ const DEFAULT_FROM = 'local-user';
 const DEFAULT_TO = 'default_user';
 const BATCH_SIZE = 400;
 
+/**
+ * Recommendations that belong to a record being migrated. A recommendation
+ * whose parent moves but which keeps the old owner becomes unreadable and
+ * undeletable under firestore.rules, so both must move together.
+ */
+function selectRecommendationsToMigrate(recDocs, migratedRecordIds) {
+  return recDocs.filter((doc) => {
+    const data = doc.data() || {};
+    return typeof data.recordId === 'string' && migratedRecordIds.has(data.recordId);
+  });
+}
+
 function usage() {
   console.log(
     [
@@ -134,10 +146,10 @@ async function main() {
     .collection('recommendations')
     .where('userId', '==', from)
     .get();
-  const recsToUpdate = recSnapshot.docs.filter((doc) => {
-    const data = doc.data() || {};
-    return typeof data.recordId === 'string' && migratedRecordIds.has(data.recordId);
-  });
+  const recsToUpdate = selectRecommendationsToMigrate(
+    recSnapshot.docs,
+    migratedRecordIds,
+  );
   console.log(`Matched: ${recsToUpdate.length} recommendations to cascade`);
 
   if (!apply) {
@@ -174,8 +186,12 @@ async function main() {
   console.log(`Updated: ${updated} (${snapshot.size} sqiRecords, ${recsToUpdate.length} recommendations)`);
 }
 
-main().catch((error) => {
-  console.error('Migration failed:', error.message);
-  console.error('No credentials are printed. Check ADC / emulator host and retry.');
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('Migration failed:', error.message);
+    console.error('No credentials are printed. Check ADC / emulator host and retry.');
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { selectRecommendationsToMigrate };
