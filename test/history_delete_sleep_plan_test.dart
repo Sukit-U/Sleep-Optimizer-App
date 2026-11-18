@@ -43,8 +43,9 @@ class _PlanService implements FirestoreService {
   @override
   Future<SleepPlanReadBatch> getSleepPlans(String userId) async {
     loadCount++;
-    return SleepPlanReadBatch(
-        [SleepPlanValid(documentId: _plan.planId, plan: _plan)]);
+    return SleepPlanReadBatch([
+      SleepPlanValid(documentId: _plan.planId, plan: _plan),
+    ]);
   }
 
   @override
@@ -64,7 +65,10 @@ class _PlanService implements FirestoreService {
       throw UnimplementedError('${invocation.memberName} is not stubbed');
 }
 
-Future<void> _pumpPlansTab(WidgetTester tester, FirestoreService service) async {
+Future<void> _pumpPlansTab(
+  WidgetTester tester,
+  FirestoreService service,
+) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Provider<AuthService>.value(
@@ -113,8 +117,9 @@ void main() {
     );
   });
 
-  testWidgets('a failed delete shows friendly copy and no raw error',
-      (tester) async {
+  testWidgets('a failed delete shows friendly copy and no raw error', (
+    tester,
+  ) async {
     final service = _PlanService(failDelete: true);
     await _pumpPlansTab(tester, service);
 

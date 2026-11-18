@@ -8,6 +8,7 @@ enum RecommendationPriority { critical, high, medium, low }
 /// Current-contract, fully valid recommendation (safe for writes and full display).
 class Recommendation {
   final String recommendationId;
+
   /// Owner of the parent SQIRecord (Firebase Auth uid). Empty means the object
   /// has not been persisted yet; Firestore rules require a matching owner.
   final String userId;
@@ -67,12 +68,7 @@ class Recommendation {
   }
 }
 
-const _recommendationPriorities = <String>{
-  'critical',
-  'high',
-  'medium',
-  'low',
-};
+const _recommendationPriorities = <String>{'critical', 'high', 'medium', 'low'};
 
 /// Verified, safely displayable subset of a recommendation. Fields are null
 /// only when that specific value could not be validated; no values are invented.
@@ -101,20 +97,29 @@ class RecommendationPartial {
 
   bool get canDisplayRecommendation =>
       userId != null &&
-      recordId != null && createdAt != null && title != null && title!.trim().isNotEmpty;
+      recordId != null &&
+      createdAt != null &&
+      title != null &&
+      title!.trim().isNotEmpty;
 }
 
 sealed class RecommendationReadResult implements DocumentReadResult {
   const RecommendationReadResult();
 
-  static RecommendationReadResult parse(Map<String, dynamic> data, String documentId) {
+  static RecommendationReadResult parse(
+    Map<String, dynamic> data,
+    String documentId,
+  ) {
     final issues = FieldIssues();
 
     // recommendationId (document id) is always preserved; validate it is non-empty.
     String? recommendationId;
     if (documentId.isEmpty) {
-      issues.add('recommendationId', FieldIssueKind.missing,
-          expected: 'non-empty String');
+      issues.add(
+        'recommendationId',
+        FieldIssueKind.missing,
+        expected: 'non-empty String',
+      );
     } else {
       recommendationId = documentId;
     }
@@ -130,13 +135,21 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         userId = raw;
         if (raw.isEmpty) {
-          issues.add('userId', FieldIssueKind.outOfRange,
-              expected: 'non-empty String', actual: raw);
+          issues.add(
+            'userId',
+            FieldIssueKind.outOfRange,
+            expected: 'non-empty String',
+            actual: raw,
+          );
           userId = null;
         }
       } else {
-        issues.add('userId', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'userId',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -151,13 +164,21 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         recordId = raw;
         if (raw.isEmpty) {
-          issues.add('recordId', FieldIssueKind.outOfRange,
-              expected: 'non-empty String', actual: raw);
+          issues.add(
+            'recordId',
+            FieldIssueKind.outOfRange,
+            expected: 'non-empty String',
+            actual: raw,
+          );
           recordId = null;
         }
       } else {
-        issues.add('recordId', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'recordId',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -172,12 +193,20 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         factor = raw.trim().isEmpty ? null : raw;
         if (factor == null) {
-          issues.add('factor', FieldIssueKind.outOfRange,
-              expected: 'non-empty String', actual: raw);
+          issues.add(
+            'factor',
+            FieldIssueKind.outOfRange,
+            expected: 'non-empty String',
+            actual: raw,
+          );
         }
       } else {
-        issues.add('factor', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'factor',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -192,12 +221,20 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         title = raw.trim().isEmpty ? null : raw;
         if (title == null) {
-          issues.add('title', FieldIssueKind.outOfRange,
-              expected: 'non-empty String', actual: raw);
+          issues.add(
+            'title',
+            FieldIssueKind.outOfRange,
+            expected: 'non-empty String',
+            actual: raw,
+          );
         }
       } else {
-        issues.add('title', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'title',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -212,8 +249,12 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         description = raw.trim().isEmpty ? null : raw;
       } else {
-        issues.add('description', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'description',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -228,31 +269,49 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       } else if (raw is String) {
         action = raw.trim().isEmpty ? null : raw;
       } else {
-        issues.add('action', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'action',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
     // priority
     String? priority;
     if (!data.containsKey('priority')) {
-      issues.add('priority', FieldIssueKind.missing,
-          expected: 'one of critical/high/medium/low');
+      issues.add(
+        'priority',
+        FieldIssueKind.missing,
+        expected: 'one of critical/high/medium/low',
+      );
     } else {
       final raw = data['priority'];
       if (raw == null) {
-        issues.add('priority', FieldIssueKind.nullValue,
-            expected: 'one of critical/high/medium/low');
+        issues.add(
+          'priority',
+          FieldIssueKind.nullValue,
+          expected: 'one of critical/high/medium/low',
+        );
       } else if (raw is String) {
         if (_recommendationPriorities.contains(raw)) {
           priority = raw;
         } else {
-          issues.add('priority', FieldIssueKind.unknownValue,
-              expected: 'one of critical/high/medium/low', actual: raw);
+          issues.add(
+            'priority',
+            FieldIssueKind.unknownValue,
+            expected: 'one of critical/high/medium/low',
+            actual: raw,
+          );
         }
       } else {
-        issues.add('priority', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'priority',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -263,12 +322,20 @@ sealed class RecommendationReadResult implements DocumentReadResult {
     } else {
       final raw = data['createdAt'];
       if (raw == null) {
-        issues.add('createdAt', FieldIssueKind.nullValue, expected: 'Timestamp');
+        issues.add(
+          'createdAt',
+          FieldIssueKind.nullValue,
+          expected: 'Timestamp',
+        );
       } else if (raw is Timestamp) {
         createdAt = raw.toDate();
       } else {
-        issues.add('createdAt', FieldIssueKind.wrongType,
-            expected: 'Timestamp', actual: raw);
+        issues.add(
+          'createdAt',
+          FieldIssueKind.wrongType,
+          expected: 'Timestamp',
+          actual: raw,
+        );
       }
     }
 
@@ -323,9 +390,10 @@ sealed class RecommendationReadResult implements DocumentReadResult {
       issues: issues.items.isEmpty
           ? [
               const FieldIssue(
-                  field: 'document',
-                  kind: FieldIssueKind.missing,
-                  expected: 'displayable recommendation fields')
+                field: 'document',
+                kind: FieldIssueKind.missing,
+                expected: 'displayable recommendation fields',
+              ),
             ]
           : issues.items,
     );
@@ -355,8 +423,11 @@ class RecommendationLegacy extends RecommendationReadResult {
   final RecommendationPartial partial;
   @override
   final List<FieldIssue> issues;
-  const RecommendationLegacy(
-      {required this.documentId, required this.partial, required this.issues});
+  const RecommendationLegacy({
+    required this.documentId,
+    required this.partial,
+    required this.issues,
+  });
   @override
   ReadQuality get quality => ReadQuality.legacy;
   @override
@@ -373,8 +444,11 @@ class RecommendationInvalid extends RecommendationReadResult {
   final RecommendationPartial partial;
   @override
   final List<FieldIssue> issues;
-  const RecommendationInvalid(
-      {required this.documentId, required this.partial, required this.issues});
+  const RecommendationInvalid({
+    required this.documentId,
+    required this.partial,
+    required this.issues,
+  });
   @override
   ReadQuality get quality => ReadQuality.invalid;
   @override

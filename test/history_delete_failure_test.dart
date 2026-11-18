@@ -44,8 +44,9 @@ class _FailingDeleteService implements FirestoreService {
   @override
   Future<SQIRecordReadBatch> getSQIRecords(String userId) async {
     loadCount++;
-    return SQIRecordReadBatch(
-        [SQIRecordValid(documentId: _record.recordId, record: _record)]);
+    return SQIRecordReadBatch([
+      SQIRecordValid(documentId: _record.recordId, record: _record),
+    ]);
   }
 
   @override
@@ -63,8 +64,9 @@ class _FailingDeleteService implements FirestoreService {
 }
 
 void main() {
-  testWidgets('an unconfirmed delete says so and Refresh reloads history',
-      (tester) async {
+  testWidgets('an unconfirmed delete says so and Refresh reloads history', (
+    tester,
+  ) async {
     final service = _FailingDeleteService();
 
     await tester.pumpWidget(

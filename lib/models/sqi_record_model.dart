@@ -52,7 +52,8 @@ class SQIRecordPartial {
     this.createdAt,
   });
 
-  bool get canDisplayScore => userId != null && sqiScore != null && createdAt != null;
+  bool get canDisplayScore =>
+      userId != null && sqiScore != null && createdAt != null;
 
   bool get canDisplayQuestionnaire =>
       questionnaireComplete && createdAt != null;
@@ -71,7 +72,10 @@ const _questionnaireKeys = <String>{
 sealed class SQIRecordReadResult implements DocumentReadResult {
   const SQIRecordReadResult();
 
-  static SQIRecordReadResult parse(Map<String, dynamic> data, String documentId) {
+  static SQIRecordReadResult parse(
+    Map<String, dynamic> data,
+    String documentId,
+  ) {
     final issues = FieldIssues();
 
     // userId
@@ -85,13 +89,21 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
       } else if (raw is String) {
         userId = raw;
         if (raw.isEmpty) {
-          issues.add('userId', FieldIssueKind.outOfRange,
-              expected: 'non-empty String', actual: raw);
+          issues.add(
+            'userId',
+            FieldIssueKind.outOfRange,
+            expected: 'non-empty String',
+            actual: raw,
+          );
           userId = null;
         }
       } else {
-        issues.add('userId', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'userId',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -107,35 +119,57 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
         if (raw >= 0 && raw <= 100) {
           sqiScore = raw;
         } else {
-          issues.add('sqiScore', FieldIssueKind.outOfRange,
-              expected: 'int 0-100', actual: raw);
+          issues.add(
+            'sqiScore',
+            FieldIssueKind.outOfRange,
+            expected: 'int 0-100',
+            actual: raw,
+          );
         }
       } else {
-        issues.add('sqiScore', FieldIssueKind.wrongType,
-            expected: 'int 0-100', actual: raw);
+        issues.add(
+          'sqiScore',
+          FieldIssueKind.wrongType,
+          expected: 'int 0-100',
+          actual: raw,
+        );
       }
     }
 
     // sleepQualityLevel
     String? sleepQualityLevel;
     if (!data.containsKey('sleepQualityLevel')) {
-      issues.add('sleepQualityLevel', FieldIssueKind.missing,
-          expected: 'one of poor/fair/good/excellent');
+      issues.add(
+        'sleepQualityLevel',
+        FieldIssueKind.missing,
+        expected: 'one of poor/fair/good/excellent',
+      );
     } else {
       final raw = data['sleepQualityLevel'];
       if (raw == null) {
-        issues.add('sleepQualityLevel', FieldIssueKind.nullValue,
-            expected: 'one of poor/fair/good/excellent');
+        issues.add(
+          'sleepQualityLevel',
+          FieldIssueKind.nullValue,
+          expected: 'one of poor/fair/good/excellent',
+        );
       } else if (raw is String) {
         if (_sqiLevels.contains(raw)) {
           sleepQualityLevel = raw;
         } else {
-          issues.add('sleepQualityLevel', FieldIssueKind.unknownValue,
-              expected: 'one of poor/fair/good/excellent', actual: raw);
+          issues.add(
+            'sleepQualityLevel',
+            FieldIssueKind.unknownValue,
+            expected: 'one of poor/fair/good/excellent',
+            actual: raw,
+          );
         }
       } else {
-        issues.add('sleepQualityLevel', FieldIssueKind.wrongType,
-            expected: 'String', actual: raw);
+        issues.add(
+          'sleepQualityLevel',
+          FieldIssueKind.wrongType,
+          expected: 'String',
+          actual: raw,
+        );
       }
     }
 
@@ -143,20 +177,29 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
     final verifiedResponses = <String, int>{};
     bool questionnaireComplete = false;
     if (!data.containsKey('questionnaireResponses')) {
-      issues.add('questionnaireResponses', FieldIssueKind.missing,
-          expected: 'Map<String,int> with 6 keys');
+      issues.add(
+        'questionnaireResponses',
+        FieldIssueKind.missing,
+        expected: 'Map<String,int> with 6 keys',
+      );
     } else {
       final raw = data['questionnaireResponses'];
       if (raw == null) {
-        issues.add('questionnaireResponses', FieldIssueKind.nullValue,
-            expected: 'Map<String,int>');
+        issues.add(
+          'questionnaireResponses',
+          FieldIssueKind.nullValue,
+          expected: 'Map<String,int>',
+        );
       } else if (raw is Map) {
         var allKeysPresent = true;
         var allValuesValid = true;
         for (final key in _questionnaireKeys) {
           if (!raw.containsKey(key)) {
-            issues.add('questionnaireResponses.$key',
-                FieldIssueKind.missing, expected: 'int 1-5');
+            issues.add(
+              'questionnaireResponses.$key',
+              FieldIssueKind.missing,
+              expected: 'int 1-5',
+            );
             allKeysPresent = false;
             continue;
           }
@@ -164,12 +207,19 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
           if (val is int && val >= 1 && val <= 5) {
             verifiedResponses[key] = val;
           } else if (val == null) {
-            issues.add('questionnaireResponses.$key',
-                FieldIssueKind.nullValue, expected: 'int 1-5');
+            issues.add(
+              'questionnaireResponses.$key',
+              FieldIssueKind.nullValue,
+              expected: 'int 1-5',
+            );
             allValuesValid = false;
           } else {
-            issues.add('questionnaireResponses.$key',
-                FieldIssueKind.outOfRange, expected: 'int 1-5', actual: val);
+            issues.add(
+              'questionnaireResponses.$key',
+              FieldIssueKind.outOfRange,
+              expected: 'int 1-5',
+              actual: val,
+            );
             allValuesValid = false;
           }
         }
@@ -185,8 +235,12 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
           }
         }
       } else {
-        issues.add('questionnaireResponses', FieldIssueKind.wrongType,
-            expected: 'Map<String,int>', actual: raw);
+        issues.add(
+          'questionnaireResponses',
+          FieldIssueKind.wrongType,
+          expected: 'Map<String,int>',
+          actual: raw,
+        );
       }
     }
 
@@ -197,12 +251,20 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
     } else {
       final raw = data['createdAt'];
       if (raw == null) {
-        issues.add('createdAt', FieldIssueKind.nullValue, expected: 'Timestamp');
+        issues.add(
+          'createdAt',
+          FieldIssueKind.nullValue,
+          expected: 'Timestamp',
+        );
       } else if (raw is Timestamp) {
         createdAt = raw.toDate();
       } else {
-        issues.add('createdAt', FieldIssueKind.wrongType,
-            expected: 'Timestamp', actual: raw);
+        issues.add(
+          'createdAt',
+          FieldIssueKind.wrongType,
+          expected: 'Timestamp',
+          actual: raw,
+        );
       }
     }
 
@@ -249,9 +311,10 @@ sealed class SQIRecordReadResult implements DocumentReadResult {
       issues: issues.items.isEmpty
           ? [
               const FieldIssue(
-                  field: 'document',
-                  kind: FieldIssueKind.missing,
-                  expected: 'displayable SQI score and timestamp')
+                field: 'document',
+                kind: FieldIssueKind.missing,
+                expected: 'displayable SQI score and timestamp',
+              ),
             ]
           : issues.items,
     );
@@ -281,8 +344,11 @@ class SQIRecordLegacy extends SQIRecordReadResult {
   final SQIRecordPartial partial;
   @override
   final List<FieldIssue> issues;
-  const SQIRecordLegacy(
-      {required this.documentId, required this.partial, required this.issues});
+  const SQIRecordLegacy({
+    required this.documentId,
+    required this.partial,
+    required this.issues,
+  });
   @override
   ReadQuality get quality => ReadQuality.legacy;
   @override
@@ -299,8 +365,11 @@ class SQIRecordInvalid extends SQIRecordReadResult {
   final SQIRecordPartial partial;
   @override
   final List<FieldIssue> issues;
-  const SQIRecordInvalid(
-      {required this.documentId, required this.partial, required this.issues});
+  const SQIRecordInvalid({
+    required this.documentId,
+    required this.partial,
+    required this.issues,
+  });
   @override
   ReadQuality get quality => ReadQuality.invalid;
   @override

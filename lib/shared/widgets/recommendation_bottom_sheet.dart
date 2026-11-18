@@ -46,7 +46,11 @@ void showRecommendationSheet(
             ),
             Row(
               children: [
-                Icon(Icons.auto_awesome, size: AppSpacing.iconMd, color: colors.primary),
+                Icon(
+                  Icons.auto_awesome,
+                  size: AppSpacing.iconMd,
+                  color: colors.primary,
+                ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   'Recommendations',
@@ -60,7 +64,9 @@ void showRecommendationSheet(
                 child: Center(
                   child: Text(
                     'No recommendations recorded for this assessment.',
-                    style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                    style: AppTypography.body.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -70,7 +76,9 @@ void showRecommendationSheet(
                 child: Center(
                   child: Text(
                     'Some recommendations could not be displayed.',
-                    style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                    style: AppTypography.body.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -88,7 +96,9 @@ void showRecommendationSheet(
                   padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
                     'Some recommendations could not be displayed.',
-                    style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                    style: AppTypography.body.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -143,7 +153,9 @@ class _RecommendationItem extends StatelessWidget {
               ),
               Text(
                 rec.factor,
-                style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                style: AppTypography.caption.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -160,7 +172,9 @@ class _RecommendationItem extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             'Action: ${rec.action}',
-            style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+            style: AppTypography.caption.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),

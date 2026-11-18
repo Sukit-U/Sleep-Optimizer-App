@@ -54,12 +54,14 @@ class FieldIssues {
     String? expected,
     Object? actual,
   }) {
-    _items.add(FieldIssue(
-      field: field,
-      kind: kind,
-      expected: expected,
-      actualType: actual?.runtimeType.toString(),
-    ));
+    _items.add(
+      FieldIssue(
+        field: field,
+        kind: kind,
+        expected: expected,
+        actualType: actual?.runtimeType.toString(),
+      ),
+    );
   }
 }
 
@@ -68,4 +70,5 @@ String? actualTypeName(Object? value) =>
 
 bool isIntLike(Object? value) => value is int;
 
-bool isNonEmptyString(Object? value) => value is String && value.trim().isNotEmpty;
+bool isNonEmptyString(Object? value) =>
+    value is String && value.trim().isNotEmpty;

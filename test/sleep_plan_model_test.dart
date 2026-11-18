@@ -45,7 +45,9 @@ void main() {
       final result = SleepPlanReadResult.parse(data, 'plan-1');
       expect(result.isInvalid, isTrue);
       expect(
-        result.issues.any((i) => i.field == 'wakeUpTime' && i.kind == FieldIssueKind.wrongType),
+        result.issues.any(
+          (i) => i.field == 'wakeUpTime' && i.kind == FieldIssueKind.wrongType,
+        ),
         isTrue,
       );
     });
@@ -64,7 +66,10 @@ void main() {
       expect(legacy.partial.canDisplayPlan, isTrue);
       expect(legacy.partial.sleepCycles, isNull);
       expect(
-        legacy.issues.any((i) => i.field == 'sleepCycles' && i.kind == FieldIssueKind.outOfRange),
+        legacy.issues.any(
+          (i) =>
+              i.field == 'sleepCycles' && i.kind == FieldIssueKind.outOfRange,
+        ),
         isTrue,
       );
     });
@@ -74,7 +79,9 @@ void main() {
       final result = SleepPlanReadResult.parse(data, 'plan-1');
       expect(result.isLegacy, isTrue);
       expect(
-        result.issues.any((i) => i.field == 'sleepCycles' && i.kind == FieldIssueKind.wrongType),
+        result.issues.any(
+          (i) => i.field == 'sleepCycles' && i.kind == FieldIssueKind.wrongType,
+        ),
         isTrue,
       );
     });
@@ -104,7 +111,11 @@ void main() {
       final result = SleepPlanReadResult.parse(data, 'plan-1');
       expect(result.isInvalid, isTrue);
       expect(
-        result.issues.any((i) => i.field == 'suggestedBedtimes' && i.kind == FieldIssueKind.wrongType),
+        result.issues.any(
+          (i) =>
+              i.field == 'suggestedBedtimes' &&
+              i.kind == FieldIssueKind.wrongType,
+        ),
         isTrue,
       );
     });
@@ -134,7 +145,10 @@ void main() {
   group('SleepPlanReadBatch', () {
     test('one bad document does not crash the batch read', () {
       final valid = SleepPlanReadResult.parse(validPlanData(), 'plan-1');
-      final bad = SleepPlanReadResult.parse(validPlanData()..remove('wakeUpTime'), 'plan-2');
+      final bad = SleepPlanReadResult.parse(
+        validPlanData()..remove('wakeUpTime'),
+        'plan-2',
+      );
       final batch = SleepPlanReadBatch([valid, bad]);
       expect(batch.validCount, 1);
       expect(batch.invalidCount, 1);

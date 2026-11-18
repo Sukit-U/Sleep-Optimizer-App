@@ -91,7 +91,9 @@ void main() {
       final data = validRecData()..['priority'] = 42;
       final result = RecommendationReadResult.parse(data, 'rec-1-r0');
       expect(
-        result.issues.any((i) => i.field == 'priority' && i.kind == FieldIssueKind.wrongType),
+        result.issues.any(
+          (i) => i.field == 'priority' && i.kind == FieldIssueKind.wrongType,
+        ),
         isTrue,
       );
     });
@@ -116,7 +118,10 @@ void main() {
   group('RecommendationReadBatch', () {
     test('mixed batch keeps valid and invalid independently', () {
       final valid = RecommendationReadResult.parse(validRecData(), 'rec-1-r0');
-      final bad = RecommendationReadResult.parse(validRecData()..remove('title'), 'rec-1-r1');
+      final bad = RecommendationReadResult.parse(
+        validRecData()..remove('title'),
+        'rec-1-r1',
+      );
       final batch = RecommendationReadBatch([valid, bad]);
       expect(batch.validCount, 1);
       expect(batch.invalidCount, 1);

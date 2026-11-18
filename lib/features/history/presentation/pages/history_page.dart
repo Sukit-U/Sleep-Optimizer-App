@@ -82,17 +82,18 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<SQIRecord> _validSqiRecords() {
     return _sqiBatch?.results
-        .whereType<SQIRecordValid>()
-        .map((r) => r.record)
-        .toList() ??
+            .whereType<SQIRecordValid>()
+            .map((r) => r.record)
+            .toList() ??
         <SQIRecord>[];
   }
 
   List<SleepPlan> _validSleepPlans() {
     return _planBatch?.results
-        .whereType<SleepPlanValid>()
-        .map((r) => r.plan)
-        .toList() ?? <SleepPlan>[];
+            .whereType<SleepPlanValid>()
+            .map((r) => r.plan)
+            .toList() ??
+        <SleepPlan>[];
   }
 
   Future<void> _deleteSQIRecord(String recordId) async {
@@ -103,7 +104,9 @@ class _HistoryPageState extends State<HistoryPage> {
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not sign in. Check your connection and try again.'),
+          content: Text(
+            'Could not sign in. Check your connection and try again.',
+          ),
         ),
       );
       return;
@@ -159,22 +162,33 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> _openRecommendations(String recordId, String userId) async {
     if (_recsCache.containsKey(recordId)) {
       if (!mounted) return;
-      showRecommendationSheet(context, recs: _recsCache[recordId]!, unavailableCount: _recsUnavailableCounts[recordId] ?? 0);
+      showRecommendationSheet(
+        context,
+        recs: _recsCache[recordId]!,
+        unavailableCount: _recsUnavailableCounts[recordId] ?? 0,
+      );
       return;
     }
 
     if (!mounted) return;
 
     try {
-      final batch = await _firestoreService.getRecommendations(recordId, userId);
+      final batch = await _firestoreService.getRecommendations(
+        recordId,
+        userId,
+      );
       final valid = batch.results
           .whereType<RecommendationValid>()
           .map((r) => r.record)
           .toList();
-_recsCache[recordId] = valid;
-_recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
+      _recsCache[recordId] = valid;
+      _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
       if (!mounted) return;
-      showRecommendationSheet(context, recs: valid, unavailableCount: batch.legacyCount + batch.invalidCount);
+      showRecommendationSheet(
+        context,
+        recs: valid,
+        unavailableCount: batch.legacyCount + batch.invalidCount,
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -188,7 +202,10 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text('History', style: AppTypography.h1.copyWith(color: colors.onSurface)),
+        title: Text(
+          'History',
+          style: AppTypography.h1.copyWith(color: colors.onSurface),
+        ),
         leading: const BackButton(),
       ),
       body: SafeArea(
@@ -207,14 +224,14 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? ErrorStateWidget(
-                            message: 'Failed to load history',
-                            detail: _error,
-                            onRetry: _loadHistory,
-                          )
-                        : _selectedTab == 'sqi'
-                            ? _buildSQIList()
-                            : _buildPlansList(),
+                    ? ErrorStateWidget(
+                        message: 'Failed to load history',
+                        detail: _error,
+                        onRetry: _loadHistory,
+                      )
+                    : _selectedTab == 'sqi'
+                    ? _buildSQIList()
+                    : _buildPlansList(),
               ),
             ],
           ),
@@ -240,7 +257,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: _selectedTab == 'sqi' ? colors.primary : Colors.transparent,
+                  color: _selectedTab == 'sqi'
+                      ? colors.primary
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Center(
@@ -262,7 +281,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: _selectedTab == 'plans' ? colors.primary : Colors.transparent,
+                  color: _selectedTab == 'plans'
+                      ? colors.primary
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Center(
@@ -302,7 +323,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (invalidCount > 0)
-          _unreadableBanner('$invalidCount record(s) could not be read and are hidden.'),
+          _unreadableBanner(
+            '$invalidCount record(s) could not be read and are hidden.',
+          ),
         Expanded(
           child: ListView.separated(
             itemCount: validRecords.length + legacyCount,
@@ -312,7 +335,8 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
                 final record = validRecords[index];
                 return SQIRecordCard(
                   record: record,
-                  onTap: () => _openRecommendations(record.recordId, record.userId),
+                  onTap: () =>
+                      _openRecommendations(record.recordId, record.userId),
                   onDelete: () => _deleteSQIRecord(record.recordId),
                 );
               }
@@ -356,11 +380,16 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
               const SizedBox(width: AppSpacing.xs),
               Text(
                 '· ${partial.sleepQualityLevel ?? 'quality level unavailable'}',
-                style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                style: AppTypography.caption.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
               const SizedBox(width: AppSpacing.xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
@@ -376,7 +405,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
               _formatDate(partial.createdAt!),
-              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+              style: AppTypography.caption.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
           ],
           if (!partial.questionnaireComplete)
@@ -384,7 +415,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
               padding: const EdgeInsets.only(top: AppSpacing.spacingXs),
               child: Text(
                 'Questionnaire details unavailable for this record.',
-                style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                style: AppTypography.caption.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
             ),
         ],
@@ -411,7 +444,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (invalidCount > 0)
-          _unreadableBanner('$invalidCount plan(s) could not be read and are hidden.'),
+          _unreadableBanner(
+            '$invalidCount plan(s) could not be read and are hidden.',
+          ),
         Expanded(
           child: ListView.separated(
             itemCount: validPlans.length + legacyCount,
@@ -472,7 +507,10 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
               ],
               const SizedBox(width: AppSpacing.xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
@@ -488,7 +526,9 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
               '${partial.sleepCycles ?? '?'} cycles · ${partial.createdAt != null ? _formatDate(partial.createdAt!) : 'date unavailable'}',
-              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+              style: AppTypography.caption.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
           ],
         ],
@@ -507,12 +547,18 @@ _recsUnavailableCounts[recordId] = batch.legacyCount + batch.invalidCount;
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: colors.error, size: AppSpacing.iconMd),
+          Icon(
+            Icons.error_outline,
+            color: colors.error,
+            size: AppSpacing.iconMd,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: AppTypography.body.copyWith(color: colors.onErrorContainer),
+              style: AppTypography.body.copyWith(
+                color: colors.onErrorContainer,
+              ),
             ),
           ),
         ],
