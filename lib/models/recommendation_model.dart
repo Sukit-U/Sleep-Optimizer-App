@@ -45,6 +45,12 @@ class Recommendation {
     };
   }
 
+  /// Copies this recommendation, keeping every field that is not passed.
+  ///
+  /// [createdAt] defaults to the existing value and must never fall back to
+  /// `DateTime.now()`: `createdAt` is immutable in the Firestore rules, so a
+  /// copy built for a retry has to carry the original timestamp or the retried
+  /// write is rejected as an update of an immutable field.
   Recommendation copyWith({
     String? recommendationId,
     String? userId,
@@ -54,6 +60,7 @@ class Recommendation {
     String? description,
     String? action,
     String? priority,
+    DateTime? createdAt,
   }) {
     return Recommendation(
       recommendationId: recommendationId ?? this.recommendationId,
@@ -64,6 +71,7 @@ class Recommendation {
       description: description ?? this.description,
       action: action ?? this.action,
       priority: priority ?? this.priority,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
