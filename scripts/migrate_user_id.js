@@ -37,6 +37,18 @@ const DEFAULT_FROM = 'local-user';
 const DEFAULT_TO = 'default_user';
 const BATCH_SIZE = 400;
 
+/**
+ * Recommendations that belong to a record being migrated. A recommendation
+ * whose parent moves but which keeps the old owner becomes unreadable and
+ * undeletable under firestore.rules, so both must move together.
+ */
+function selectRecommendationsToMigrate(recDocs, migratedRecordIds) {
+  return recDocs.filter((doc) => {
+    const data = doc.data() || {};
+    return typeof data.recordId === 'string' && migratedRecordIds.has(data.recordId);
+  });
+}
+
 function usage() {
   console.log(
     [
@@ -126,10 +138,22 @@ async function main() {
     return;
   }
 
+  const migratedRecordIds = new Set(snapshot.docs.map((doc) => doc.id));
   console.log(`Matched: ${snapshot.size} sqiRecords`);
 
+  // Cascade: find recommendations whose parent record is being migrated.
+  const recSnapshot = await db
+    .collection('recommendations')
+    .where('userId', '==', from)
+    .get();
+  const recsToUpdate = selectRecommendationsToMigrate(
+    recSnapshot.docs,
+    migratedRecordIds,
+  );
+  console.log(`Matched: ${recsToUpdate.length} recommendations to cascade`);
+
   if (!apply) {
-    console.log(`Would update: ${snapshot.size} (dry-run — re-run with --apply to write)`);
+    console.log(`Would update: ${snapshot.size} sqiRecords, ${recsToUpdate.length} recommendations (dry-run — re-run with --apply to write)`);
     return;
   }
 
@@ -137,30 +161,37 @@ async function main() {
   let batch = db.batch();
   let inBatch = 0;
 
-  for (const doc of snapshot.docs) {
-    batch.update(doc.ref, { userId: to });
-    inBatch += 1;
-    if (inBatch === BATCH_SIZE) {
-      await batch.commit();
-      updated += inBatch;
-      console.log(`  ... ${updated} documents updated`);
-      batch = db.batch();
-      inBatch = 0;
-    }
-  }
-
-  if (inBatch > 0) {
+  const flushBatch = async () => {
+    if (inBatch === 0) return;
     await batch.commit();
     updated += inBatch;
     console.log(`  ... ${updated} documents updated`);
+    batch = db.batch();
+    inBatch = 0;
+  };
+
+  for (const doc of snapshot.docs) {
+    batch.update(doc.ref, { userId: to });
+    inBatch += 1;
+    if (inBatch === BATCH_SIZE) await flushBatch();
   }
+  for (const doc of recsToUpdate) {
+    batch.update(doc.ref, { userId: to });
+    inBatch += 1;
+    if (inBatch === BATCH_SIZE) await flushBatch();
+  }
+  await flushBatch();
 
   console.log('');
-  console.log(`Updated: ${updated}`);
+  console.log(`Updated: ${updated} (${snapshot.size} sqiRecords, ${recsToUpdate.length} recommendations)`);
 }
 
-main().catch((error) => {
-  console.error('Migration failed:', error.message);
-  console.error('No credentials are printed. Check ADC / emulator host and retry.');
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('Migration failed:', error.message);
+    console.error('No credentials are printed. Check ADC / emulator host and retry.');
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { selectRecommendationsToMigrate };

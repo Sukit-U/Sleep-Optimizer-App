@@ -38,10 +38,10 @@ class FirestoreSettingsRepository {
       // If Firestore fails, fall back to local storage
       final storage = await StorageService.create();
       final localTheme = storage.loadTheme();
-      if (localTheme != null) {
+      if (localTheme == 'light' || localTheme == 'dark') {
         return {'userId': userId, 'theme': localTheme};
       }
-      throw Exception('Failed to load settings from both Firestore and local storage: $e');
+      return null;
     }
     return null;
   }
