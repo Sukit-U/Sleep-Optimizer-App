@@ -16,7 +16,7 @@ abstract class SqiRepository {
 
 class FirestoreSqiRepository implements SqiRepository {
   FirestoreSqiRepository({FirestoreService? firestoreService})
-      : _firestoreService = firestoreService ?? FirestoreService();
+    : _firestoreService = firestoreService ?? FirestoreService();
 
   final FirestoreService _firestoreService;
 

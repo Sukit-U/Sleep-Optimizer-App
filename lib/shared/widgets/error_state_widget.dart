@@ -34,7 +34,9 @@ class ErrorStateWidget extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               detail!,
-              style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+              style: AppTypography.caption.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
           ],
           if (onRetry != null) ...[

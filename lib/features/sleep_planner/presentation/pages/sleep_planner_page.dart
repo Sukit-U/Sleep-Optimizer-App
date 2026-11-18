@@ -61,9 +61,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: colors.primary,
-            ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: colors.primary),
           ),
           child: child!,
         );
@@ -93,11 +93,13 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       final totalMinutes = (cycles * 90) + _latency.round();
       final bedtime = _wakeUpTime.subtract(Duration(minutes: totalMinutes));
 
-      options.add(_BedtimeOption(
-        cycles: cycles,
-        bedtimeString: DateFormat('hh:mm a').format(bedtime),
-        durationMinutes: (cycles * 90),
-      ));
+      options.add(
+        _BedtimeOption(
+          cycles: cycles,
+          bedtimeString: DateFormat('hh:mm a').format(bedtime),
+          durationMinutes: (cycles * 90),
+        ),
+      );
     }
     return options;
   }
@@ -121,7 +123,11 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     final userId = await auth.ensureSignedIn();
     if (userId == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Could not sign in. Check your connection and try again.')),
+        const SnackBar(
+          content: Text(
+            'Could not sign in. Check your connection and try again.',
+          ),
+        ),
       );
       return;
     }
@@ -155,7 +161,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Could not save plan. Check your connection and try again.'),
+          content: const Text(
+            'Could not save plan. Check your connection and try again.',
+          ),
           action: SnackBarAction(
             label: 'Retry',
             textColor: colors.primary,
@@ -185,7 +193,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Discard changes?'),
-            content: const Text('You have unsaved planner changes. Do you want to discard them?'),
+            content: const Text(
+              'You have unsaved planner changes. Do you want to discard them?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -274,7 +284,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     return GestureDetector(
                       onTap: () => _toggleConstraint(c),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: isOn
                               ? colors.primary.withValues(alpha: 0.15)
@@ -288,8 +301,12 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                           c,
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            fontWeight: isOn ? FontWeight.w500 : FontWeight.w400,
-                            color: isOn ? colors.primary : colors.onSurfaceVariant,
+                            fontWeight: isOn
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                            color: isOn
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -379,7 +396,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.4),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _showWakeUpTimeError

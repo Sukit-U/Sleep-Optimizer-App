@@ -37,6 +37,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The whole Dart tree is formatted, so the gate checks all of it: any
+      # file that comes back unformatted fails the build.
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
       - name: Analyze
         run: flutter analyze
 

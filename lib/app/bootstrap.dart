@@ -16,7 +16,10 @@ import 'app.dart';
 
 /// Everything the widget tree needs that can only exist after booting.
 class AppDependencies {
-  const AppDependencies({required this.authService, required this.themeProvider});
+  const AppDependencies({
+    required this.authService,
+    required this.themeProvider,
+  });
 
   final AuthService authService;
   final ThemeProvider themeProvider;

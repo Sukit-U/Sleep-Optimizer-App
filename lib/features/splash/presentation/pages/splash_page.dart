@@ -7,7 +7,6 @@ import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
-
 const _welcomeKey = 'so.welcomeSeen';
 
 /// Welcome screen matching Lovable index.tsx layout:
@@ -82,9 +81,9 @@ class _SplashPageState extends State<SplashPage> {
                       MediaQuery.of(context).padding.bottom,
                 ),
                 child: IntrinsicHeight(
-          child: Column(
-            children: [
-              SizedBox(height: AppSpacing.xxl),
+                  child: Column(
+                    children: [
+                      SizedBox(height: AppSpacing.xxl),
 
                       // ── Header: icon + title + subtitle ──
                       _buildHeader(),
@@ -152,7 +151,11 @@ class _SplashPageState extends State<SplashPage> {
             Positioned(
               top: -AppSpacing.sm - 2, // -6
               right: -AppSpacing.sm - 2, // -6
-              child: Icon(Icons.auto_awesome, size: AppSpacing.iconSm,              color: colors.secondary),
+              child: Icon(
+                Icons.auto_awesome,
+                size: AppSpacing.iconSm,
+                color: colors.secondary,
+              ),
             ),
           ],
         ),
@@ -324,7 +327,10 @@ class _FeatureRow extends StatelessWidget {
           // card-surface: surface 92% opacity, border, radius-2xl (24px), backdrop-blur-ish
           color: colors.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-          border: Border.all(color: colors.outline.withValues(alpha: 0.80), width: 1),
+          border: Border.all(
+            color: colors.outline.withValues(alpha: 0.80),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -334,10 +340,16 @@ class _FeatureRow extends StatelessWidget {
               height: AppSpacing.iconMdContainer,
               decoration: BoxDecoration(
                 // bg-background/40 equivalent
-                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.40),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.40),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               ),
-              child: Icon(feature.icon, size: AppSpacing.iconMd - 2, color: feature.iconColor), // 18
+              child: Icon(
+                feature.icon,
+                size: AppSpacing.iconMd - 2,
+                color: feature.iconColor,
+              ), // 18
             ),
 
             SizedBox(width: AppSpacing.md),

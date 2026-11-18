@@ -22,9 +22,8 @@ enum SubmitSqiOutcome {
 }
 
 typedef WriteSqiRecord = Future<void> Function(SQIRecord record);
-typedef WriteSqiRecommendations = Future<void> Function(
-  List<Recommendation> recommendations,
-);
+typedef WriteSqiRecommendations =
+    Future<void> Function(List<Recommendation> recommendations);
 
 /// Writes one SQI assessment in the two steps the Firestore rules allow.
 ///
@@ -105,8 +104,9 @@ class SubmitSqiAssessment {
               userId: userId,
               sqiScore: result.score,
               sleepQualityLevel: result.level.name,
-              questionnaireResponses:
-                  Map<String, dynamic>.from(result.responses),
+              questionnaireResponses: Map<String, dynamic>.from(
+                result.responses,
+              ),
               createdAt: createdAt,
             ),
           );

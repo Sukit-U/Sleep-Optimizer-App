@@ -8,17 +8,22 @@ import 'package:flutter_test/flutter_test.dart';
 /// when the flavor's applicationId is not registered in that file.
 void main() {
   final gradle = File('android/app/build.gradle.kts').readAsStringSync();
-  final baseAppId =
-      RegExp(r'applicationId = "([^"]+)"').firstMatch(gradle)!.group(1)!;
-  final devSuffix =
-      RegExp(r'applicationIdSuffix = "([^"]+)"').firstMatch(gradle)!.group(1)!;
+  final baseAppId = RegExp(
+    r'applicationId = "([^"]+)"',
+  ).firstMatch(gradle)!.group(1)!;
+  final devSuffix = RegExp(
+    r'applicationIdSuffix = "([^"]+)"',
+  ).firstMatch(gradle)!.group(1)!;
 
   Map<String, dynamic> services(String path) =>
       jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
 
   List<String> packages(String path) => (services(path)['client'] as List)
-      .map((client) =>
-          client['client_info']['android_client_info']['package_name'] as String)
+      .map(
+        (client) =>
+            client['client_info']['android_client_info']['package_name']
+                as String,
+      )
       .toList();
 
   String projectId(String path) =>
@@ -37,10 +42,12 @@ void main() {
     expect(packages(prodFlavor), contains(baseAppId));
   });
 
-  test('dev flavor google-services.json registers the suffixed applicationId',
-      () {
-    expect(packages(devFlavor), contains('$baseAppId$devSuffix'));
-  });
+  test(
+    'dev flavor google-services.json registers the suffixed applicationId',
+    () {
+      expect(packages(devFlavor), contains('$baseAppId$devSuffix'));
+    },
+  );
 
   test('flavors point at different Firebase projects', () {
     expect(projectId(devFlavor), 'sleep-optimizer-dev');

@@ -8,7 +8,7 @@ abstract class SettingsRepository {
 
 class FirestoreSettingsRepository {
   FirestoreSettingsRepository({FirestoreService? firestoreService})
-      : _firestoreService = firestoreService ?? FirestoreService();
+    : _firestoreService = firestoreService ?? FirestoreService();
 
   final FirestoreService _firestoreService;
 
@@ -23,7 +23,9 @@ class FirestoreSettingsRepository {
       // Fall back to local storage if Firestore fails
       final storage = await StorageService.create();
       await storage.saveTheme(payload['theme'] as String);
-      throw Exception('Failed to save settings to Firestore, saved locally: $e');
+      throw Exception(
+        'Failed to save settings to Firestore, saved locally: $e',
+      );
     }
   }
 

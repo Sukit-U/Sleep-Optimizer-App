@@ -13,8 +13,10 @@ void main() {
 
   test('dev options target sleep-optimizer-dev, not production', () {
     expect(dev.DefaultFirebaseOptions.android.projectId, 'sleep-optimizer-dev');
-    expect(prod.DefaultFirebaseOptions.android.projectId,
-        isNot(dev.DefaultFirebaseOptions.android.projectId));
+    expect(
+      prod.DefaultFirebaseOptions.android.projectId,
+      isNot(dev.DefaultFirebaseOptions.android.projectId),
+    );
   });
 
   group('firebaseOptionsForEnv', () {
@@ -47,11 +49,13 @@ void main() {
           envWasProvided: false,
           isReleaseBuild: true,
         ),
-        throwsA(isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          contains('--dart-define=APP_ENV=prod'),
-        )),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('--dart-define=APP_ENV=prod'),
+          ),
+        ),
       );
     });
 

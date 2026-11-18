@@ -36,9 +36,9 @@ class _FakeSqiRepository implements SqiRepository {
 }
 
 void main() {
-  testWidgets(
-      'a rapid second tap while the first save is pending is ignored',
-      (tester) async {
+  testWidgets('a rapid second tap while the first save is pending is ignored', (
+    tester,
+  ) async {
     // Tall enough that every question card and the button are laid out.
     tester.view.physicalSize = const Size(1000, 2600);
     tester.view.devicePixelRatio = 1.0;
@@ -84,8 +84,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(repository.recordAttempts, hasLength(1),
-        reason: 'a duplicate tap must not start a second submission');
+    expect(
+      repository.recordAttempts,
+      hasLength(1),
+      reason: 'a duplicate tap must not start a second submission',
+    );
 
     // The record write is in flight (the fake holds it open), so the button
     // must still be disabled, not just during the sign-in step.

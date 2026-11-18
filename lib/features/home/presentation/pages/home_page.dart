@@ -42,10 +42,9 @@ class _HomePageState extends State<HomePage> {
       _currentIndex = index;
     });
     final route = _tabs[index].route;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      route,
-      (route) => route.isFirst,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(route, (route) => route.isFirst);
   }
 
   @override
@@ -86,14 +85,14 @@ class _HomePageState extends State<HomePage> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: colors.surface.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                border: Border.all(
-                  color: colors.outline,
-                  width: 1,
-                ),
+                border: Border.all(color: colors.outline, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: colors.shadow.withValues(alpha: 0.60),
@@ -111,7 +110,9 @@ class _HomePageState extends State<HomePage> {
                       onTap: () => _onTabTapped(index),
                       behavior: HitTestBehavior.opaque,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm - 2),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm - 2,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [

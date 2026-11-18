@@ -10,11 +10,7 @@ class HistorySleepPlanCard extends StatelessWidget {
   final SleepPlan plan;
   final VoidCallback? onDelete;
 
-  const HistorySleepPlanCard({
-    super.key,
-    required this.plan,
-    this.onDelete,
-  });
+  const HistorySleepPlanCard({super.key, required this.plan, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +59,9 @@ class HistorySleepPlanCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.spacingXs),
                 Text(
                   '${plan.sleepCycles} cycles · ${_formatDate(plan.createdAt)}',
-                  style: AppTypography.caption.copyWith(color: colors.onSurfaceVariant),
+                  style: AppTypography.caption.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

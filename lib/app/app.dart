@@ -22,7 +22,7 @@ class SnoozefriendApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-initialRoute: '/splash',
+          initialRoute: '/splash',
           onGenerateRoute: AppRouter.generateRoute,
         );
       },

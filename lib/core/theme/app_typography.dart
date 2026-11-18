@@ -9,10 +9,18 @@ class AppTypography {
   // Note: Add these fonts to pubspec.yaml and download from Google Fonts
   static const String fontFamilyHeader = 'Nunito';
   static const String fontFamilyBody = 'DM Sans';
-  
+
   // Fallback to system fonts if custom fonts not loaded
-  static const List<String> fontFamilyHeaderFallback = ['Nunito', 'Segoe UI', 'sans-serif'];
-  static const List<String> fontFamilyBodyFallback = ['DM Sans', 'Segoe UI', 'sans-serif'];
+  static const List<String> fontFamilyHeaderFallback = [
+    'Nunito',
+    'Segoe UI',
+    'sans-serif',
+  ];
+  static const List<String> fontFamilyBodyFallback = [
+    'DM Sans',
+    'Segoe UI',
+    'sans-serif',
+  ];
 
   // === DISPLAY STYLES (Large numbers, scores) ===
   static const TextStyle displayLarge = TextStyle(

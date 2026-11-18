@@ -14,7 +14,8 @@ const env = { ...process.env };
 if (!env.JAVA_HOME) {
   env.JAVA_HOME = 'C:\\Program Files\\Android\\Android Studio\\jbr';
 }
-env.PATH = `${path.join(env.JAVA_HOME, 'bin')}${path.delimiter}${env.PATH ?? ''}`;
+const pathKey = Object.keys(env).find((key) => key.toLowerCase() === 'path') ?? 'PATH';
+env[pathKey] = `${path.join(env.JAVA_HOME, 'bin')}${path.delimiter}${env[pathKey] ?? ''}`;
 
 const result = spawnSync(
   'npx',

@@ -18,25 +18,29 @@ class _FactorConfig {
 const _factorMap = <String, _FactorConfig>{
   'Sleep duration': _FactorConfig(
     title: 'Aim for a consistent bedtime',
-    description: 'A stable sleep schedule helps your body recover more efficiently.',
+    description:
+        'A stable sleep schedule helps your body recover more efficiently.',
     action: 'Set a fixed bedtime and wake-up time.',
     priority: RecommendationPriority.high,
   ),
   'Sleep regularity': _FactorConfig(
     title: 'Keep a steady rhythm',
-    description: 'Regular sleep timing strengthens your sleep quality over time.',
+    description:
+        'Regular sleep timing strengthens your sleep quality over time.',
     action: 'Stick to the same wake-up time each day.',
     priority: RecommendationPriority.critical,
   ),
   'Screen time': _FactorConfig(
     title: 'Reduce late screen exposure',
-    description: 'Blue light can delay your sleep onset and reduce night-time rest.',
+    description:
+        'Blue light can delay your sleep onset and reduce night-time rest.',
     action: 'Put your phone away 30 minutes before bed.',
     priority: RecommendationPriority.high,
   ),
   'Exercise': _FactorConfig(
     title: 'Add light activity earlier in the day',
-    description: 'Physical activity can improve your sleep readiness and energy balance.',
+    description:
+        'Physical activity can improve your sleep readiness and energy balance.',
     action: 'Take a short walk or stretch earlier in the day.',
     priority: RecommendationPriority.medium,
   ),
@@ -57,8 +61,10 @@ const _factorMap = <String, _FactorConfig>{
 /// Positive reinforcement shown when SQI is Excellent.
 const _positiveReinforcement = _FactorConfig(
   title: 'Keep up the great habits!',
-  description: 'Your sleep habits are excellent — maintaining them will help you stay rested and perform at your best.',
-  action: 'Continue with your current sleep routine and share your good habits with friends.',
+  description:
+      'Your sleep habits are excellent — maintaining them will help you stay rested and perform at your best.',
+  action:
+      'Continue with your current sleep routine and share your good habits with friends.',
   priority: RecommendationPriority.low,
 );
 

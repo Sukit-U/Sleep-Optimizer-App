@@ -52,11 +52,7 @@ class BedtimeOptionCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              Icons.nightlight_round,
-              color: colors.primary,
-              size: 24,
-            ),
+            Icon(Icons.nightlight_round, color: colors.primary, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -109,11 +105,7 @@ class BedtimeOptionCard extends StatelessWidget {
                 if (isSelected)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Icon(
-                      Icons.check,
-                      color: colors.primary,
-                      size: 20,
-                    ),
+                    child: Icon(Icons.check, color: colors.primary, size: 20),
                   ),
               ],
             ),

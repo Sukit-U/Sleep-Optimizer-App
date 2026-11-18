@@ -99,8 +99,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('repeated taps during sign-in and during the write save once',
-      (tester) async {
+  testWidgets('repeated taps during sign-in and during the write save once', (
+    tester,
+  ) async {
     final signInGate = Completer<String?>();
     final firestoreService = _GatedFirestoreService();
     await pumpPlanner(
@@ -116,7 +117,9 @@ void main() {
     // Still signing in, and the button must already be closed.
     expect(find.text('Saving…'), findsOneWidget);
     expect(
-      tester.widget<PlannerSaveButton>(find.byType(PlannerSaveButton)).onPressed,
+      tester
+          .widget<PlannerSaveButton>(find.byType(PlannerSaveButton))
+          .onPressed,
       isNull,
       reason: 'the button must close before the first await returns',
     );
@@ -164,7 +167,9 @@ void main() {
     );
     expect(find.text('Saving…'), findsNothing);
     expect(
-      tester.widget<PlannerSaveButton>(find.byType(PlannerSaveButton)).onPressed,
+      tester
+          .widget<PlannerSaveButton>(find.byType(PlannerSaveButton))
+          .onPressed,
       isNotNull,
       reason: 'a failed save must leave the button usable',
     );
