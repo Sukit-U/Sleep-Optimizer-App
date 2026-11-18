@@ -1,0 +1,48 @@
+{
+  "description": "Generated from SubmitSqiAssessment + FirestoreService payloads. Do not edit by hand; regenerate with --dart-define=UPDATE_FIXTURE=true.",
+  "userId": "fixture-owner-uid",
+  "recordId": "fixture-record-id",
+  "createdAt": "2026-09-25T22:00:00.000Z",
+  "record": {
+    "userId": "fixture-owner-uid",
+    "sqiScore": 50,
+    "sleepQualityLevel": "fair",
+    "questionnaireResponses": {
+      "Sleep duration": 2,
+      "Sleep regularity": 3,
+      "Screen time": 3,
+      "Exercise": 4,
+      "Stress": 2,
+      "Caffeine": 1
+    },
+    "createdAt": "2026-09-25T22:00:00.000Z"
+  },
+  "recommendations": [
+    {
+      "documentId": "fixture-record-id-r0",
+      "data": {
+        "userId": "fixture-owner-uid",
+        "recordId": "fixture-record-id",
+        "factor": "Caffeine",
+        "title": "Cut back on late caffeine",
+        "description": "Caffeine can stay in your system and disrupt sleep.",
+        "action": "Avoid caffeine at least 6 hours before bed.",
+        "priority": "high",
+        "createdAt": "2026-09-25T22:00:00.000Z"
+      }
+    },
+    {
+      "documentId": "fixture-record-id-r1",
+      "data": {
+        "userId": "fixture-owner-uid",
+        "recordId": "fixture-record-id",
+        "factor": "Stress",
+        "title": "Create a simple wind-down routine",
+        "description": "A calm routine can reduce stress and support better sleep.",
+        "action": "Try breathing exercises or journaling before bed.",
+        "priority": "critical",
+        "createdAt": "2026-09-25T22:00:00.000Z"
+      }
+    }
+  ]
+}

@@ -14,6 +14,25 @@ Runs `../firestore.rules` against the real Firestore emulator using
 - **settings** — `userId == docId == auth.uid`, theme enum, no deletes
 - **sleepPlans** — ownership plus schema validation
 - **default deny** for unknown collections
+- **retry idempotency** — replays the payload the app really writes, from the
+  checked-in fixture `fixtures/retry-assessment.json`: the record is written once
+  and the same recommendation batch is accepted again after a failed attempt
+  (no duplicates, `createdAt` unchanged), while a retry that regenerates
+  `createdAt` — the defect this suite guards against — is still rejected
+
+## The retry fixture
+
+`fixtures/retry-assessment.json` is not hand-written. It is the payload produced
+by the Flutter flow (`SubmitSqiAssessment` → `FirestoreService.toFirestore()`),
+and `../test/retry_assessment_e2e_test.dart` compares the fixture against that
+flow byte for byte, so this suite cannot pass against a payload the app would
+not send. After an intentional payload change, regenerate it and rerun both
+suites:
+
+```bash
+flutter test test/retry_assessment_e2e_test.dart --dart-define=UPDATE_FIXTURE=true
+npm test
+```
 
 ## Run
 

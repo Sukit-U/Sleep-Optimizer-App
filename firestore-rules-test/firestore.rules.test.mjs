@@ -693,3 +693,158 @@ describe('settings - Category A regression', () => {
     await assertFails(db.collection('settings').doc(ALICE).update({ userId: BOB }));
   });
 });
+
+// ===========================================================================
+// Retry idempotency, replayed from the payload the app actually writes.
+//
+// fixtures/retry-assessment.json is produced by the Flutter flow itself
+// (SubmitSqiAssessment -> FirestoreService.toFirestore()) and is pinned by
+// test/retry_assessment_e2e_test.dart, which fails when the app's payload
+// drifts. So this suite can never pass against a hand-written payload the app
+// would not send.
+// ===========================================================================
+
+describe('recommendation retry with the app-generated payload', () => {
+  const fixture = JSON.parse(
+    readFileSync(new URL('./fixtures/retry-assessment.json', import.meta.url), 'utf8'),
+  );
+
+  const RECORD_ID = fixture.recordId;
+  const OWNER = fixture.userId;
+  const CREATED_AT = new Date(fixture.createdAt);
+
+  // Timestamps travel through the fixture as ISO strings, as they do through
+  // JSON; Firestore stores them as timestamps.
+  const revive = (payload) => ({ ...payload, createdAt: new Date(payload.createdAt) });
+  const recordPayload = revive(fixture.record);
+  const recommendationPayloads = fixture.recommendations.map(({ documentId, data }) => ({
+    documentId,
+    data: revive(data),
+  }));
+
+  const owner = () => testEnv.authenticatedContext(OWNER).firestore();
+
+  // One WriteBatch, exactly like FirestoreService.saveRecommendations.
+  const commitRecommendations = (db, docs = recommendationPayloads) => {
+    const batch = db.batch();
+    for (const { documentId, data } of docs) {
+      batch.set(db.collection('recommendations').doc(documentId), data);
+    }
+    return batch.commit();
+  };
+
+  it('accepts the record and the same recommendation batch again after a failed attempt', async () => {
+    const db = owner();
+
+    // Attempt 1: the record lands, the recommendation batch never reaches
+    // Firestore (the failure this task is about), so nothing is written for it.
+    await assertSucceeds(db.collection('sqiRecords').doc(RECORD_ID).set(recordPayload));
+
+    // Retry: the app resends the record payload and the cached batch it built
+    // on the first attempt, timestamps included.
+    await assertSucceeds(db.collection('sqiRecords').doc(RECORD_ID).set(recordPayload));
+    await assertSucceeds(commitRecommendations(db));
+
+    // A further retry is still an overwrite, not an append.
+    await assertSucceeds(commitRecommendations(db));
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const admin = context.firestore();
+
+      const recommendations = await admin.collection('recommendations').get();
+      assert.equal(
+        recommendations.size,
+        recommendationPayloads.length,
+        'a retry must not duplicate recommendation documents',
+      );
+      assert.deepEqual(
+        recommendations.docs.map((doc) => doc.id).sort(),
+        recommendationPayloads.map((doc) => doc.documentId).sort(),
+      );
+
+      for (const doc of recommendations.docs) {
+        const expected = recommendationPayloads.find((r) => r.documentId === doc.id).data;
+        assert.equal(doc.data().createdAt.toMillis(), CREATED_AT.getTime());
+        assert.equal(doc.data().createdAt.toMillis(), expected.createdAt.getTime());
+        assert.equal(doc.data().userId, OWNER);
+        assert.equal(doc.data().recordId, RECORD_ID);
+        assert.equal(doc.data().factor, expected.factor);
+        assert.equal(doc.data().title, expected.title);
+        assert.equal(doc.data().priority, expected.priority);
+      }
+
+      const records = await admin.collection('sqiRecords').get();
+      assert.equal(records.size, 1, 'a retry must not create a second record');
+      assert.equal(records.docs[0].id, RECORD_ID);
+      assert.equal(records.docs[0].data().createdAt.toMillis(), CREATED_AT.getTime());
+    });
+  });
+
+  it('rejects the retry the old bug produced, where createdAt is regenerated', async () => {
+    const db = owner();
+    await assertSucceeds(db.collection('sqiRecords').doc(RECORD_ID).set(recordPayload));
+    await assertSucceeds(commitRecommendations(db));
+
+    // The defect: same document IDs, but the recommendation objects were rebuilt
+    // so createdAt moved. The rules must keep refusing this, and the stored
+    // document must keep the timestamp written first.
+    const regenerated = recommendationPayloads.map(({ documentId, data }) => ({
+      documentId,
+      data: { ...data, createdAt: new Date(data.createdAt.getTime() + 60_000) },
+    }));
+    await assertFails(commitRecommendations(db, regenerated));
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const stored = await context.firestore().collection('recommendations').get();
+      assert.equal(stored.size, recommendationPayloads.length);
+      for (const doc of stored.docs) {
+        assert.equal(
+          doc.data().createdAt.toMillis(),
+          CREATED_AT.getTime(),
+          'a rejected retry must not rewrite the stored timestamp',
+        );
+      }
+    });
+  });
+
+  it('rejects a record retry that regenerates the record createdAt', async () => {
+    const db = owner();
+    await assertSucceeds(db.collection('sqiRecords').doc(RECORD_ID).set(recordPayload));
+    await assertFails(
+      db
+        .collection('sqiRecords')
+        .doc(RECORD_ID)
+        .set({ ...recordPayload, createdAt: new Date(CREATED_AT.getTime() + 60_000) }),
+    );
+  });
+
+  it('rejects the app payload written by someone else or without its parent', async () => {
+    const db = owner();
+    // No parent record yet: the create rule's exists() check fails.
+    await assertFails(commitRecommendations(db));
+
+    await assertSucceeds(db.collection('sqiRecords').doc(RECORD_ID).set(recordPayload));
+
+    // Another signed-in user cannot write this assessment's documents.
+    const intruder = testEnv.authenticatedContext(BOB).firestore();
+    await assertFails(
+      intruder.collection('sqiRecords').doc(RECORD_ID).set({ ...recordPayload, userId: BOB }),
+    );
+    await assertFails(
+      commitRecommendations(intruder, [
+        {
+          documentId: recommendationPayloads[0].documentId,
+          data: { ...recommendationPayloads[0].data, userId: BOB },
+        },
+      ]),
+    );
+    await assertFails(
+      commitRecommendations(intruder, [
+        {
+          documentId: recommendationPayloads[0].documentId,
+          data: { ...recommendationPayloads[0].data, recordId: 'someone-elses-record' },
+        },
+      ]),
+    );
+  });
+});
