@@ -16,15 +16,17 @@ class FirestoreService {
     return docRef.id;
   }
 
-  Future<List<SleepPlan>> getSleepPlans(String userId) async {
+  Future<SleepPlanReadBatch> getSleepPlans(String userId) async {
     final snapshot = await _firestore
         .collection('sleepPlans')
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
-        .map((doc) => SleepPlan.fromFirestore(doc.data(), doc.id))
-        .toList();
+    final results = <SleepPlanReadResult>[];
+    for (final doc in snapshot.docs) {
+      results.add(SleepPlanReadResult.parse(doc.data(), doc.id));
+    }
+    return SleepPlanReadBatch(results);
   }
 
   // SQIRecord operations
@@ -48,15 +50,17 @@ class FirestoreService {
         .set(record.toFirestore());
   }
 
-  Future<List<SQIRecord>> getSQIRecords(String userId) async {
+  Future<SQIRecordReadBatch> getSQIRecords(String userId) async {
     final snapshot = await _firestore
         .collection('sqiRecords')
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
-        .map((doc) => SQIRecord.fromFirestore(doc.data(), doc.id))
-        .toList();
+    final results = <SQIRecordReadResult>[];
+    for (final doc in snapshot.docs) {
+      results.add(SQIRecordReadResult.parse(doc.data(), doc.id));
+    }
+    return SQIRecordReadBatch(results);
   }
 
   // Recommendation operations
@@ -91,7 +95,7 @@ class FirestoreService {
 
   // Firestore rules do not filter query results: the query itself must be
   // scoped to the owner, or the whole request is rejected.
-  Future<List<Recommendation>> getRecommendations(
+  Future<RecommendationReadBatch> getRecommendations(
     String recordId,
     String userId,
   ) async {
@@ -101,9 +105,11 @@ class FirestoreService {
         .where('recordId', isEqualTo: recordId)
         .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
-        .map((doc) => Recommendation.fromFirestore(doc.data(), doc.id))
-        .toList();
+    final results = <RecommendationReadResult>[];
+    for (final doc in snapshot.docs) {
+      results.add(RecommendationReadResult.parse(doc.data(), doc.id));
+    }
+    return RecommendationReadBatch(results);
   }
 
   Future<void> deleteSleepPlan(String planId) async {

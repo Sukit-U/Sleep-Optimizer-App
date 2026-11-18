@@ -10,6 +10,7 @@ import 'package:snoozemate/models/recommendation_model.dart';
 void showRecommendationSheet(
   BuildContext context, {
   required List<Recommendation> recs,
+  int unavailableCount = 0,
 }) {
   final colors = Theme.of(context).colorScheme;
   showModalBottomSheet(
@@ -54,7 +55,7 @@ void showRecommendationSheet(
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            if (recs.isEmpty)
+            if (recs.isEmpty && unavailableCount == 0)
               Expanded(
                 child: Center(
                   child: Text(
@@ -64,7 +65,17 @@ void showRecommendationSheet(
                   ),
                 ),
               )
-            else
+            else if (recs.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'Some recommendations could not be displayed.',
+                    style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else ...[
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
@@ -72,6 +83,16 @@ void showRecommendationSheet(
                   itemBuilder: (ctx, i) => _RecommendationItem(rec: recs[i]),
                 ),
               ),
+              if (unavailableCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    'Some recommendations could not be displayed.',
+                    style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
           ],
         ),
       ),

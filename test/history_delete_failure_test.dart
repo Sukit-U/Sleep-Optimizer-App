@@ -38,12 +38,14 @@ class _FailingDeleteService implements FirestoreService {
   int deleteCalls = 0;
 
   @override
-  Future<List<SleepPlan>> getSleepPlans(String userId) async => const [];
+  Future<SleepPlanReadBatch> getSleepPlans(String userId) async =>
+      const SleepPlanReadBatch([]);
 
   @override
-  Future<List<SQIRecord>> getSQIRecords(String userId) async {
+  Future<SQIRecordReadBatch> getSQIRecords(String userId) async {
     loadCount++;
-    return [_record];
+    return SQIRecordReadBatch(
+        [SQIRecordValid(documentId: _record.recordId, record: _record)]);
   }
 
   @override

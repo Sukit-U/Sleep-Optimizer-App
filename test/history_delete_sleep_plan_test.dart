@@ -41,13 +41,15 @@ class _PlanService implements FirestoreService {
   int loadCount = 0;
 
   @override
-  Future<List<SleepPlan>> getSleepPlans(String userId) async {
+  Future<SleepPlanReadBatch> getSleepPlans(String userId) async {
     loadCount++;
-    return [_plan];
+    return SleepPlanReadBatch(
+        [SleepPlanValid(documentId: _plan.planId, plan: _plan)]);
   }
 
   @override
-  Future<List<SQIRecord>> getSQIRecords(String userId) async => const [];
+  Future<SQIRecordReadBatch> getSQIRecords(String userId) async =>
+      const SQIRecordReadBatch([]);
 
   @override
   Future<void> deleteSleepPlan(String planId) async {
