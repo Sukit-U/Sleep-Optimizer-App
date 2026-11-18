@@ -22,10 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          # The format gate below diffs against a base commit, so the
-          # clone must contain the history that commit lives in.
-          fetch-depth: 0
 
       - uses: actions/setup-java@v6
         with:
@@ -41,38 +37,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Most Dart files predate dart format, so the gate covers the files a
-      # change touches instead of the whole tree: new and edited code must come
-      # back formatted, untouched legacy files are not this change's problem.
-      - name: Check formatting of changed Dart files
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-          base=""
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            base="$PR_BASE_SHA"
-          elif [ -n "${PUSH_BEFORE_SHA:-}" ] && ! printf '%s' "$PUSH_BEFORE_SHA" | grep -qE '^0+$'; then
-            base="$PUSH_BEFORE_SHA"
-          fi
-          # Manual dispatch, or a push that created the branch: fall back to the
-          # previous commit rather than silently skipping the check.
-          if [ -z "$base" ] || ! git rev-parse --verify --quiet "${base}^{commit}" > /dev/null; then
-            base="$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)"
-          fi
-          changed=()
-          while IFS= read -r file; do
-            [ -n "$file" ] && changed+=("$file")
-          done < <(git diff --name-only --diff-filter=ACMR "$base" HEAD -- '*.dart')
-          if [ "${#changed[@]}" -eq 0 ]; then
-            echo "No Dart files changed since $base."
-            exit 0
-          fi
-          echo "Checking ${#changed[@]} changed Dart file(s) since $base:"
-          printf '  %s\n' "${changed[@]}"
-          dart format --output=none --set-exit-if-changed "${changed[@]}"
+      # The whole Dart tree is formatted, so the gate checks all of it: any
+      # file that comes back unformatted fails the build.
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Analyze
         run: flutter analyze
