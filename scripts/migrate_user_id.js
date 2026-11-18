@@ -126,10 +126,22 @@ async function main() {
     return;
   }
 
+  const migratedRecordIds = new Set(snapshot.docs.map((doc) => doc.id));
   console.log(`Matched: ${snapshot.size} sqiRecords`);
 
+  // Cascade: find recommendations whose parent record is being migrated.
+  const recSnapshot = await db
+    .collection('recommendations')
+    .where('userId', '==', from)
+    .get();
+  const recsToUpdate = recSnapshot.docs.filter((doc) => {
+    const data = doc.data() || {};
+    return typeof data.recordId === 'string' && migratedRecordIds.has(data.recordId);
+  });
+  console.log(`Matched: ${recsToUpdate.length} recommendations to cascade`);
+
   if (!apply) {
-    console.log(`Would update: ${snapshot.size} (dry-run — re-run with --apply to write)`);
+    console.log(`Would update: ${snapshot.size} sqiRecords, ${recsToUpdate.length} recommendations (dry-run — re-run with --apply to write)`);
     return;
   }
 
@@ -137,26 +149,29 @@ async function main() {
   let batch = db.batch();
   let inBatch = 0;
 
-  for (const doc of snapshot.docs) {
-    batch.update(doc.ref, { userId: to });
-    inBatch += 1;
-    if (inBatch === BATCH_SIZE) {
-      await batch.commit();
-      updated += inBatch;
-      console.log(`  ... ${updated} documents updated`);
-      batch = db.batch();
-      inBatch = 0;
-    }
-  }
-
-  if (inBatch > 0) {
+  const flushBatch = async () => {
+    if (inBatch === 0) return;
     await batch.commit();
     updated += inBatch;
     console.log(`  ... ${updated} documents updated`);
+    batch = db.batch();
+    inBatch = 0;
+  };
+
+  for (const doc of snapshot.docs) {
+    batch.update(doc.ref, { userId: to });
+    inBatch += 1;
+    if (inBatch === BATCH_SIZE) await flushBatch();
   }
+  for (const doc of recsToUpdate) {
+    batch.update(doc.ref, { userId: to });
+    inBatch += 1;
+    if (inBatch === BATCH_SIZE) await flushBatch();
+  }
+  await flushBatch();
 
   console.log('');
-  console.log(`Updated: ${updated}`);
+  console.log(`Updated: ${updated} (${snapshot.size} sqiRecords, ${recsToUpdate.length} recommendations)`);
 }
 
 main().catch((error) => {
