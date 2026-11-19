@@ -24,6 +24,9 @@ class _SignedInAuth implements AuthService {
   String? get uid => 'owner-1';
 
   @override
+  void resolveAuth() {}
+
+  @override
   Future<String?> ensureSignedIn({int maxAttempts = 3}) async => 'owner-1';
 
   @override

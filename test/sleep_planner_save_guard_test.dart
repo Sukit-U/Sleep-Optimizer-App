@@ -25,6 +25,9 @@ class _FakeAuthService implements AuthService {
   String? get uid => 'test-uid';
 
   @override
+  void resolveAuth() {}
+
+  @override
   Future<String?> ensureSignedIn({int maxAttempts = 3}) async =>
       signInGate?.future ?? Future<String?>.value('test-uid');
 

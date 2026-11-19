@@ -3,11 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/app.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 import '../../../../shared/widgets/bedtime_option_card.dart';
 import '../../../../shared/widgets/planner_save_button.dart';
+import '../../data/repositories/sleep_plan_repository.dart';
+import '../../domain/usecases/calculate_planner_bedtimes.dart';
+import '../../domain/entities/bedtime_option.dart';
 
 class SleepPlannerPage extends StatefulWidget {
   const SleepPlannerPage({super.key, this.firestoreService});
@@ -87,21 +91,11 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     }
   }
 
-  List<_BedtimeOption> _getOptions() {
-    final List<_BedtimeOption> options = [];
-    for (int cycles in [6, 5, 4]) {
-      final totalMinutes = (cycles * 90) + _latency.round();
-      final bedtime = _wakeUpTime.subtract(Duration(minutes: totalMinutes));
-
-      options.add(
-        _BedtimeOption(
-          cycles: cycles,
-          bedtimeString: DateFormat('hh:mm a').format(bedtime),
-          durationMinutes: (cycles * 90),
-        ),
-      );
-    }
-    return options;
+  List<BedtimeOption> _getOptions() {
+    return CalculatePlannerBedtimes().call(
+      wakeUpTime: _wakeUpTime,
+      latencyMinutes: _latency.round(),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -120,25 +114,17 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     final auth = context.read<AuthService>();
     final messenger = ScaffoldMessenger.of(context);
 
-    final userId = await auth.ensureSignedIn();
-    if (userId == null) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not sign in. Check your connection and try again.',
-          ),
-        ),
-      );
-      return;
-    }
+    // Validate the local inputs before touching the network: a plan needs a
+    // wake-up time whether it is saved to the cloud or only on this device.
     if (!_hasSelectedWakeUpTime) {
       setState(() => _showWakeUpTimeError = true);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please select a wake-up time first.')),
       );
       return;
     }
+
+    final userId = await auth.ensureSignedIn();
 
     final options = _getOptions();
     final chosenOption = options.firstWhere(
@@ -148,32 +134,68 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
     final sleepPlan = SleepPlan(
       planId: '',
-      userId: userId,
+      userId: userId ?? 'local',
       wakeUpTime: _wakeUpTime,
       createdAt: DateTime.now(),
       sleepCycles: chosenOption.cycles,
       suggestedBedtimes: options.map((o) => o.bedtimeString).toList(),
     );
 
-    try {
-      await _firestoreService.addSleepPlan(sleepPlan);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Could not save plan. Check your connection and try again.',
-          ),
-          action: SnackBarAction(
-            label: 'Retry',
-            textColor: colors.primary,
-            onPressed: _handleSave,
-          ),
-        ),
-      );
-      return;
+    // Preferred path: persist to the cloud when signed in.
+    if (userId != null) {
+      try {
+        await _firestoreService.addSleepPlan(sleepPlan);
+        if (!mounted) return;
+        _markSaved();
+        return;
+      } catch (_) {
+        // Cloud write failed (e.g. offline): fall back to on-device storage
+        // below so the plan is not silently lost.
+      }
     }
 
+    // Offline / not signed in: keep the plan on this device. This never claims
+    // a cloud save happened; the message says it is device-only.
+    final storage = appStorage;
+    if (storage != null) {
+      try {
+        await LocalSleepPlanRepository(storage).addSleepPlan(sleepPlan);
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Saved on this device only. It was not synced to the cloud — '
+              'reconnect and save to sync.',
+            ),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: colors.primary,
+              onPressed: _handleSave,
+            ),
+          ),
+        );
+        return;
+      } catch (_) {
+        // Local persistence also failed; report the failure below.
+      }
+    }
+
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Could not save plan. Check your connection and try again.',
+        ),
+        action: SnackBarAction(
+          label: 'Retry',
+          textColor: colors.primary,
+          onPressed: _handleSave,
+        ),
+      ),
+    );
+  }
+
+  void _markSaved() {
     setState(() => _saved = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _saved = false);
@@ -458,16 +480,4 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       ),
     );
   }
-}
-
-class _BedtimeOption {
-  final int cycles;
-  final String bedtimeString;
-  final int durationMinutes;
-
-  _BedtimeOption({
-    required this.cycles,
-    required this.bedtimeString,
-    required this.durationMinutes,
-  });
 }

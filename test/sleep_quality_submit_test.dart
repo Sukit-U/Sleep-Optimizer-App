@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:snoozemate/features/sleep_quality/data/repositories/local_sqi_repository.dart';
 import 'package:snoozemate/features/sleep_quality/data/repositories/sqi_repository.dart';
+import 'package:snoozemate/features/sleep_quality/domain/entities/local_sqi_assessment.dart';
 import 'package:snoozemate/features/sleep_quality/presentation/pages/sleep_quality_page.dart';
 import 'package:snoozemate/models/recommendation_model.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
@@ -35,6 +37,73 @@ class _FakeSqiRepository implements SqiRepository {
   }
 }
 
+class _FixedLocalSqiRepository implements LocalSqiRepository {
+  @override
+  String newAssessmentId() => 'rec-fixed';
+
+  @override
+  Future<void> save(LocalSqiAssessment assessment) async {}
+
+  @override
+  List<LocalSqiAssessment> loadAll() => <LocalSqiAssessment>[];
+
+  @override
+  Future<void> updateSyncStatus(
+    String assessmentId,
+    LocalSqiSyncStatus status, {
+    String? userId,
+    String? cloudRecordId,
+    String? error,
+    DateTime? attemptTime,
+  }) async {}
+}
+
+class _FailOnceSqiRepository implements SqiRepository {
+  int _recordCalls = 0;
+  final recordAttempts = <SQIRecord>[];
+  final recordWrites = <SQIRecord>[];
+  final recommendationWrites = <List<Recommendation>>[];
+
+  @override
+  String newRecordId() => 'rec-fixed';
+
+  @override
+  Future<void> saveRecord(SQIRecord record) async {
+    recordAttempts.add(record);
+    _recordCalls++;
+    if (_recordCalls == 1) throw Exception('firestore unavailable');
+    recordWrites.add(record);
+  }
+
+  @override
+  Future<void> saveRecommendations(List<Recommendation> recommendations) async {
+    recommendationWrites.add(recommendations);
+  }
+}
+
+class _CountingLocalSqiRepository implements LocalSqiRepository {
+  int _n = 0;
+
+  @override
+  String newAssessmentId() => _n++ == 0 ? 'id-A' : 'id-B';
+
+  @override
+  Future<void> save(LocalSqiAssessment assessment) async {}
+
+  @override
+  List<LocalSqiAssessment> loadAll() => <LocalSqiAssessment>[];
+
+  @override
+  Future<void> updateSyncStatus(
+    String assessmentId,
+    LocalSqiSyncStatus status, {
+    String? userId,
+    String? cloudRecordId,
+    String? error,
+    DateTime? attemptTime,
+  }) async {}
+}
+
 void main() {
   testWidgets('a rapid second tap while the first save is pending is ignored', (
     tester,
@@ -54,6 +123,7 @@ void main() {
       MaterialApp(
         home: SleepQualityPage(
           repository: repository,
+          localSqiRepository: _FixedLocalSqiRepository(),
           ensureSignedIn: () => signInGate.future,
         ),
       ),
@@ -106,4 +176,84 @@ void main() {
     expect(repository.recordWrites.single.recordId, 'rec-fixed');
     expect(repository.recommendationWrites, hasLength(1));
   });
+
+  testWidgets(
+    'a failed cloud save followed by changed responses uses a new assessment id',
+    (tester) async {
+      tester.view.physicalSize = const Size(1000, 2600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final repository = _FailOnceSqiRepository();
+      final localRepo = _CountingLocalSqiRepository();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SleepQualityPage(
+            repository: repository,
+            localSqiRepository: localRepo,
+            ensureSignedIn: () async => 'owner-uid',
+          ),
+        ),
+      );
+
+      for (var i = 0; i < 6; i++) {
+        await tester.tap(find.text('3').at(i));
+        await tester.pump();
+      }
+
+      await tester.tap(find.text('Calculate SQI'));
+      await tester.pumpAndSettle();
+
+      expect(repository.recordAttempts, hasLength(1));
+      expect(repository.recordAttempts.single.recordId, 'id-A');
+
+      await tester.tap(find.text('4').at(0));
+      await tester.pump();
+
+      await tester.tap(find.text('Calculate SQI'));
+      await tester.pumpAndSettle();
+
+      expect(repository.recordWrites, hasLength(1));
+      expect(repository.recordWrites.single.recordId, 'id-B');
+    },
+  );
+
+  testWidgets(
+    'retrying an unchanged assessment reuses its original assessment id',
+    (tester) async {
+      tester.view.physicalSize = const Size(1000, 2600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final repository = _FailOnceSqiRepository();
+      final localRepo = _CountingLocalSqiRepository();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SleepQualityPage(
+            repository: repository,
+            localSqiRepository: localRepo,
+            ensureSignedIn: () async => 'owner-uid',
+          ),
+        ),
+      );
+
+      for (var i = 0; i < 6; i++) {
+        await tester.tap(find.text('3').at(i));
+        await tester.pump();
+      }
+
+      await tester.tap(find.text('Calculate SQI'));
+      await tester.pumpAndSettle();
+
+      expect(repository.recordAttempts.single.recordId, 'id-A');
+
+      await tester.tap(find.text('Calculate SQI'));
+      await tester.pumpAndSettle();
+
+      expect(repository.recordWrites, hasLength(1));
+      expect(repository.recordWrites.single.recordId, 'id-A');
+    },
+  );
 }
