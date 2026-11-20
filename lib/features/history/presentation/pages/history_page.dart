@@ -225,7 +225,7 @@ class _HistoryPageState extends State<HistoryPage> {
       return;
     }
 
-    // Cloud plan - use existing delete flow
+    // Cloud plan - delete from cloud first (source of truth).
     try {
       await _firestoreService.deleteSleepPlan(planId);
     } catch (_) {
@@ -236,6 +236,28 @@ class _HistoryPageState extends State<HistoryPage> {
           action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
         ),
       );
+      return;
+    }
+
+    // Cloud deletion succeeded; remove the local copy too so it cannot
+    // resurrect on the next load. If local deletion fails, tombstone the id
+    // so the stale local copy is filtered out.
+    try {
+      await _localRepo.deleteLocalPlan(planId);
+    } catch (e) {
+      // Cloud is gone; tombstone locally so the stale copy does not reappear.
+      try {
+        await appStorage?.markSleepPlanDeleted(planId);
+      } catch (_) {
+        // Best effort; loadLocalSleepPlans filters tombstoned ids.
+      }
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Plan deleted from cloud. Local cleanup failed: $e'),
+        ),
+      );
+      await _loadHistory();
       return;
     }
 

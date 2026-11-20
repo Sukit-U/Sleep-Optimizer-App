@@ -114,8 +114,8 @@ class LocalSleepPlanRepositoryImpl implements LocalSleepPlanRepository {
       existing[idx] = {
         ...existing[idx],
         'syncStatus': status.name,
-        if (cloudPlanId != null) 'cloudPlanId': cloudPlanId,
-        if (error != null) 'lastSyncError': error,
+        'cloudPlanId': ?cloudPlanId,
+        'lastSyncError': ?error,
         if (attemptTime != null)
           'lastSyncAttempt': attemptTime.toIso8601String(),
       };
