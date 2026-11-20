@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'read/firestore_read.dart';
 
+/// Sync status for a local sleep plan.
+enum LocalSleepPlanSyncStatus { pending, synced, failed }
+
 /// Current-contract, fully valid sleep plan (safe for writes and full display).
 class SleepPlan {
   final String planId;
@@ -10,6 +13,8 @@ class SleepPlan {
   final DateTime createdAt;
   final int sleepCycles;
   final List<String> suggestedBedtimes;
+  final LocalSleepPlanSyncStatus? syncStatus;
+  final String? cloudPlanId;
 
   SleepPlan({
     required this.planId,
@@ -18,6 +23,8 @@ class SleepPlan {
     required this.createdAt,
     required this.sleepCycles,
     required this.suggestedBedtimes,
+    this.syncStatus,
+    this.cloudPlanId,
   });
 
   Map<String, dynamic> toFirestore() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:snoozemate/app/app.dart';
 import 'package:snoozemate/core/services/auth_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
@@ -14,6 +15,7 @@ import 'package:snoozemate/shared/widgets/error_state_widget.dart';
 import 'package:snoozemate/shared/widgets/recommendation_bottom_sheet.dart';
 import 'package:snoozemate/features/history/presentation/widgets/delete_sleep_plan_dialog.dart';
 import 'package:snoozemate/features/history/presentation/widgets/delete_sqi_record_dialog.dart';
+import 'package:snoozemate/features/sleep_planner/data/repositories/sleep_plan_repository.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key, this.firestoreService});
@@ -28,10 +30,14 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   late final FirestoreService _firestoreService =
       widget.firestoreService ?? FirestoreService();
+  late final LocalSleepPlanRepository _localRepo = LocalSleepPlanRepositoryImpl(
+    appStorage!,
+  );
   String _selectedTab = 'sqi';
 
   SQIRecordReadBatch? _sqiBatch;
   SleepPlanReadBatch? _planBatch;
+  List<SleepPlan> _localPlans = [];
   bool _isLoading = true;
   String? _error;
 
@@ -48,20 +54,40 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _loadHistory() async {
-    final userId = await context.read<AuthService>().ensureSignedIn();
-    if (userId == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Could not sign in. Check your connection and retry.';
-      });
-      return;
-    }
+    final auth = context.read<AuthService>();
+    final userId = await auth.ensureSignedIn();
 
     setState(() {
       _isLoading = true;
       _error = null;
     });
+
+    // Load local plans first (works offline)
+    try {
+      if (userId != null) {
+        _localPlans = await _localRepo.getSleepPlans(userId);
+      } else {
+        // Even without auth, show local-only plans (userId == 'local')
+        _localPlans = await _localRepo.getSleepPlans('local');
+      }
+    } catch (e) {
+      // Local load failed, continue with cloud load if possible
+      debugPrint('Failed to load local plans: $e');
+    }
+
+    // If no auth, we can't load cloud plans - show local only
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() {
+        _planBatch = null;
+        _sqiBatch = null;
+        _isLoading = false;
+        _error = 'Could not sign in. Showing local plans only.';
+      });
+      return;
+    }
+
+    // Load cloud plans
     try {
       final planBatch = await _firestoreService.getSleepPlans(userId);
       final sqiBatch = await _firestoreService.getSQIRecords(userId);
@@ -88,12 +114,46 @@ class _HistoryPageState extends State<HistoryPage> {
         <SQIRecord>[];
   }
 
-  List<SleepPlan> _validSleepPlans() {
-    return _planBatch?.results
+  /// Combines local and cloud plans, deduplicating by planId.
+  /// Local plans with syncStatus 'synced' are hidden if the cloud version exists.
+  List<SleepPlan> _mergedSleepPlans() {
+    final cloudPlans =
+        _planBatch?.results
             .whereType<SleepPlanValid>()
             .map((r) => r.plan)
             .toList() ??
         <SleepPlan>[];
+
+    final cloudPlanIds = cloudPlans.map((p) => p.planId).toSet();
+
+    // Filter local plans: exclude synced ones that have a cloud counterpart
+    final localToShow = _localPlans.where((local) {
+      // Exclude local plans that are marked as synced and have a matching cloud plan
+      if (local.syncStatus == LocalSleepPlanSyncStatus.synced &&
+          cloudPlanIds.contains(local.planId)) {
+        return false;
+      }
+      // Exclude local plans that have the same planId as a cloud plan (any status)
+      if (cloudPlanIds.contains(local.planId)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    // Merge: cloud plans first (most recent), then local-only plans
+    final merged = <SleepPlan>[];
+    merged.addAll(cloudPlans);
+    merged.addAll(localToShow);
+
+    // Sort by createdAt descending
+    merged.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return merged;
+  }
+
+  List<SleepPlan> _validSleepPlans() {
+    // Use merged list for display
+    return _mergedSleepPlans();
   }
 
   Future<void> _deleteSQIRecord(String recordId) async {
@@ -142,6 +202,30 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final messenger = ScaffoldMessenger.of(context);
 
+    // Check if it's a local-only plan (not in cloud)
+    final isLocalOnly =
+        _localPlans.any((p) => p.planId == planId) &&
+        !(_planBatch?.results.whereType<SleepPlanValid>().any(
+              (r) => r.plan.planId == planId,
+            ) ??
+            false);
+
+    if (isLocalOnly) {
+      // Delete from local storage only
+      try {
+        await _localRepo.deleteLocalPlan(planId);
+        if (!mounted) return;
+        await _loadHistory();
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text('Could not delete local plan: $e')),
+        );
+      }
+      return;
+    }
+
+    // Cloud plan - use existing delete flow
     try {
       await _firestoreService.deleteSleepPlan(planId);
     } catch (_) {

@@ -35,16 +35,52 @@ class StorageService {
 
   static const _localSleepPlansKey = 'local_sleep_plans';
 
-  /// Appends a sleep plan saved on this device only (offline fallback).
+  /// Persists (or updates) a durable sleep plan record on this device.
   ///
-  /// Uses the same on-device list as [saveHistoryEntry], so a plan saved while
-  /// offline survives an app restart.
-  Future<void> saveLocalSleepPlan(Map<String, dynamic> plan) =>
-      saveHistoryEntry(_localSleepPlansKey, plan);
+  /// Plans are keyed by `planId`, so saving an updated status for an
+  /// existing plan overwrites in place instead of appending a duplicate.
+  Future<void> saveLocalSleepPlan(Map<String, dynamic> plan) async {
+    final existing = loadLocalSleepPlans();
+    final id = plan['planId'];
+    final idx = existing.indexWhere((e) => e['planId'] == id);
+    if (idx >= 0) {
+      existing[idx] = plan;
+    } else {
+      existing.add(plan);
+    }
+    await _prefs.setStringList(
+      _localSleepPlansKey,
+      existing.map(jsonEncode).toList(),
+    );
+  }
 
-  /// Every sleep plan saved on this device only, oldest first.
-  List<Map<String, dynamic>> loadLocalSleepPlans() =>
-      loadHistoryEntries(_localSleepPlansKey);
+  /// Every durable sleep plan saved on this device, oldest first.
+  /// Malformed entries are skipped so one bad record cannot break loading.
+  List<Map<String, dynamic>> loadLocalSleepPlans() {
+    final raw = _prefs.getStringList(_localSleepPlansKey) ?? <String>[];
+    final result = <Map<String, dynamic>>[];
+    for (final entry in raw) {
+      try {
+        final decoded = jsonDecode(entry);
+        if (decoded is Map<String, dynamic>) {
+          result.add(decoded);
+        }
+      } catch (_) {
+        // Skip malformed entries.
+      }
+    }
+    return result;
+  }
+
+  /// Deletes a local sleep plan by planId.
+  Future<void> deleteLocalSleepPlan(String planId) async {
+    final existing = loadLocalSleepPlans();
+    final filtered = existing.where((e) => e['planId'] != planId).toList();
+    await _prefs.setStringList(
+      _localSleepPlansKey,
+      filtered.map(jsonEncode).toList(),
+    );
+  }
 
   static const _localSqiAssessmentsKey = 'local_sqi_assessments';
 

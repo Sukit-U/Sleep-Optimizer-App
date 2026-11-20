@@ -26,6 +26,9 @@ class SleepPlannerPage extends StatefulWidget {
 class _SleepPlannerPageState extends State<SleepPlannerPage> {
   late final FirestoreService _firestoreService =
       widget.firestoreService ?? FirestoreService();
+  late final LocalSleepPlanRepository _localRepo = LocalSleepPlanRepositoryImpl(
+    appStorage!,
+  );
 
   DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
   double _latency = 15; // default 15 mins
@@ -44,6 +47,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   int? _chosenCycles;
   bool _saved = false;
   bool _isSaving = false;
+
+  /// The pending/failed local plan being retried, if any.
+  /// Retained across retries so the same plan is synced instead of creating a new one.
+  Map<String, dynamic>? _pendingLocalPlan;
 
   bool get _isDirty => _hasSelectedWakeUpTime || _chosenCycles != null;
 
@@ -87,6 +94,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
         _hasSelectedWakeUpTime = true;
         _showWakeUpTimeError = false;
         _chosenCycles = null;
+        // New wake-up time means a new plan; clear any pending retry.
+        _pendingLocalPlan = null;
       });
     }
   }
@@ -124,75 +133,146 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       return;
     }
 
-    final userId = await auth.ensureSignedIn();
-
     final options = _getOptions();
     final chosenOption = options.firstWhere(
       (o) => o.cycles == (_chosenCycles ?? 5),
       orElse: () => options[1],
     );
 
+    // If we have a pending local plan with the same wake-up time and cycles,
+    // reuse it for retry. Otherwise create a new one.
+    final reusePending =
+        _pendingLocalPlan != null &&
+        _pendingLocalPlan!['wakeUpTime'] == _wakeUpTime.toIso8601String() &&
+        _pendingLocalPlan!['sleepCycles'] == chosenOption.cycles;
+
+    String planId;
+    DateTime createdAt;
+    Map<String, dynamic> planData;
+
+    if (reusePending) {
+      // Retry: reuse the existing local plan's identity and original contents.
+      planId = _pendingLocalPlan!['planId'] as String;
+      createdAt = DateTime.parse(_pendingLocalPlan!['createdAt'] as String);
+      planData = {
+        ..._pendingLocalPlan!,
+        'wakeUpTime': _wakeUpTime.toIso8601String(),
+        'sleepCycles': chosenOption.cycles,
+        'suggestedBedtimes': options.map((o) => o.bedtimeString).toList(),
+      };
+    } else {
+      // New plan: generate a stable local ID and timestamp.
+      planId = 'local-${DateTime.now().millisecondsSinceEpoch}';
+      createdAt = DateTime.now();
+      planData = {
+        'planId': planId,
+        'userId': 'local', // Will be updated after auth if successful
+        'wakeUpTime': _wakeUpTime.toIso8601String(),
+        'createdAt': createdAt.toIso8601String(),
+        'sleepCycles': chosenOption.cycles,
+        'suggestedBedtimes': options.map((o) => o.bedtimeString).toList(),
+        'syncStatus': LocalSleepPlanSyncStatus.pending.name,
+      };
+    }
+
+    // LOCAL-FIRST: Persist locally BEFORE any network/auth attempt.
+    try {
+      await _localRepo.addSleepPlan(
+        SleepPlan(
+          planId: planId,
+          userId: planData['userId'] as String,
+          wakeUpTime: _wakeUpTime,
+          createdAt: createdAt,
+          sleepCycles: chosenOption.cycles,
+          suggestedBedtimes: options.map((o) => o.bedtimeString).toList(),
+        ),
+      );
+      _pendingLocalPlan = planData;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not save plan locally: $e')),
+      );
+      return;
+    }
+
+    // Now attempt authentication and cloud sync.
+    final userId = await auth.ensureSignedIn();
+
+    // If not signed in, the plan is already saved locally.
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Saved on this device only. It was not synced to the cloud — '
+            'reconnect and save to sync.',
+          ),
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: colors.primary,
+            onPressed: _handleSave,
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Update local plan with resolved userId.
+    planData['userId'] = userId;
+    await _localRepo.updateSyncStatus(planId, LocalSleepPlanSyncStatus.pending);
+    _pendingLocalPlan = planData;
+
+    // Try cloud sync with idempotent write (fixed planId).
     final sleepPlan = SleepPlan(
-      planId: '',
-      userId: userId ?? 'local',
+      planId: planId,
+      userId: userId,
       wakeUpTime: _wakeUpTime,
-      createdAt: DateTime.now(),
+      createdAt: createdAt,
       sleepCycles: chosenOption.cycles,
       suggestedBedtimes: options.map((o) => o.bedtimeString).toList(),
     );
 
-    // Preferred path: persist to the cloud when signed in.
-    if (userId != null) {
-      try {
-        await _firestoreService.addSleepPlan(sleepPlan);
-        if (!mounted) return;
-        _markSaved();
-        return;
-      } catch (_) {
-        // Cloud write failed (e.g. offline): fall back to on-device storage
-        // below so the plan is not silently lost.
-      }
-    }
+    try {
+      // Use the repository's idempotent save method.
+      final firestoreRepo = FirestoreSleepPlanRepository(
+        firestoreService: _firestoreService,
+      );
+      await firestoreRepo.saveSleepPlan(sleepPlan);
 
-    // Offline / not signed in: keep the plan on this device. This never claims
-    // a cloud save happened; the message says it is device-only.
-    final storage = appStorage;
-    if (storage != null) {
-      try {
-        await LocalSleepPlanRepository(storage).addSleepPlan(sleepPlan);
-        if (!mounted) return;
-        messenger.showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Saved on this device only. It was not synced to the cloud — '
-              'reconnect and save to sync.',
-            ),
-            action: SnackBarAction(
-              label: 'Retry',
-              textColor: colors.primary,
-              onPressed: _handleSave,
-            ),
+      if (!mounted) return;
+      await _localRepo.updateSyncStatus(
+        planId,
+        LocalSleepPlanSyncStatus.synced,
+        cloudPlanId: planId,
+        attemptTime: DateTime.now(),
+      );
+      _pendingLocalPlan = null; // Clear pending on confirmed sync.
+      _markSaved();
+    } catch (e) {
+      if (!mounted) return;
+      // Cloud sync failed - keep local plan with failed status for retry.
+      await _localRepo.updateSyncStatus(
+        planId,
+        LocalSleepPlanSyncStatus.failed,
+        error: e.toString(),
+        attemptTime: DateTime.now(),
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Could not sync to cloud. Saved on this device — tap Retry to sync.',
           ),
-        );
-        return;
-      } catch (_) {
-        // Local persistence also failed; report the failure below.
-      }
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: colors.primary,
+            onPressed: _handleSave,
+          ),
+        ),
+      );
     }
-
-    if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Could not save plan. Check your connection and try again.',
-        ),
-        action: SnackBarAction(
-          label: 'Retry',
-          textColor: colors.primary,
-          onPressed: _handleSave,
-        ),
-      ),
-    );
   }
 
   void _markSaved() {
