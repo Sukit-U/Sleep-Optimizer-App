@@ -22,9 +22,10 @@ void showRecommendationSheet(
       minChildSize: 0.3,
       maxChildSize: 0.85,
       builder: (ctx, scrollController) => Container(
-        padding: const EdgeInsets.all(AppSpacing.px),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: colors.surface,
+          // The sheet body is the page; the cards on it are the raised surfaces.
+          color: Theme.of(ctx).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppSpacing.radius2xl),
           ),
@@ -44,19 +45,9 @@ void showRecommendationSheet(
                 ),
               ),
             ),
-            Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  size: AppSpacing.iconMd,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  'Recommendations',
-                  style: AppTypography.h2.copyWith(color: colors.onSurface),
-                ),
-              ],
+            Text(
+              'Recommendations',
+              style: AppTypography.h2.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: AppSpacing.sm),
             if (recs.isEmpty && unavailableCount == 0)
@@ -123,13 +114,7 @@ class _RecommendationItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
