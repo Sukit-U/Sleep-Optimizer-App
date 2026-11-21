@@ -94,7 +94,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
       providers: [
         ChangeNotifierProvider.value(value: dependencies.themeProvider),
         Provider<AuthService>.value(value: dependencies.authService),
-        Provider<CloudConnectionService>.value(
+        ChangeNotifierProvider<CloudConnectionService>.value(
           value: dependencies.cloudConnectionService,
         ),
       ],
