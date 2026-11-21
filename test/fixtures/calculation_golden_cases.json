@@ -1,0 +1,642 @@
+{
+  "version": "1.0.0",
+  "algorithmVersions": {
+    "sqi": "1.0.0",
+    "recommendations": "1.0.0",
+    "planner": "1.0.0"
+  },
+  "sqiCases": [
+    {
+      "id": "sqi-typical-valid",
+      "description": "Typical valid responses across all factors",
+      "input": {
+        "Sleep duration": 3,
+        "Sleep regularity": 2,
+        "Screen time": 4,
+        "Exercise": 3,
+        "Stress": 2,
+        "Caffeine": 1
+      },
+      "expectedOutput": {
+        "score": 50,
+        "level": "fair",
+        "weakFactors": ["Caffeine", "Stress"],
+        "factorScores": {
+          "Sleep duration": 12,
+          "Sleep regularity": 8,
+          "Screen time": 12,
+          "Exercise": 9,
+          "Stress": 6,
+          "Caffeine": 3
+        }
+      }
+    },
+    {
+      "id": "sqi-minimum-responses",
+      "description": "Minimum valid responses (all zeros)",
+      "input": {
+        "Sleep duration": 0,
+        "Sleep regularity": 0,
+        "Screen time": 0,
+        "Exercise": 0,
+        "Stress": 0,
+        "Caffeine": 0
+      },
+      "expectedOutput": {
+        "score": 0,
+        "level": "poor",
+        "weakFactors": ["Sleep duration", "Sleep regularity"],
+        "factorScores": {
+          "Sleep duration": 0,
+          "Sleep regularity": 0,
+          "Screen time": 0,
+          "Exercise": 0,
+          "Stress": 0,
+          "Caffeine": 0
+        }
+      }
+    },
+    {
+      "id": "sqi-maximum-responses",
+      "description": "Maximum valid responses (all fives) - tied weak factors order undefined",
+      "input": {
+        "Sleep duration": 5,
+        "Sleep regularity": 5,
+        "Screen time": 5,
+        "Exercise": 5,
+        "Stress": 5,
+        "Caffeine": 5
+      },
+      "expectedOutput": {
+        "score": 100,
+        "level": "excellent",
+        "weakFactors": ["Screen time", "Exercise"],
+        "factorScores": {
+          "Sleep duration": 20,
+          "Sleep regularity": 20,
+          "Screen time": 15,
+          "Exercise": 15,
+          "Stress": 15,
+          "Caffeine": 15
+        },
+        "note": "All 6 factors tied at max; weakFactors order is undefined (List.sort unstable). This records one observed ordering."
+      }
+    },
+    {
+      "id": "sqi-excellent-boundary-80",
+      "description": "Score exactly 80 → excellent level",
+      "input": {
+        "Sleep duration": 4,
+        "Sleep regularity": 4,
+        "Screen time": 5,
+        "Exercise": 5,
+        "Stress": 4,
+        "Caffeine": 2
+      },
+      "expectedOutput": {
+        "score": 80,
+        "level": "excellent",
+        "weakFactors": ["Caffeine", "Stress"],
+        "factorScores": {
+          "Sleep duration": 16,
+          "Sleep regularity": 16,
+          "Screen time": 15,
+          "Exercise": 15,
+          "Stress": 12,
+          "Caffeine": 6
+        }
+      }
+    },
+    {
+      "id": "sqi-good-boundary-60",
+      "description": "Score exactly 60 → good level",
+      "input": {
+        "Sleep duration": 3,
+        "Sleep regularity": 3,
+        "Screen time": 5,
+        "Exercise": 4,
+        "Stress": 2,
+        "Caffeine": 1
+      },
+      "expectedOutput": {
+        "score": 60,
+        "level": "good",
+        "weakFactors": ["Caffeine", "Stress"],
+        "factorScores": {
+          "Sleep duration": 12,
+          "Sleep regularity": 12,
+          "Screen time": 15,
+          "Exercise": 12,
+          "Stress": 6,
+          "Caffeine": 3
+        }
+      }
+    },
+    {
+      "id": "sqi-fair-boundary-40",
+      "description": "Score exactly 40 → fair level",
+      "input": {
+        "Sleep duration": 1,
+        "Sleep regularity": 3,
+        "Screen time": 3,
+        "Exercise": 2,
+        "Stress": 2,
+        "Caffeine": 1
+      },
+      "expectedOutput": {
+        "score": 40,
+        "level": "fair",
+        "weakFactors": ["Caffeine", "Sleep duration"],
+        "factorScores": {
+          "Sleep duration": 4,
+          "Sleep regularity": 12,
+          "Screen time": 9,
+          "Exercise": 6,
+          "Stress": 6,
+          "Caffeine": 3
+        }
+      }
+    },
+    {
+      "id": "sqi-poor-boundary-39",
+      "description": "Score 39 (just below fair) → poor level",
+      "input": {
+        "Sleep duration": 1,
+        "Sleep regularity": 2,
+        "Screen time": 3,
+        "Exercise": 3,
+        "Stress": 2,
+        "Caffeine": 1
+      },
+      "expectedOutput": {
+        "score": 39,
+        "level": "poor",
+        "weakFactors": ["Caffeine", "Sleep duration"],
+        "factorScores": {
+          "Sleep duration": 4,
+          "Sleep regularity": 8,
+          "Screen time": 9,
+          "Exercise": 9,
+          "Stress": 6,
+          "Caffeine": 3
+        }
+      }
+    },
+    {
+      "id": "sqi-tied-weak-factors",
+      "description": "Tied weak factors — order is undefined (List.sort unstable)",
+      "input": {
+        "Sleep duration": 2,
+        "Sleep regularity": 2,
+        "Screen time": 3,
+        "Exercise": 3,
+        "Stress": 3,
+        "Caffeine": 3
+      },
+      "expectedOutput": {
+        "score": 52,
+        "level": "fair",
+        "weakFactors": ["Sleep duration", "Sleep regularity"],
+        "factorScores": {
+          "Sleep duration": 8,
+          "Sleep regularity": 8,
+          "Screen time": 9,
+          "Exercise": 9,
+          "Stress": 9,
+          "Caffeine": 9
+        },
+        "note": "weakFactors order for tied scores is not guaranteed; this records one observed ordering"
+      }
+    },
+    {
+      "id": "sqi-missing-keys",
+      "description": "Missing keys default to 0",
+      "input": {
+        "Sleep duration": 3,
+        "Screen time": 4
+      },
+      "expectedOutput": {
+        "score": 24,
+        "level": "poor",
+        "weakFactors": ["Sleep regularity", "Exercise"],
+        "factorScores": {
+          "Sleep duration": 12,
+          "Sleep regularity": 0,
+          "Screen time": 12,
+          "Exercise": 0,
+          "Stress": 0,
+          "Caffeine": 0
+        }
+      }
+    },
+    {
+      "id": "sqi-out-of-range-high",
+      "description": "Out-of-range values (6) are accepted and used in calculation",
+      "input": {
+        "Sleep duration": 6,
+        "Sleep regularity": 5,
+        "Screen time": 5,
+        "Exercise": 5,
+        "Stress": 5,
+        "Caffeine": 5
+      },
+      "expectedOutput": {
+        "score": 104,
+        "level": "excellent",
+        "weakFactors": ["Screen time", "Exercise"],
+        "factorScores": {
+          "Sleep duration": 24,
+          "Sleep regularity": 20,
+          "Screen time": 15,
+          "Exercise": 15,
+          "Stress": 15,
+          "Caffeine": 15
+        },
+        "note": "Values > 5 are not clamped; score can exceed 100. Weak factors tied at 15; order undefined."
+      }
+    },
+    {
+      "id": "sqi-out-of-range-negative",
+      "description": "Negative values are accepted and used in calculation",
+      "input": {
+        "Sleep duration": -1,
+        "Sleep regularity": 5,
+        "Screen time": 5,
+        "Exercise": 5,
+        "Stress": 5,
+        "Caffeine": 5
+      },
+      "expectedOutput": {
+        "score": 76,
+        "level": "good",
+        "weakFactors": ["Sleep duration", "Screen time"],
+        "factorScores": {
+          "Sleep duration": -4,
+          "Sleep regularity": 20,
+          "Screen time": 15,
+          "Exercise": 15,
+          "Stress": 15,
+          "Caffeine": 15
+        },
+        "note": "Negative values are not clamped; factor score can be negative."
+      }
+    }
+  ],
+  "recommendationCases": [
+    {
+      "id": "rec-excellent",
+      "description": "Excellent level → positive reinforcement only",
+      "input": {
+        "weakFactors": ["Caffeine", "Sleep regularity"],
+        "level": "excellent",
+        "recordId": "rec-123",
+        "userId": "user-456"
+      },
+      "expectedOutput": [
+        {
+          "factor": "General",
+          "title": "Keep up the great habits!",
+          "description": "Your sleep habits are excellent — maintaining them will help you stay rested and perform at your best.",
+          "action": "Continue with your current sleep routine and share your good habits with friends.",
+          "priority": "low"
+        }
+      ]
+    },
+    {
+      "id": "rec-good-single-factor",
+      "description": "Good level → only the single lowest-scoring factor",
+      "input": {
+        "weakFactors": ["Sleep regularity", "Caffeine"],
+        "level": "good",
+        "recordId": "rec-124",
+        "userId": "user-456"
+      },
+      "expectedOutput": [
+        {
+          "factor": "Sleep regularity",
+          "title": "Keep a steady rhythm",
+          "description": "Regular sleep timing strengthens your sleep quality over time.",
+          "action": "Stick to the same wake-up time each day.",
+          "priority": "critical"
+        }
+      ]
+    },
+    {
+      "id": "rec-good-empty-weak-factors",
+      "description": "Good level with no weak factors → empty",
+      "input": {
+        "weakFactors": [],
+        "level": "good",
+        "recordId": "rec-125"
+      },
+      "expectedOutput": []
+    },
+    {
+      "id": "rec-good-unknown-factor",
+      "description": "Good level with unknown weakest factor → empty",
+      "input": {
+        "weakFactors": ["Unknown factor"],
+        "level": "good",
+        "recordId": "rec-126"
+      },
+      "expectedOutput": []
+    },
+    {
+      "id": "rec-fair-three-factors",
+      "description": "Fair level → up to 3 recommendations, one per weak factor",
+      "input": {
+        "weakFactors": ["Caffeine", "Exercise", "Screen time"],
+        "level": "fair",
+        "recordId": "rec-127"
+      },
+      "expectedOutput": [
+        {
+          "factor": "Caffeine",
+          "title": "Cut back on late caffeine",
+          "description": "Caffeine can stay in your system and disrupt sleep.",
+          "action": "Avoid caffeine at least 6 hours before bed.",
+          "priority": "high"
+        },
+        {
+          "factor": "Exercise",
+          "title": "Add light activity earlier in the day",
+          "description": "Physical activity can improve your sleep readiness and energy balance.",
+          "action": "Take a short walk or stretch earlier in the day.",
+          "priority": "medium"
+        },
+        {
+          "factor": "Screen time",
+          "title": "Reduce late screen exposure",
+          "description": "Blue light can delay your sleep onset and reduce night-time rest.",
+          "action": "Put your phone away 30 minutes before bed.",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "id": "rec-poor-capped-at-three",
+      "description": "Poor level → capped at 3 even with more weak factors",
+      "input": {
+        "weakFactors": ["Sleep regularity", "Stress", "Sleep duration", "Caffeine"],
+        "level": "poor",
+        "recordId": "rec-128"
+      },
+      "expectedOutput": [
+        {
+          "factor": "Sleep regularity",
+          "title": "Keep a steady rhythm",
+          "description": "Regular sleep timing strengthens your sleep quality over time.",
+          "action": "Stick to the same wake-up time each day.",
+          "priority": "critical"
+        },
+        {
+          "factor": "Stress",
+          "title": "Create a simple wind-down routine",
+          "description": "A calm routine can reduce stress and support better sleep.",
+          "action": "Try breathing exercises or journaling before bed.",
+          "priority": "critical"
+        },
+        {
+          "factor": "Sleep duration",
+          "title": "Aim for a consistent bedtime",
+          "description": "A stable sleep schedule helps your body recover more efficiently.",
+          "action": "Set a fixed bedtime and wake-up time.",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "id": "rec-poor-all-six-factors",
+      "description": "Poor level with all six factors → capped at 3",
+      "input": {
+        "weakFactors": ["Sleep duration", "Sleep regularity", "Screen time", "Exercise", "Stress", "Caffeine"],
+        "level": "poor",
+        "recordId": "rec-129"
+      },
+      "expectedOutput": [
+        {
+          "factor": "Sleep duration",
+          "title": "Aim for a consistent bedtime",
+          "description": "A stable sleep schedule helps your body recover more efficiently.",
+          "action": "Set a fixed bedtime and wake-up time.",
+          "priority": "high"
+        },
+        {
+          "factor": "Sleep regularity",
+          "title": "Keep a steady rhythm",
+          "description": "Regular sleep timing strengthens your sleep quality over time.",
+          "action": "Stick to the same wake-up time each day.",
+          "priority": "critical"
+        },
+        {
+          "factor": "Screen time",
+          "title": "Reduce late screen exposure",
+          "description": "Blue light can delay your sleep onset and reduce night-time rest.",
+          "action": "Put your phone away 30 minutes before bed.",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "id": "rec-unknown-factors-skipped",
+      "description": "Unknown factor names are skipped, known ones returned",
+      "input": {
+        "weakFactors": ["Unknown factor", "Caffeine"],
+        "level": "poor",
+        "recordId": "rec-130"
+      },
+      "expectedOutput": [
+        {
+          "factor": "Caffeine",
+          "title": "Cut back on late caffeine",
+          "description": "Caffeine can stay in your system and disrupt sleep.",
+          "action": "Avoid caffeine at least 6 hours before bed.",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "id": "rec-fair-empty-weak-factors",
+      "description": "Fair level with no weak factors → empty",
+      "input": {
+        "weakFactors": [],
+        "level": "fair",
+        "recordId": "rec-131"
+      },
+      "expectedOutput": []
+    },
+    {
+      "id": "rec-poor-empty-weak-factors",
+      "description": "Poor level with no weak factors → empty",
+      "input": {
+        "weakFactors": [],
+        "level": "poor",
+        "recordId": "rec-132"
+      },
+      "expectedOutput": []
+    }
+  ],
+  "plannerCases": [
+    {
+      "id": "planner-6-cycles-zero-latency",
+      "description": "6 cycles, zero latency",
+      "input": {
+        "wakeUpTime": "2024-01-15T07:00:00.000",
+        "latencyMinutes": 0
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "10:00 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "11:30 PM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "1:00 AM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-default-latency-15",
+      "description": "Default latency of 15 minutes",
+      "input": {
+        "wakeUpTime": "2024-01-15T07:00:00.000",
+        "latencyMinutes": 15
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "9:45 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "11:15 PM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "12:45 AM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-max-latency-45",
+      "description": "Maximum latency of 45 minutes",
+      "input": {
+        "wakeUpTime": "2024-01-15T07:00:00.000",
+        "latencyMinutes": 45
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "9:15 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "10:45 PM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "12:15 AM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-midnight-rollover",
+      "description": "Date rollover across midnight (wake at 1 AM)",
+      "input": {
+        "wakeUpTime": "2024-01-15T01:00:00.000",
+        "latencyMinutes": 0
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "4:00 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "5:30 PM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "7:00 PM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-wake-6am",
+      "description": "Wake at 6:00 AM",
+      "input": {
+        "wakeUpTime": "2024-01-15T06:00:00.000",
+        "latencyMinutes": 0
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "9:00 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "10:30 PM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "12:00 AM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-wake-8am",
+      "description": "Wake at 8:00 AM",
+      "input": {
+        "wakeUpTime": "2024-01-15T08:00:00.000",
+        "latencyMinutes": 0
+      },
+      "expectedOutput": [
+        {
+          "cycles": 6,
+          "bedtimeString": "11:00 PM",
+          "durationMinutes": 540
+        },
+        {
+          "cycles": 5,
+          "bedtimeString": "12:30 AM",
+          "durationMinutes": 450
+        },
+        {
+          "cycles": 4,
+          "bedtimeString": "2:00 AM",
+          "durationMinutes": 360
+        }
+      ]
+    },
+    {
+      "id": "planner-ordering",
+      "description": "Options always ordered 6, 5, 4 cycles",
+      "input": {
+        "wakeUpTime": "2024-01-15T07:00:00.000",
+        "latencyMinutes": 0
+      },
+      "expectedOutput": {
+        "cyclesOrder": [6, 5, 4]
+      }
+    }
+  ]
+}

@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:snoozemate/app/app.dart';
 import 'package:snoozemate/core/services/auth_service.dart';
+import 'package:snoozemate/core/services/storage_service.dart';
 import 'package:snoozemate/features/sleep_planner/presentation/pages/sleep_planner_page.dart';
 import 'package:snoozemate/models/sleep_plan_model.dart';
 import 'package:snoozemate/services/firestore_service.dart';
@@ -25,6 +28,9 @@ class _FakeAuthService implements AuthService {
   String? get uid => 'test-uid';
 
   @override
+  void resolveAuth() {}
+
+  @override
   Future<String?> ensureSignedIn({int maxAttempts = 3}) async =>
       signInGate?.future ?? Future<String?>.value('test-uid');
 
@@ -37,22 +43,21 @@ class _FakeAuthService implements AuthService {
 /// so a duplicate save would be visible.
 class _GatedFirestoreService extends FirestoreService {
   final gate = Completer<void>();
-  int addSleepPlanCalls = 0;
+  int saveSleepPlanCalls = 0;
 
   @override
-  Future<String> addSleepPlan(SleepPlan sleepPlan) async {
-    addSleepPlanCalls++;
+  Future<void> saveSleepPlan(SleepPlan sleepPlan) async {
+    saveSleepPlanCalls++;
     await gate.future;
-    return 'plan-1';
   }
 }
 
 class _FailingFirestoreService extends FirestoreService {
-  int addSleepPlanCalls = 0;
+  int saveSleepPlanCalls = 0;
 
   @override
-  Future<String> addSleepPlan(SleepPlan sleepPlan) async {
-    addSleepPlanCalls++;
+  Future<void> saveSleepPlan(SleepPlan sleepPlan) async {
+    saveSleepPlanCalls++;
     throw Exception('offline');
   }
 }
@@ -61,6 +66,14 @@ void main() {
   setUpAll(() {
     // No font downloads in tests.
     GoogleFonts.config.allowRuntimeFetching = false;
+    // Initialize shared preferences mock for StorageService.
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  setUp(() async {
+    // Initialize appStorage for each test.
+    final storage = await StorageService.create();
+    appStorage = storage;
   });
 
   Future<void> pumpPlanner(
@@ -130,13 +143,13 @@ void main() {
     signInGate.complete('test-uid');
     await tester.pump();
     await tester.pump();
-    expect(firestoreService.addSleepPlanCalls, 1);
+    expect(firestoreService.saveSleepPlanCalls, 1);
 
     // The second tap of a fast double tap, now inside the write.
     await tester.tap(find.byType(PlannerSaveButton), warnIfMissed: false);
     await tester.pump();
     expect(
-      firestoreService.addSleepPlanCalls,
+      firestoreService.saveSleepPlanCalls,
       1,
       reason: 'a tap during the write must not start a second save',
     );
@@ -144,7 +157,7 @@ void main() {
     firestoreService.gate.complete();
     await tester.pumpAndSettle();
 
-    expect(firestoreService.addSleepPlanCalls, 1);
+    expect(firestoreService.saveSleepPlanCalls, 1);
     expect(find.text('Saved to history'), findsOneWidget);
 
     // Let the "Saved" label timer finish so no timer outlives the test.
@@ -160,9 +173,11 @@ void main() {
     await tester.tap(find.text('Save plan'), warnIfMissed: false);
     await tester.pumpAndSettle();
 
-    expect(firestoreService.addSleepPlanCalls, 1);
+    expect(firestoreService.saveSleepPlanCalls, 1);
     expect(
-      find.text('Could not save plan. Check your connection and try again.'),
+      find.text(
+        'Could not sync to cloud. Saved on this device — tap Retry to sync.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Saving…'), findsNothing);
@@ -177,6 +192,6 @@ void main() {
     await tester.tap(find.text('Save plan'), warnIfMissed: false);
     await tester.pumpAndSettle();
 
-    expect(firestoreService.addSleepPlanCalls, 2);
+    expect(firestoreService.saveSleepPlanCalls, 2);
   });
 }

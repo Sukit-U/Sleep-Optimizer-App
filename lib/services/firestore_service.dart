@@ -16,6 +16,25 @@ class FirestoreService {
     return docRef.id;
   }
 
+  /// Allocates a document ID without writing anything, so a sync that is
+  /// retried can reuse the same plan instead of creating a duplicate.
+  String newSleepPlanId() => _firestore.collection('sleepPlans').doc().id;
+
+  /// Creates or overwrites the plan with its already-allocated ID.
+  ///
+  /// `set()` on a fixed ID makes the write idempotent. Retrying with the same
+  /// payload (same `createdAt`) is accepted by the rules as an update, because
+  /// none of the immutable fields change.
+  Future<void> saveSleepPlan(SleepPlan sleepPlan) async {
+    if (sleepPlan.planId.isEmpty) {
+      throw ArgumentError('SleepPlan.planId is required');
+    }
+    await _firestore
+        .collection('sleepPlans')
+        .doc(sleepPlan.planId)
+        .set(sleepPlan.toFirestore());
+  }
+
   Future<SleepPlanReadBatch> getSleepPlans(String userId) async {
     final snapshot = await _firestore
         .collection('sleepPlans')

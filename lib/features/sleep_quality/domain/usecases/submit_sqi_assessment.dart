@@ -101,28 +101,32 @@ class SubmitSqiAssessment {
   Future<SubmitSqiOutcome> call({
     required String userId,
     required SqiResult result,
+    String? recordId,
+    DateTime? createdAt,
   }) async {
     if (_inFlight) return SubmitSqiOutcome.busy;
     _inFlight = true;
     try {
       // Allocated once per attempt and reused by every retry: the same record
       // and the same createdAt keep the retried write an in-place update that
-      // the rules accept.
-      final recordId = _recordId ??= newRecordId();
-      final createdAt = _createdAt ??= now();
+      // the rules accept. A caller may seed the id/timestamp (e.g. from a
+      // restored local assessment) so a retry after a restart keeps the original
+      // identity instead of minting a new one.
+      final resolvedRecordId = _recordId ??= (recordId ?? newRecordId());
+      final resolvedCreatedAt = _createdAt ??= (createdAt ?? now());
 
       if (!_recordSaved) {
         try {
           await writeRecord(
             SQIRecord(
-              recordId: recordId,
+              recordId: resolvedRecordId,
               userId: userId,
               sqiScore: result.score,
               sleepQualityLevel: result.level.name,
               questionnaireResponses: Map<String, dynamic>.from(
                 result.responses,
               ),
-              createdAt: createdAt,
+              createdAt: resolvedCreatedAt,
             ),
           );
           _recordSaved = true;
@@ -135,9 +139,9 @@ class SubmitSqiAssessment {
       // Built once per attempt and cached, so a retry resends the same objects
       // (same IDs, same createdAt, same payload) instead of minting a new batch.
       final recommendations = _recommendations ??= _buildRecommendations(
-        recordId: recordId,
+        recordId: resolvedRecordId,
         userId: userId,
-        createdAt: createdAt,
+        createdAt: resolvedCreatedAt,
         result: result,
       );
 

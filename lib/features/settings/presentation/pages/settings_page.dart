@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snoozemate/core/services/auth_service.dart';
+import 'package:snoozemate/core/services/cloud_connection_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
@@ -129,6 +130,85 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Cloud Sync Card
+              Builder(
+                builder: (context) {
+                  final cloud = context.watch<CloudConnectionService>();
+                  final isInitializing = cloud.isInitializing;
+                  final statusText = switch (cloud.state) {
+                    CloudConnectionState.ready => 'Connected',
+                    CloudConnectionState.initializing => 'Connecting…',
+                    CloudConnectionState.notInitialized => 'Not connected',
+                    CloudConnectionState.unavailable => 'Unavailable',
+                    CloudConnectionState.firebaseInitialized =>
+                      'Firebase ready, App Check pending',
+                    CloudConnectionState.appCheckCompleted =>
+                      'Cloud ready, sign-in pending',
+                  };
+                  return Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.shadow,
+                          blurRadius: AppSpacing.cardShadow,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          cloud.isReady ? Icons.cloud_done : Icons.cloud_off,
+                          color: cloud.isReady
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
+                          size: AppSpacing.iconXl,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Cloud sync',
+                                style: AppTypography.h3.copyWith(
+                                  color: colors.onSurface,
+                                ),
+                              ),
+                              Text(
+                                statusText,
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                              if (cloud.lastError != null && !cloud.isReady)
+                                Text(
+                                  cloud.lastError!,
+                                  style: AppTypography.caption.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: isInitializing
+                              ? null
+                              : () => cloud.retry(),
+                          child: Text(isInitializing ? '…' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.lg),
 
