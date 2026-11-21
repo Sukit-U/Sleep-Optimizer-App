@@ -536,9 +536,8 @@ class _HistoryPageState extends State<HistoryPage> {
     final validPlans = _validSleepPlans();
     final legacyCount = batch?.legacyCount ?? 0;
     final invalidCount = batch?.invalidCount ?? 0;
-    final total = batch?.results.length ?? 0;
 
-    if (total == 0) {
+    if (validPlans.isEmpty && legacyCount == 0) {
       return EmptyStateCard(
         label: 'No plans saved yet.',
         ctaLabel: 'Open planner',

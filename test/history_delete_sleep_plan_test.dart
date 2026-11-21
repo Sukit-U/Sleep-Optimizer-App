@@ -103,6 +103,48 @@ class _TrackingPlanService implements FirestoreService {
       throw UnimplementedError('${invocation.memberName} is not stubbed');
 }
 
+final _plan2 = SleepPlan(
+  planId: 'plan-2',
+  userId: 'owner-1',
+  wakeUpTime: DateTime(2026, 11, 15, 7, 0),
+  createdAt: DateTime(2026, 11, 14, 23, 0),
+  sleepCycles: 6,
+  suggestedBedtimes: const ['10:15 PM', '11:45 PM', '1:15 AM'],
+);
+
+/// Cloud service returning two plans; deletion removes one.
+class _TwoPlanService implements FirestoreService {
+  _TwoPlanService();
+
+  int deleteCalls = 0;
+  int loadCount = 0;
+  final Set<String> _deleted = {};
+
+  @override
+  Future<SleepPlanReadBatch> getSleepPlans(String userId) async {
+    loadCount++;
+    final plans = [_plan, _plan2]
+        .where((p) => !_deleted.contains(p.planId))
+        .map((p) => SleepPlanValid(documentId: p.planId, plan: p))
+        .toList();
+    return SleepPlanReadBatch(plans);
+  }
+
+  @override
+  Future<SQIRecordReadBatch> getSQIRecords(String userId) async =>
+      const SQIRecordReadBatch([]);
+
+  @override
+  Future<void> deleteSleepPlan(String planId) async {
+    deleteCalls++;
+    _deleted.add(planId);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not stubbed');
+}
+
 /// Cloud service that returns no plans (for local-only tests).
 class _EmptyCloudService implements FirestoreService {
   @override
@@ -168,6 +210,7 @@ void main() {
   });
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     final storage = await StorageService.create();
     appStorage = storage;
   });
@@ -246,22 +289,40 @@ void main() {
     expect(find.byIcon(Icons.delete_outline), findsNothing);
   });
 
-  testWidgets('reload History after deletion keeps plan absent', (
+  testWidgets('History recreation after deletion keeps deleted plan absent', (
     tester,
   ) async {
-    final service = _TrackingPlanService();
+    final service = _TwoPlanService();
     await _pumpPlansTab(tester, service);
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    // Both plans rendered initially.
+    expect(find.byIcon(Icons.delete_outline), findsNWidgets(2));
+
+    // Delete plan-1.
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
-    // Reload by re-tapping the tab.
+    // Dispose the original History page by replacing the widget tree.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    // Reconstruct a fresh History page.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Provider<AuthService>.value(
+          value: _SignedInAuth(),
+          child: HistoryPage(firestoreService: service),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sleep plans'));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    // Deleted plan absent, unaffected plan present.
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
   });
 
   testWidgets('cloud deletion failure keeps plan available', (tester) async {
@@ -304,14 +365,20 @@ void main() {
     final service = _EmptyCloudService();
     await _pumpPlansTab(tester, service);
 
-    // The plan is local-only; check it renders.
-    if (find.byIcon(Icons.delete_outline).evaluate().isEmpty) return;
+    // The seeded local plan must be rendered before deletion.
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
+    // Removed from UI.
     expect(find.byIcon(Icons.delete_outline), findsNothing);
+
+    // Removed from persistent local storage.
+    final storage = appStorage!;
+    final remaining = storage.loadLocalSleepPlans();
+    expect(remaining.where((p) => p['planId'] == _plan.planId), isEmpty);
   });
 }
