@@ -28,30 +28,16 @@ class SQIRecordCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: AppSpacing.cardShadow,
-              color: colors.shadow.withValues(alpha: 0.45),
-              offset: Offset(0, AppSpacing.defaultSpacing - 6),
-            ),
-          ],
+          border: Border.all(color: colors.outline),
         ),
         child: Row(
           children: [
-            Container(
-              width: AppSpacing.iconXl,
-              height: AppSpacing.iconXl,
-              decoration: BoxDecoration(
-                color: colors.secondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppSpacing.roundedSm),
-              ),
-              child: Icon(
-                Icons.assignment_outlined,
-                size: AppSpacing.iconMd,
-                color: colors.secondary,
-              ),
+            Icon(
+              Icons.assignment_outlined,
+              size: AppSpacing.iconMd,
+              color: colors.secondary,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -32,31 +32,18 @@ class _SettingsPageState extends State<SettingsPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.px,
-            vertical: AppSpacing.py,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
           ),
           child: ListView(
             children: [
-              // Screen Title
-              Text(
-                'Settings',
-                style: AppTypography.h1.copyWith(color: colors.onSurface),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
               // Dark Mode Card
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow,
-                      blurRadius: AppSpacing.cardShadow,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: colors.outline),
                 ),
                 child: Row(
                   children: [
@@ -153,13 +140,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     decoration: BoxDecoration(
                       color: colors.surface,
                       borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.shadow,
-                          blurRadius: AppSpacing.cardShadow,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(color: colors.outline),
                     ),
                     child: Row(
                       children: [
@@ -199,12 +180,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             ],
                           ),
                         ),
-                        TextButton(
-                          onPressed: isInitializing
-                              ? null
-                              : () => cloud.retry(),
-                          child: Text(isInitializing ? '…' : 'Retry'),
-                        ),
+                        // Only offer a retry when one could change something:
+                        // a connected service has nothing to retry, and while
+                        // connecting the status itself says "Connecting…".
+                        if (!cloud.isReady && !isInitializing)
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                await cloud.retry();
+                              } catch (_) {
+                                // The stage and the error are shown above; the
+                                // card is the report, so nothing is rethrown.
+                              }
+                            },
+                            child: const Text('Retry'),
+                          ),
                       ],
                     ),
                   );
@@ -218,13 +208,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow,
-                      blurRadius: AppSpacing.cardShadow,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: colors.outline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

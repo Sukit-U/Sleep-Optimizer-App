@@ -322,7 +322,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           elevation: 0,
           title: Text(
             'Sleep Planner',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.karla(
               fontSize: 12,
               color: colors.onSurfaceVariant,
             ),
@@ -343,15 +343,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sleep Planner',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                        Text(
                           'When should I sleep?',
-                          style: GoogleFonts.sora(
+                          style: GoogleFonts.karla(
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: colors.onSurface,
@@ -372,7 +365,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 // ── Constraints ──
                 Text(
                   'Tonight I also have…',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.karla(
                     fontSize: 14,
                     color: colors.onSurfaceVariant,
                   ),
@@ -401,7 +394,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         ),
                         child: Text(
                           c,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.karla(
                             fontSize: 12,
                             fontWeight: isOn
                                 ? FontWeight.w500
@@ -424,7 +417,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                   children: [
                     Text(
                       'Suggested bedtimes',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.karla(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         color: colors.onSurface,
@@ -432,7 +425,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     ),
                     Text(
                       'Wake at ${DateFormat('HH:mm').format(_wakeUpTime)}',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.karla(
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
                       ),
@@ -477,16 +470,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.92),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colors.outline.withValues(alpha: 0.8)),
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Wake-up time',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.karla(
               fontSize: 14,
               color: colors.onSurfaceVariant,
             ),
@@ -510,7 +503,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               ),
               child: Text(
                 DateFormat('hh:mm a').format(_wakeUpTime),
-                style: GoogleFonts.sora(
+                style: GoogleFonts.karla(
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -524,14 +517,14 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
             children: [
               Text(
                 'Time to fall asleep: ',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.karla(
                   fontSize: 14,
                   color: colors.onSurfaceVariant,
                 ),
               ),
               Text(
                 '${_latency.toInt()} min',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.karla(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: colors.onSurface,

@@ -40,12 +40,10 @@ class BedtimeOptionCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colors.surface.withValues(alpha: 0.92),
+          color: colors.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected
-                ? colors.primary
-                : colors.outline.withValues(alpha: 0.8),
+            color: isSelected ? colors.primary : colors.outline,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -60,7 +58,7 @@ class BedtimeOptionCard extends StatelessWidget {
                 children: [
                   Text(
                     bedtimeString,
-                    style: GoogleFonts.sora(
+                    style: GoogleFonts.karla(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: colors.onSurface,
@@ -69,7 +67,7 @@ class BedtimeOptionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '$cycles cycles • ${_formatDuration(durationMinutes)}',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.karla(
                       fontSize: 12,
                       color: colors.onSurfaceVariant,
                     ),
@@ -95,7 +93,7 @@ class BedtimeOptionCard extends StatelessWidget {
                     ),
                     child: Text(
                       'Recommended',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.karla(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: colors.onSurface,

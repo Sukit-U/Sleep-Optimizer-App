@@ -33,15 +33,7 @@ class PlannerSaveButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: colors.primary,
-            borderRadius: BorderRadius.circular(9999),
-            boxShadow: [
-              BoxShadow(
-                color: colors.primary.withValues(alpha: 0.60),
-                blurRadius: 30,
-                spreadRadius: -12,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -54,7 +46,7 @@ class PlannerSaveButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.karla(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: colors.onPrimary,

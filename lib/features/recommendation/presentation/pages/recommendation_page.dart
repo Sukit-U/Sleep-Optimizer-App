@@ -33,8 +33,8 @@ class _RecommendationPageState extends State<RecommendationPage> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.px,
-            vertical: AppSpacing.py,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
           ),
           children: [
             // Inline header (Lovable reference: back button + caption + title)
@@ -163,13 +163,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         children: [
@@ -272,13 +266,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow,
-                blurRadius: AppSpacing.cardShadow,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: colors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,19 +320,9 @@ class _RecommendationPageState extends State<RecommendationPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(
-              Icons.auto_awesome,
-              size: AppSpacing.iconMd,
-              color: colors.primary,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              'Personalized recommendations',
-              style: AppTypography.h2.copyWith(color: colors.onSurface),
-            ),
-          ],
+        Text(
+          'Recommendations',
+          style: AppTypography.h2.copyWith(color: colors.onSurface),
         ),
         const SizedBox(height: AppSpacing.md),
       ],
@@ -360,13 +338,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,13 +404,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline),
       ),
       child: Text(
         label,
