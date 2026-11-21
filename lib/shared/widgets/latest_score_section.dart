@@ -26,7 +26,7 @@ class LatestScoreSection extends StatelessWidget {
           children: [
             Text(
               'Latest score',
-              style: GoogleFonts.sora(
+              style: GoogleFonts.karla(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: colors.onSurface,
@@ -36,7 +36,7 @@ class LatestScoreSection extends StatelessWidget {
               onTap: onViewHistory,
               child: Text(
                 'View history',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.karla(
                   fontSize: 12,
                   color: colors.onSurfaceVariant,
                 ),
@@ -49,26 +49,25 @@ class LatestScoreSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.92),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-            border: Border.all(color: colors.outline.withValues(alpha: 0.8)),
+            border: Border.all(color: colors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Sleep Quality Index',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                'Your sleep quality',
+                style: GoogleFonts.karla(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                   color: colors.onSurfaceVariant,
-                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 'Complete your first assessment to see your sleep quality score.',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.karla(
                   fontSize: 14,
                   color: colors.onSurfaceVariant,
                   height: 1.4,
@@ -82,7 +81,7 @@ class LatestScoreSection extends StatelessWidget {
                   children: [
                     Text(
                       'Start Assessment',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.karla(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: colors.primary,

@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
+import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:snoozemate/features/home/presentation/widgets/home_body.dart';
 
@@ -14,7 +14,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+  /// The tab to highlight, taken from the route. Home is only ever shown as
+  /// `/`, so a tab pushed on top and then popped cannot leave the bar
+  /// highlighting the screen the user just came back from.
+  int get _currentIndex {
+    final name = ModalRoute.of(context)?.settings.name ?? AppRoutes.home;
+    final index = _tabs.indexWhere((tab) => tab.route == name);
+    return index < 0 ? 0 : index;
+  }
 
   final List<_TabItem> _tabs = [
     _TabItem(route: AppRoutes.home, label: 'Home', icon: Icons.home),
@@ -38,9 +45,6 @@ class _HomePageState extends State<HomePage> {
 
   void _onTabTapped(int index) {
     if (_currentIndex == index) return;
-    setState(() {
-      _currentIndex = index;
-    });
     final route = _tabs[index].route;
     Navigator.of(
       context,
@@ -80,70 +84,64 @@ class _HomePageState extends State<HomePage> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.sm,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            border: Border.all(color: colors.outline, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow,
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
-              decoration: BoxDecoration(
-                color: colors.surface.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                border: Border.all(color: colors.outline, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.60),
-                    blurRadius: 60,
-                    offset: const Offset(0, 20),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: List.generate(_tabs.length, (index) {
-                  final active = index == _currentIndex;
-                  final tab = _tabs[index];
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => _onTabTapped(index),
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.sm - 2,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              tab.icon,
-                              size: 20,
-                              color: active
-                                  ? colors.primary
-                                  : colors.onSurfaceVariant,
-                            ),
-                            const SizedBox(height: AppSpacing.xs - 2),
-                            Text(
-                              tab.label,
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: active
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                                color: active
-                                    ? colors.primary
-                                    : colors.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+            ],
+          ),
+          child: Row(
+            children: List.generate(_tabs.length, (index) {
+              final active = index == _currentIndex;
+              final tab = _tabs[index];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => _onTabTapped(index),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm - 2,
                     ),
-                  );
-                }),
-              ),
-            ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          tab.icon,
+                          size: 20,
+                          color: active
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: AppSpacing.xs - 2),
+                        Text(
+                          tab.label,
+                          style: GoogleFonts.karla(
+                            fontSize: AppTypography.navLabel.fontSize,
+                            fontWeight: active
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: active
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),

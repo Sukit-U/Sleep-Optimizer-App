@@ -54,25 +54,19 @@ class HomeBody extends StatelessWidget {
           children: [
             Text(
               '${_greet()},',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.karla(
                 fontSize: 14,
                 color: colors.onSurfaceVariant,
               ),
             ),
-            Row(
-              children: [
-                Text(
-                  'Dashboard',
-                  style: GoogleFonts.sora(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Text('🌙', style: TextStyle(fontSize: 24)),
-              ],
+            Text(
+              'Home',
+              style: GoogleFonts.karla(
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface,
+                letterSpacing: -0.5,
+              ),
             ),
           ],
         ),
