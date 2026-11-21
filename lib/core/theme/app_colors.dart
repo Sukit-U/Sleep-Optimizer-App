@@ -1,135 +1,95 @@
 import 'package:flutter/material.dart';
 
-/// App color palette based on CompleteScreenSpecifications design system
-/// Dark theme with periwinkle blue primary (#6E9EF5) and muted purple accent (#C47FD9)
+/// App color palette: a cool night sky rather than a warm room.
+///
+/// The dark theme is the default. Surfaces are deep blue-black, actions are
+/// moonlight blue, and status colors are muted rather than saturated. The action
+/// color is a fill: put dark text on it, and use the light theme's deeper
+/// [lightPrimary] instead of it for small text on paper.
 class AppColors {
   AppColors._();
 
   // === PRIMARY COLORS ===
-  /// Primary periwinkle blue - #6E9EF5 (oklch 0.7 0.16 245)
-  static const Color primary = Color(0xFF6E9EF5);
-  static const Color primaryLight = Color(0xFF87B4F7);
-  static const Color primaryDark = Color(0xFF587DD9);
+  /// Moonlight blue - #7FA8E0
+  static const Color primary = Color(0xFF7FA8E0);
+  static const Color primaryLight = Color(0xFFA3C4F0);
+  static const Color primaryDark = Color(0xFF5A82B8);
 
-  /// Primary foreground (text on primary)
-  static const Color primaryForeground = Color(0xFFFAFAFA);
+  /// Text on primary (deep night, not pure black)
+  static const Color primaryForeground = Color(0xFF0A1220);
 
   // === ACCENT COLORS ===
-  /// Muted purple accent - #C47FD9 (oklch 0.68 0.18 300)
-  static const Color accent = Color(0xFFC47FD9);
-  static const Color secondary = Color(
-    0xFFC47FD9,
-  ); // Alias for accent (Material Design compatibility)
-  static const Color accentLight = Color(0xFFD694E4);
-  static const Color accentDark = Color(0xFFA664BB);
+  /// Cool horizon teal - #7BBFC2 (status, secondary emphasis)
+  static const Color accent = Color(0xFF7BBFC2);
+  static const Color secondary = Color(0xFF7BBFC2); // Material alias for accent
+  static const Color accentLight = Color(0xFFA2D8DA);
+  static const Color accentDark = Color(0xFF4E8D90);
 
   // === BACKGROUND COLORS ===
-  /// Dark background - #252830 (oklch 0.18 0.008 260)
-  static const Color background = Color(0xFF252830);
-  static const Color backgroundLight = Color(
-    0xFF30333D,
-  ); // This is the new card/surface color
+  /// Deep night blue - #0B1220
+  static const Color background = Color(0xFF0B1220);
 
-  /// Card/Surface background - #30333D (oklch 0.235 0.01 260)
-  static const Color card = Color(0xFF30333D);
-  static const Color surface = Color(0xFF30333D);
-  static const Color surfaceElevated = Color(
-    0xFF3B3E4A,
-  ); // Slightly lighter for elevated surfaces
+  /// Card/Surface background - #141C2A
+  static const Color card = Color(0xFF141C2A);
+  static const Color surface = Color(0xFF141C2A);
+  static const Color surfaceElevated = Color(0xFF1D2738);
 
   // === FOREGROUND COLORS ===
-  /// Primary text color - #fafafa
-  static const Color foreground = Color(0xFFFAFAFA);
+  /// Primary text, cool off-white - #E7EDF6
+  static const Color foreground = Color(0xFFE7EDF6);
 
-  /// Muted foreground - #AEB2BE (oklch 0.74 0.02 260)
-  static const Color mutedForeground = Color(0xFFAEB2BE);
+  /// Muted foreground - #8FA0B7
+  static const Color mutedForeground = Color(0xFF8FA0B7);
 
   // === MUTED COLORS ===
-  /// Muted background - for progress bars, etc.
-  static const Color muted = Color(
-    0xFF333333,
-  ); // Keep as a general muted, though design might specify a background for it.
-  static const Color mutedLight = Color(
-    0xFF404040,
-  ); // Keep for consistency if needed.
-  static const Color mutedBackground = Color(
-    0xFF2A2A2A,
-  ); // Keep for consistency if needed.
+  /// Muted fill for tracks and dividers
+  static const Color muted = Color(0xFF1A2333);
+  static const Color mutedBackground = Color(0xFF0F1724);
 
   // === BORDER COLORS ===
-  /// Border color - #454850 (oklch 0.32 0.012 260)
-  static const Color border = Color(0xFF454850);
-  static const Color borderLight = Color(0xFF505058);
+  /// Hairline border - #283649
+  static const Color border = Color(0xFF283649);
 
   // === STATUS COLORS ===
-  /// Success - Green
-  static const Color success = Color(0xFF4ADE80);
-  static const Color successForeground = Color(0xFFFFFFFF);
+  static const Color success = Color(0xFF74C49E);
+  static const Color successForeground = Color(0xFF08170F);
 
-  /// Warning - Orange/Yellow
-  static const Color warning = Color(0xFFFBBF24);
-  static const Color warningForeground = Color(0xFF1A1A1A);
+  static const Color warning = Color(0xFFD6B36A);
+  static const Color warningForeground = Color(0xFF17120A);
 
-  /// Error/Destructive - Red
-  static const Color destructive = Color(0xFFEF4444);
-  static const Color destructiveForeground = Color(0xFFFFFFFF);
-
-  /// Info - Blue (often same as primary for informational purposes)
-  static const Color info = Color(0xFF60A5FA);
-  static const Color infoForeground = Color(0xFFFFFFFF);
-
-  // === CHART COLORS ===
-  static const Color chart1 = Color(0xFF6E9EF5); // Primary Blue
-  static const Color chart2 = Color(0xFFC47FD9); // Accent Purple
-  static const Color chart3 = Color(0xFF4ADE80); // Success Green
-  static const Color chart4 = Color(0xFFFBBF24); // Warning Yellow
-  static const Color chart5 = Color(0xFF60A5FA); // Info Blue
-
-  // === GRADIENT COLORS ===
-  /// Ambient orb purple for background
-  static const Color orbPurple = Color(
-    0xFF6E9EF5,
-  ); // Primary color for orb effect
-  /// Ambient orb blue for background
-  static const Color orbBlue = Color(0xFFC47FD9); // Accent color for orb effect
-
-  // === Primary glow effect
-  static const Color primaryGlow = Color(0xFF6E9EF5);
-
-  /// Moon icon color
-  static const Color moon = Color(0xFFFAFAFA); // White for Moon icon
-  /// Star icon color
-  static const Color star = Color(0xFFFBBF24); // Yellow for Star/Sparkle icon
+  /// Cool rose, not fire-engine red
+  static const Color destructive = Color(0xFFE18D95);
+  static const Color destructiveForeground = Color(0xFF1E0F12);
 
   // === SHADOW COLORS ===
-  static const Color shadow = Color(0x40000000);
-  static const Color shadowLight = Color(0x20000000);
+  /// Shadows are restrained: separation comes from surface color and borders.
+  static const Color shadow = Color(0x33000000);
 
   // === INPUT COLORS ===
-  static const Color inputBackground = Color(0xFF2A2A2A);
-  static const Color inputBorder = Color(0xFF454850); // Use new border color
+  static const Color inputBackground = Color(0xFF0F1725);
+  static const Color inputBorder = Color(0xFF283649);
   static const Color inputFocusBorder = primary;
 
   // === OVERLAY COLORS ===
-  static const Color overlay = Color(0x80000000);
+  static const Color overlay = Color(0x99000000);
   static const Color overlayLight = Color(0x40000000);
 
-  // === RING COLOR ===
-  static const Color ring = Color(
-    0xFF6E9EF5,
-  ); // Use primary for ring as per Lovable
-
   // === LIGHT THEME VARIANTS ===
-  // For future light theme support
-  static const Color lightBackground = Color(0xFFFFFFFF);
-  static const Color lightForeground = Color(0xFF1A1A1A);
-  static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightBorder = Color(0xFFE5E5E5);
-  static const Color lightMuted = Color(0xFFF5F5F5);
+  /// Cool paper, not pure white
+  static const Color lightBackground = Color(0xFFEDF1F7);
+  static const Color lightForeground = Color(0xFF16202E);
+  static const Color lightCard = Color(0xFFFBFCFE);
+  static const Color lightBorder = Color(0xFFD6DEE9);
+  static const Color lightMuted = Color(0xFFE6EBF3);
 
-  /// Light muted foreground - medium gray for light theme
-  static const Color lightMutedForeground = Color(0xFF6B7280);
+  static const Color lightMutedForeground = Color(0xFF5B6878);
 
-  /// Light on-secondary - dark text on purple accent
-  static const Color lightOnSecondary = Color(0xFF1A1A1A);
+  /// Accent for paper: the moonlight teal is too pale for icons on white.
+  static const Color lightAccent = Color(0xFF3F8A8D);
+
+  /// Deeper action blue for paper: [primary] is too pale for small text there.
+  static const Color lightPrimary = Color(0xFF2A5C9E);
+  static const Color lightPrimaryForeground = Color(0xFFF7FAFF);
+
+  static const Color lightOnSecondary = Color(0xFF101821);
 }
