@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_spacing.dart';
@@ -60,7 +59,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
@@ -83,12 +82,12 @@ class AppTheme {
         unselectedItemColor: AppColors.mutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: GoogleFonts.karla(
+        selectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),
-        unselectedLabelStyle: GoogleFonts.karla(
+        unselectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
@@ -103,13 +102,13 @@ class AppTheme {
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.karla(
+            return TextStyle(fontFamily: 'Kanit', 
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
             );
           }
-          return GoogleFonts.karla(
+          return TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.mutedForeground,
@@ -145,11 +144,11 @@ class AppTheme {
         backgroundColor: AppColors.muted,
         selectedColor: AppColors.primary,
         disabledColor: AppColors.mutedBackground,
-        labelStyle: GoogleFonts.karla(
+        labelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: 14,
           color: AppColors.foreground,
         ),
-        secondaryLabelStyle: GoogleFonts.karla(
+        secondaryLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryForeground,
@@ -171,7 +170,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -188,7 +187,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -200,7 +199,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -257,17 +256,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: GoogleFonts.karla(
+        labelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
         ),
-        hintStyle: GoogleFonts.karla(
+        hintStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        errorStyle: GoogleFonts.karla(
+        errorStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -331,7 +330,7 @@ class AppTheme {
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: GoogleFonts.karla(
+        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
@@ -350,12 +349,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        contentTextStyle: GoogleFonts.karla(
+        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -390,12 +389,12 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.foreground,
         iconColor: AppColors.mutedForeground,
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        subtitleTextStyle: GoogleFonts.karla(
+        subtitleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -404,77 +403,77 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.karla(
+        displayLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displayMedium: GoogleFonts.karla(
+        displayMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displaySmall: GoogleFonts.karla(
+        displaySmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineLarge: GoogleFonts.karla(
+        headlineLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineMedium: GoogleFonts.karla(
+        headlineMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineSmall: GoogleFonts.karla(
+        headlineSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleLarge: GoogleFonts.karla(
+        titleLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleMedium: GoogleFonts.karla(
+        titleMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleSmall: GoogleFonts.karla(
+        titleSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        bodyLarge: GoogleFonts.karla(
+        bodyLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodyMedium: GoogleFonts.karla(
+        bodyMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodySmall: GoogleFonts.karla(
+        bodySmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        labelLarge: GoogleFonts.karla(
+        labelLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelMedium: GoogleFonts.karla(
+        labelMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelSmall: GoogleFonts.karla(
+        labelSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -532,7 +531,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
@@ -555,12 +554,12 @@ class AppTheme {
         unselectedItemColor: AppColors.lightMutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: GoogleFonts.karla(
+        selectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightPrimary,
         ),
-        unselectedLabelStyle: GoogleFonts.karla(
+        unselectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
@@ -575,13 +574,13 @@ class AppTheme {
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.karla(
+            return TextStyle(fontFamily: 'Kanit', 
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.lightPrimary,
             );
           }
-          return GoogleFonts.karla(
+          return TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.lightMutedForeground,
@@ -616,11 +615,11 @@ class AppTheme {
         backgroundColor: AppColors.lightMuted,
         selectedColor: AppColors.lightPrimary,
         disabledColor: AppColors.lightMuted,
-        labelStyle: GoogleFonts.karla(
+        labelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: 14,
           color: AppColors.lightForeground,
         ),
-        secondaryLabelStyle: GoogleFonts.karla(
+        secondaryLabelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.lightPrimaryForeground,
@@ -642,7 +641,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -659,7 +658,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -671,7 +670,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.lightPrimary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: GoogleFonts.karla(
+          textStyle: TextStyle(fontFamily: 'Kanit', 
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -728,17 +727,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: GoogleFonts.karla(
+        labelStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
         ),
-        hintStyle: GoogleFonts.karla(
+        hintStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        errorStyle: GoogleFonts.karla(
+        errorStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -802,7 +801,7 @@ class AppTheme {
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.lightForeground,
-        contentTextStyle: GoogleFonts.karla(
+        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightBackground,
@@ -821,12 +820,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        contentTextStyle: GoogleFonts.karla(
+        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -861,12 +860,12 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.lightForeground,
         iconColor: AppColors.lightMutedForeground,
-        titleTextStyle: GoogleFonts.karla(
+        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        subtitleTextStyle: GoogleFonts.karla(
+        subtitleTextStyle: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -875,77 +874,77 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.karla(
+        displayLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displayMedium: GoogleFonts.karla(
+        displayMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displaySmall: GoogleFonts.karla(
+        displaySmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineLarge: GoogleFonts.karla(
+        headlineLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineMedium: GoogleFonts.karla(
+        headlineMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineSmall: GoogleFonts.karla(
+        headlineSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleLarge: GoogleFonts.karla(
+        titleLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleMedium: GoogleFonts.karla(
+        titleMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleSmall: GoogleFonts.karla(
+        titleSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        bodyLarge: GoogleFonts.karla(
+        bodyLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodyMedium: GoogleFonts.karla(
+        bodyMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodySmall: GoogleFonts.karla(
+        bodySmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        labelLarge: GoogleFonts.karla(
+        labelLarge: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelMedium: GoogleFonts.karla(
+        labelMedium: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelSmall: GoogleFonts.karla(
+        labelSmall: TextStyle(fontFamily: 'Kanit', 
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -954,3 +953,5 @@ class AppTheme {
     );
   }
 }
+
+

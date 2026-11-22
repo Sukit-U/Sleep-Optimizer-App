@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// App typography system: Karla for everything, headings and body.
+/// App typography system: Kanit for everything, headings and body.
 ///
 /// One family, separated by size and weight. A display serif made headings
 /// harder to read than the body text, so headings use the same readable
@@ -13,17 +13,17 @@ class AppTypography {
   AppTypography._();
 
   // === FONT FAMILIES ===
-  static const String fontFamilyHeader = 'Karla';
-  static const String fontFamilyBody = 'Karla';
+  static const String fontFamilyHeader = 'Kanit';
+  static const String fontFamilyBody = 'Kanit';
 
   // Fallback to system fonts if custom fonts not loaded
   static const List<String> fontFamilyHeaderFallback = [
-    'Karla',
+    'Kanit',
     'Segoe UI',
     'sans-serif',
   ];
   static const List<String> fontFamilyBodyFallback = [
-    'Karla',
+    'Kanit',
     'Segoe UI',
     'sans-serif',
   ];
@@ -231,3 +231,4 @@ class AppTypography {
     height: 1.2,
   );
 }
+
