@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
@@ -20,6 +21,7 @@ class ErrorStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -53,7 +55,7 @@ class ErrorStateWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  'Retry',
+                  l10n.retry,
                   style: AppTypography.button.copyWith(color: colors.onPrimary),
                 ),
               ),

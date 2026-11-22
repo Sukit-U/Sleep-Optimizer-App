@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:snoozemate/app/router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/shared/widgets/home_feature_card.dart';
 import 'package:snoozemate/shared/widgets/tonight_suggestion_card.dart';
 import 'package:snoozemate/shared/widgets/latest_score_section.dart';
@@ -8,12 +8,13 @@ import 'package:snoozemate/shared/widgets/latest_score_section.dart';
 class HomeBody extends StatelessWidget {
   const HomeBody({super.key});
 
-  String _greet() {
+  String _greet(BuildContext context) {
     final h = DateTime.now().hour;
-    if (h < 5) return "Still up?";
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
+    final l10n = context.l10n;
+    if (h < 5) return l10n.homeGreetingLateNight;
+    if (h < 12) return l10n.homeGreetingMorning;
+    if (h < 18) return l10n.homeGreetingAfternoon;
+    return l10n.homeGreetingEvening;
   }
 
   @override
@@ -45,6 +46,7 @@ class HomeBody extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,26 +55,22 @@ class HomeBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${_greet()},',
-              style: GoogleFonts.inter(
+              '${_greet(context)},',
+              style: TextStyle(
+                fontFamily: 'Kanit',
                 fontSize: 14,
                 color: colors.onSurfaceVariant,
               ),
             ),
-            Row(
-              children: [
-                Text(
-                  'Dashboard',
-                  style: GoogleFonts.sora(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Text('🌙', style: TextStyle(fontSize: 24)),
-              ],
+            Text(
+              l10n.homeHeading,
+              style: TextStyle(
+                fontFamily: 'Kanit',
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface,
+                letterSpacing: -0.5,
+              ),
             ),
           ],
         ),
@@ -82,6 +80,7 @@ class HomeBody extends StatelessWidget {
 
   Widget _buildFeatureGrid(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return IntrinsicHeight(
       child: Row(
         children: [
@@ -89,8 +88,8 @@ class HomeBody extends StatelessWidget {
             child: HomeFeatureCard(
               icon: Icons.nightlight_round,
               iconColor: colors.primary,
-              title: 'Sleep Planner',
-              description: 'Find your best bedtime',
+              title: l10n.featurePlannerTitle,
+              description: l10n.featurePlannerDesc,
               onTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.sleepPlanner),
             ),
@@ -100,8 +99,8 @@ class HomeBody extends StatelessWidget {
             child: HomeFeatureCard(
               icon: Icons.checklist_rtl_rounded,
               iconColor: colors.secondary,
-              title: 'Sleep Quality',
-              description: 'Take the assessment',
+              title: l10n.featureQualityTitle,
+              description: l10n.featureQualityDesc,
               onTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.sleepQuality),
             ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 
 /// A full-width save button for the sleep planner.
 ///
@@ -20,11 +20,12 @@ class PlannerSaveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final label = saving
-        ? 'Saving…'
+        ? l10n.plannerBtnSaving
         : saved
-        ? 'Saved to history'
-        : 'Save plan';
+        ? l10n.plannerBtnSaved
+        : l10n.plannerBtnSave;
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
@@ -33,15 +34,7 @@ class PlannerSaveButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: colors.primary,
-            borderRadius: BorderRadius.circular(9999),
-            boxShadow: [
-              BoxShadow(
-                color: colors.primary.withValues(alpha: 0.60),
-                blurRadius: 30,
-                spreadRadius: -12,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -54,7 +47,8 @@ class PlannerSaveButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: colors.onPrimary,

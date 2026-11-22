@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 
-/// App typography system based on CompleteScreenSpecifications design system
-/// Uses Nunito for headers and DM Sans for body text
+/// App typography system: Kanit for everything, headings and body.
+///
+/// One family, separated by size and weight. A display serif made headings
+/// harder to read than the body text, so headings use the same readable
+/// sans and lose one weight step.
+///
+/// The families below must match the ones [AppTheme] loads through
+/// `google_fonts`, so text styled from these tokens renders in the same
+/// typeface as the rest of the app.
 class AppTypography {
   AppTypography._();
 
   // === FONT FAMILIES ===
-  // Note: Add these fonts to pubspec.yaml and download from Google Fonts
-  static const String fontFamilyHeader = 'Nunito';
-  static const String fontFamilyBody = 'DM Sans';
+  static const String fontFamilyHeader = 'Kanit';
+  static const String fontFamilyBody = 'Kanit';
 
   // Fallback to system fonts if custom fonts not loaded
   static const List<String> fontFamilyHeaderFallback = [
-    'Nunito',
+    'Kanit',
     'Segoe UI',
     'sans-serif',
   ];
   static const List<String> fontFamilyBodyFallback = [
-    'DM Sans',
+    'Kanit',
     'Segoe UI',
     'sans-serif',
   ];
@@ -27,7 +33,7 @@ class AppTypography {
     fontFamily: fontFamilyHeader,
     fontFamilyFallback: fontFamilyHeaderFallback,
     fontSize: 48,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
     height: 1.2,
   );
@@ -56,7 +62,7 @@ class AppTypography {
     fontFamily: fontFamilyHeader,
     fontFamilyFallback: fontFamilyHeaderFallback,
     fontSize: 20,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w700,
     letterSpacing: 0,
     height: 1.3,
   );
@@ -66,7 +72,7 @@ class AppTypography {
     fontFamily: fontFamilyHeader,
     fontFamilyFallback: fontFamilyHeaderFallback,
     fontSize: 18,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0,
     height: 1.35,
   );

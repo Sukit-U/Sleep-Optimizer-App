@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 
-/// Shown when a sleep plan delete cannot be confirmed.
-///
-/// Same reasoning as the SQI message: a request whose reply never arrived may
-/// still have been applied, so the honest instruction is to refresh the list
-/// and look before trying again.
+/// Shown when the delete batch cannot be confirmed.
 const String sleepPlanDeleteUnconfirmedMessage =
     'Could not confirm the delete. Refresh the list to see what is left, then try again.';
 
@@ -14,21 +11,20 @@ const String sleepPlanDeleteUnconfirmedMessage =
 /// outside the dialog or dismissing it with the system back gesture all count
 /// as "no", so the caller must not start deleting unless this returns `true`.
 Future<bool> confirmDeleteSleepPlan(BuildContext context) async {
+  final l10n = context.l10n;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Delete this plan?'),
-      content: const Text(
-        'This removes the plan from your history. It cannot be undone.',
-      ),
+      title: Text(l10n.historyDialogDeletePlanTitle),
+      content: Text(l10n.historyDialogDeletePlanContent),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
+          child: Text(l10n.historyBtnCancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Delete'),
+          child: Text(l10n.historyBtnDelete),
         ),
       ],
     ),

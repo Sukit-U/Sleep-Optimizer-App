@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/app.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../shared/widgets/section_title.dart';
 import '../../../../shared/widgets/sqi_question_card.dart';
@@ -136,18 +137,16 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         final discard = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Discard answers?'),
-            content: const Text(
-              'You have unanswered questions. Do you want to discard your answers?',
-            ),
+            title: Text(context.l10n.sqDialogDiscardTitle),
+            content: Text(context.l10n.sqDialogDiscardContent),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Stay'),
+                child: Text(context.l10n.dialogStay),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Discard'),
+                child: Text(context.l10n.dialogDiscard),
               ),
             ],
           ),
@@ -158,19 +157,23 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sleep Quality'),
+          title: Text(context.l10n.sqPageTitle),
           leading: const BackButton(),
         ),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const SectionTitle(title: 'Sleep Quality Check-In'),
+              SectionTitle(title: context.l10n.sqCheckInTitle),
               const SizedBox(height: 8),
               ..._questions.map(
                 (question) => SQIQuestionCard(
-                  label: question.label,
-                  helper: question.helper,
+                  label:
+                      context.l10n.recFactorLabel(question.label) ??
+                      question.label,
+                  helper:
+                      context.l10n.sqHelperLabel(question.label) ??
+                      question.helper,
                   selectedValue: _responses[question.label],
                   hasError: _unansweredTouched.contains(question.label),
                   onSelected: (value) {
@@ -185,7 +188,11 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
               FilledButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
                 icon: const Icon(Icons.assessment_rounded),
-                label: Text(_isSubmitting ? 'Saving…' : 'Calculate SQI'),
+                label: Text(
+                  _isSubmitting
+                      ? context.l10n.sqButtonSaving
+                      : context.l10n.sqButtonCalculate,
+                ),
               ),
 
               // A calculated result is kept even when the cloud save fails or
@@ -202,7 +209,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
                     );
                   },
                   icon: const Icon(Icons.insights_outlined),
-                  label: const Text('View last result'),
+                  label: Text(context.l10n.sqButtonViewLastResult),
                 ),
               ],
             ],
@@ -228,17 +235,16 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       setState(() {
         _unansweredTouched.addAll(unanswered.map((q) => q.label));
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please answer every SQI question before submitting.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.sqSnackAnswerEvery)));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
 
     try {
       // Local calculation: always available, online or offline.
@@ -277,7 +283,9 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           if (!mounted) return;
           setState(() => _isSubmitting = false);
           messenger.showSnackBar(
-            SnackBar(content: Text('Could not save assessment locally: $e')),
+            SnackBar(
+              content: Text('${context.l10n.sqSnackCouldNotSaveLocal}: $e'),
+            ),
           );
           return;
         }
@@ -347,10 +355,10 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             userId: userId,
             cloudRecordId: cloudRecordId,
           );
+          final levelThai = l10n.sleepQualityLevel(result.level.name);
           await appStorage?.saveHistoryEntry('sqi_history', {
             'title': 'SQI Score',
-            'subtitle':
-                'Score ${result.score} · Level ${result.level.name.toUpperCase()}',
+            'subtitle': 'Score ${result.score} · ระดับ $levelThai',
             'dateLabel': DateTime.now().toIso8601String(),
           });
           if (!mounted) return;
@@ -378,12 +386,14 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             cloudRecordId: _submitAssessment.recordId,
             lastSyncError: 'recommendations not confirmed',
           );
+          if (!mounted) return;
           messenger.showSnackBar(
             SnackBar(
-              content: const Text(
-                'Your assessment was saved, but its recommendations could not be confirmed. Retry to finish it.',
+              content: Text(context.l10n.sqSnackSavedButRecsFailed),
+              action: SnackBarAction(
+                label: context.l10n.retry,
+                onPressed: _submit,
               ),
-              action: SnackBarAction(label: 'Retry', onPressed: _submit),
             ),
           );
           return;
@@ -403,12 +413,14 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             userId: userId,
             lastSyncError: 'unconfirmed',
           );
+          if (!mounted) return;
           messenger.showSnackBar(
             SnackBar(
-              content: const Text(
-                'Could not confirm the save. Check History before retrying — the assessment may already be there.',
+              content: Text(context.l10n.sqSnackCouldNotConfirm),
+              action: SnackBarAction(
+                label: context.l10n.retry,
+                onPressed: _submit,
               ),
-              action: SnackBarAction(label: 'Retry', onPressed: _submit),
             ),
           );
           return;
@@ -435,20 +447,21 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
     final choice = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Calculated offline'),
+        title: Text(context.l10n.sqOfflineDialogTitle),
         content: Text(
-          'Your SQI is ${result.score} (${result.level.name}).\n\n'
-          'It was not saved to the cloud because there is no connection. '
-          'You can retry saving or view your result now.',
+          context.l10n.sqOfflineDialogContent(
+            '${result.score}',
+            context.l10n.sleepQualityLevel(result.level.name),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('View result'),
+            child: Text(context.l10n.sqOfflineViewResult),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Retry save'),
+            child: Text(context.l10n.sqOfflineRetrySave),
           ),
         ],
       ),
@@ -469,10 +482,8 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       // Dismissed without choosing: keep the result recoverable from a snackbar.
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            'SQI ${result.score} calculated — not saved to the cloud.',
-          ),
-          action: SnackBarAction(label: 'Retry', onPressed: _submit),
+          content: Text(context.l10n.sqOfflineSnack('${result.score}')),
+          action: SnackBarAction(label: context.l10n.retry, onPressed: _submit),
         ),
       );
     }

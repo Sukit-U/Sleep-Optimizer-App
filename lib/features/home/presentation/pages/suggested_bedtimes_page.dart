@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/shared/widgets/app_card.dart';
@@ -10,16 +11,20 @@ class SuggestedBedtimesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Suggested Bedtimes'),
+        title: Text(l10n.plannerSuggestedBedtimes),
         leading: const BackButton(),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
-            children: List.generate(3, (i) => _BedtimeCard(index: i + 1)),
+            children: List.generate(
+              3,
+              (i) => _BedtimeCard(index: i + 1, l10n: l10n),
+            ),
           ),
         ),
       ),
@@ -29,7 +34,9 @@ class SuggestedBedtimesPage extends StatelessWidget {
 
 class _BedtimeCard extends StatelessWidget {
   final int index;
-  const _BedtimeCard({required this.index});
+  final AppLocalizations l10n;
+
+  const _BedtimeCard({required this.index, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +46,7 @@ class _BedtimeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bedtime #$index', style: AppTypography.h2),
+            Text(l10n.bedtimeLabel(index), style: AppTypography.h2),
             const SizedBox(height: AppSpacing.xs),
             Text('7:00 PM – 7:30 PM', style: AppTypography.body),
           ],

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snoozemate/core/services/auth_service.dart';
 import 'package:snoozemate/core/services/cloud_connection_service.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
+import 'package:snoozemate/features/settings/presentation/providers/settings_sync_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
+import 'package:snoozemate/core/services/storage_service.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 
 import '../../../../core/providers/theme_provider.dart';
-import '../../data/repositories/settings_repository.dart';
 
 /// SettingsPage – UI styled to match design system while preserving
 /// all backend logic (theme provider, firestore, app storage).
@@ -18,45 +20,53 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  SettingsSyncService? _syncService;
+  SettingsSyncState _syncState = SettingsSyncState.idle;
+
+  @override
+  void initState() {
+    super.initState();
+    _recover();
+  }
+
+  Future<void> _recover() async {
+    try {
+      final auth = AuthService();
+      final userId = await auth.ensureSignedIn();
+      if (userId == null || !mounted) return;
+      _syncService ??= SettingsSyncService(userId: userId);
+      await _syncService!.recover();
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n.settingsPageTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.px,
-            vertical: AppSpacing.py,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
           ),
           child: ListView(
             children: [
-              // Screen Title
-              Text(
-                'Settings',
-                style: AppTypography.h1.copyWith(color: colors.onSurface),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
               // Dark Mode Card
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow,
-                      blurRadius: AppSpacing.cardShadow,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: colors.outline),
                 ),
                 child: Row(
                   children: [
@@ -71,13 +81,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Dark mode',
+                            l10n.settingsDarkModeTitle,
                             style: AppTypography.h3.copyWith(
                               color: colors.onSurface,
                             ),
                           ),
                           Text(
-                            'Use the app\'s dark-first visual style.',
+                            l10n.settingsDarkModeDesc,
                             style: AppTypography.caption.copyWith(
                               color: colors.onSurfaceVariant,
                             ),
@@ -89,42 +99,39 @@ class _SettingsPageState extends State<SettingsPage> {
                       value: isDarkMode,
                       onChanged: (_) async {
                         final auth = context.read<AuthService>();
-                        // Captured before the async gap; the app-scoped
-                        // messenger stays valid even if this page is disposed.
                         final messenger = ScaffoldMessenger.of(context);
 
-                        final userId = await auth.ensureSignedIn();
-                        if (userId == null) {
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Could not sign in. Check your connection and try again.',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
                         final nextMode = isDarkMode
                             ? ThemeMode.light
                             : ThemeMode.dark;
+
+                        // Apply and persist locally immediately (offline-safe).
                         themeProvider.setTheme(nextMode);
-                        try {
-                          await FirestoreSettingsRepository().saveSettings({
-                            'userId': userId,
-                            'theme': nextMode == ThemeMode.light
-                                ? 'light'
-                                : 'dark',
-                          });
-                        } catch (e) {
-                          // Repository already fell back to local storage.
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Theme saved on this device only (offline).',
+                        _syncState = SettingsSyncState.pending;
+                        if (mounted) setState(() {});
+                        final storage = await StorageService.create();
+                        await storage.saveTheme(
+                          nextMode == ThemeMode.light ? 'light' : 'dark',
+                        );
+                        if (mounted) setState(() {});
+
+                        // Best-effort cloud sync in the background.
+                        final userId = await auth.ensureSignedIn();
+                        if (userId == null) {
+                          if (mounted) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.historySnackSignInFailed),
                               ),
-                            ),
-                          );
+                            );
+                          }
+                          return;
                         }
+                        _syncService ??= SettingsSyncService(userId: userId);
+                        await _syncService!.saveTheme(
+                          nextMode == ThemeMode.light ? 'light' : 'dark',
+                        );
+                        if (mounted) setState(() {});
                       },
                       activeThumbColor: colors.primary,
                     ),
@@ -138,28 +145,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 builder: (context) {
                   final cloud = context.watch<CloudConnectionService>();
                   final isInitializing = cloud.isInitializing;
-                  final statusText = switch (cloud.state) {
-                    CloudConnectionState.ready => 'Connected',
-                    CloudConnectionState.initializing => 'Connecting…',
-                    CloudConnectionState.notInitialized => 'Not connected',
-                    CloudConnectionState.unavailable => 'Unavailable',
-                    CloudConnectionState.firebaseInitialized =>
-                      'Firebase ready, App Check pending',
-                    CloudConnectionState.appCheckCompleted =>
-                      'Cloud ready, sign-in pending',
-                  };
+                  final syncState = _syncService?.state ?? _syncState;
+                  final statusText = (syncState != SettingsSyncState.idle)
+                      ? (syncState == SettingsSyncState.pending
+                            ? 'รอซิงค์'
+                            : syncState == SettingsSyncState.syncing
+                            ? 'กำลังซิงค์'
+                            : syncState == SettingsSyncState.synced
+                            ? 'ซิงค์แล้ว'
+                            : 'ซิงค์ไม่สำเร็จ')
+                      : switch (cloud.state) {
+                          CloudConnectionState.ready => l10n.statusConnected,
+                          CloudConnectionState.initializing =>
+                            l10n.statusConnecting,
+                          CloudConnectionState.notInitialized =>
+                            l10n.statusNotConnected,
+                          CloudConnectionState.unavailable =>
+                            l10n.statusUnavailable,
+                          CloudConnectionState.firebaseInitialized =>
+                            l10n.statusFirebaseReadyAppCheckPending,
+                          CloudConnectionState.appCheckCompleted =>
+                            l10n.statusCloudReadySignInPending,
+                        };
                   return Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: colors.surface,
                       borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.shadow,
-                          blurRadius: AppSpacing.cardShadow,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(color: colors.outline),
                     ),
                     child: Row(
                       children: [
@@ -176,7 +189,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Cloud sync',
+                                l10n.settingsCloudSyncTitle,
                                 style: AppTypography.h3.copyWith(
                                   color: colors.onSurface,
                                 ),
@@ -189,7 +202,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               if (cloud.lastError != null && !cloud.isReady)
                                 Text(
-                                  cloud.lastError!,
+                                  l10n.settingsCloudError,
                                   style: AppTypography.caption.copyWith(
                                     color: colors.onSurfaceVariant,
                                   ),
@@ -199,12 +212,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             ],
                           ),
                         ),
-                        TextButton(
-                          onPressed: isInitializing
-                              ? null
-                              : () => cloud.retry(),
-                          child: Text(isInitializing ? '…' : 'Retry'),
-                        ),
+                        // Only offer a retry when one could change something:
+                        // a connected service has nothing to retry, and while
+                        // connecting the status itself says "Connecting…".
+                        if (!cloud.isReady && !isInitializing)
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                await cloud.retry();
+                              } catch (_) {
+                                // The stage and the error are shown above; the
+                                // card is the report, so nothing is rethrown.
+                              }
+                            },
+                            child: Text(l10n.settingsBtnRetry),
+                          ),
                       ],
                     ),
                   );
@@ -218,24 +240,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.roundedXl),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow,
-                      blurRadius: AppSpacing.cardShadow,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: colors.outline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'About',
+                      l10n.settingsAboutTitle,
                       style: AppTypography.h3.copyWith(color: colors.onSurface),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Snoozefriend helps students improve sleep habits through a planner, SQI, and personalized guidance.',
+                      l10n.settingsAboutDesc,
                       style: AppTypography.body.copyWith(
                         color: colors.onSurfaceVariant,
                       ),

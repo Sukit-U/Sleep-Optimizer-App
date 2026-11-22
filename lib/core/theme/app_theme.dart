@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_spacing.dart';
@@ -24,17 +23,17 @@ class AppTheme {
         onPrimaryContainer: AppColors.primaryForeground,
 
         secondary: AppColors.accent,
-        onSecondary: AppColors.foreground,
+        onSecondary: AppColors.primaryForeground,
         secondaryContainer: AppColors.accentDark,
-        onSecondaryContainer: AppColors.foreground,
+        onSecondaryContainer: AppColors.primaryForeground,
 
         tertiary: AppColors.accent,
-        onTertiary: AppColors.foreground,
+        onTertiary: AppColors.primaryForeground,
 
         error: AppColors.destructive,
         onError: AppColors.destructiveForeground,
 
-        surface: AppColors.background,
+        surface: AppColors.card,
         onSurface: AppColors.foreground,
 
         surfaceContainerHighest: AppColors.muted,
@@ -59,8 +58,9 @@ class AppTheme {
         foregroundColor: AppColors.foreground,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.sora(
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
@@ -83,12 +83,14 @@ class AppTheme {
         unselectedItemColor: AppColors.mutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: GoogleFonts.inter(
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),
-        unselectedLabelStyle: GoogleFonts.inter(
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
@@ -103,13 +105,15 @@ class AppTheme {
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.inter(
+            return TextStyle(
+              fontFamily: 'Kanit',
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
             );
           }
-          return GoogleFonts.inter(
+          return TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.mutedForeground,
@@ -140,6 +144,28 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
 
+      // Chips (SQI ratings): selection is a moonlight-blue fill with dark text.
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.muted,
+        selectedColor: AppColors.primary,
+        disabledColor: AppColors.mutedBackground,
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
+          fontSize: 14,
+          color: AppColors.foreground,
+        ),
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primaryForeground,
+        ),
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+      ),
+
       // Elevated Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -151,7 +177,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -168,7 +195,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -180,7 +208,8 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -237,17 +266,20 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: GoogleFonts.inter(
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
         ),
-        hintStyle: GoogleFonts.inter(
+        hintStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        errorStyle: GoogleFonts.inter(
+        errorStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -294,11 +326,11 @@ class AppTheme {
       ),
 
       // Slider
-      sliderTheme: const SliderThemeData(
+      sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.primary,
         inactiveTrackColor: AppColors.muted,
         thumbColor: AppColors.primary,
-        overlayColor: Color(0x296E9EF5),
+        overlayColor: AppColors.primary.withValues(alpha: 0.16),
       ),
 
       // Progress Indicator
@@ -310,8 +342,9 @@ class AppTheme {
 
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.muted,
-        contentTextStyle: GoogleFonts.inter(
+        backgroundColor: AppColors.surfaceElevated,
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
@@ -330,12 +363,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: GoogleFonts.sora(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -370,12 +405,14 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.foreground,
         iconColor: AppColors.mutedForeground,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        subtitleTextStyle: GoogleFonts.inter(
+        subtitleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -384,77 +421,92 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.sora(
+        displayLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displayMedium: GoogleFonts.sora(
+        displayMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displaySmall: GoogleFonts.sora(
+        displaySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineLarge: GoogleFonts.sora(
+        headlineLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineMedium: GoogleFonts.sora(
+        headlineMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineSmall: GoogleFonts.sora(
+        headlineSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleLarge: GoogleFonts.sora(
+        titleLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleMedium: GoogleFonts.sora(
+        titleMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleSmall: GoogleFonts.inter(
+        titleSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodySmall: GoogleFonts.inter(
+        bodySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        labelLarge: GoogleFonts.sora(
+        labelLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelMedium: GoogleFonts.inter(
+        labelMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelSmall: GoogleFonts.inter(
+        labelSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -470,23 +522,23 @@ class AppTheme {
       brightness: Brightness.light,
 
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        onPrimary: AppColors.primaryForeground,
+        primary: AppColors.lightPrimary,
+        onPrimary: AppColors.lightPrimaryForeground,
         primaryContainer: AppColors.primaryLight,
         onPrimaryContainer: AppColors.lightForeground,
 
-        secondary: AppColors.accent,
+        secondary: AppColors.lightAccent,
         onSecondary: AppColors.lightOnSecondary,
         secondaryContainer: AppColors.accentLight,
         onSecondaryContainer: AppColors.lightForeground,
 
-        tertiary: AppColors.accent,
+        tertiary: AppColors.lightAccent,
         onTertiary: AppColors.lightForeground,
 
         error: AppColors.destructive,
         onError: AppColors.destructiveForeground,
 
-        surface: AppColors.lightBackground,
+        surface: AppColors.lightCard,
         onSurface: AppColors.lightForeground,
 
         surfaceContainerHighest: AppColors.lightMuted,
@@ -511,8 +563,9 @@ class AppTheme {
         foregroundColor: AppColors.lightForeground,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.sora(
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
@@ -531,16 +584,18 @@ class AppTheme {
       // Bottom Navigation
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.lightPrimary,
         unselectedItemColor: AppColors.lightMutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: GoogleFonts.inter(
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+          color: AppColors.lightPrimary,
         ),
-        unselectedLabelStyle: GoogleFonts.inter(
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
@@ -550,18 +605,20 @@ class AppTheme {
       // Navigation Bar (Material 3)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.lightBackground,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
+        indicatorColor: AppColors.lightPrimary.withValues(alpha: 0.15),
         elevation: 0,
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.inter(
+            return TextStyle(
+              fontFamily: 'Kanit',
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+              color: AppColors.lightPrimary,
             );
           }
-          return GoogleFonts.inter(
+          return TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.lightMutedForeground,
@@ -570,7 +627,7 @@ class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(
-              color: AppColors.primary,
+              color: AppColors.lightPrimary,
               size: AppSpacing.iconMd,
             );
           }
@@ -592,18 +649,40 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
 
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.lightMuted,
+        selectedColor: AppColors.lightPrimary,
+        disabledColor: AppColors.lightMuted,
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
+          fontSize: 14,
+          color: AppColors.lightForeground,
+        ),
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.lightPrimaryForeground,
+        ),
+        side: const BorderSide(color: AppColors.lightBorder),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+      ),
+
       // Elevated Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.primaryForeground,
+          backgroundColor: AppColors.lightPrimary,
+          foregroundColor: AppColors.lightPrimaryForeground,
           elevation: 0,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
           minimumSize: const Size(0, AppSpacing.inputHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -620,7 +699,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -630,9 +710,10 @@ class AppTheme {
       // Text Buttons
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: AppColors.lightPrimary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: GoogleFonts.sora(
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -655,8 +736,8 @@ class AppTheme {
 
       // Floating Action Button
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.primaryForeground,
+        backgroundColor: AppColors.lightPrimary,
+        foregroundColor: AppColors.lightPrimaryForeground,
         elevation: 4,
         shape: CircleBorder(),
       ),
@@ -679,7 +760,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.lightPrimary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
@@ -689,17 +770,20 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: GoogleFonts.inter(
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
         ),
-        hintStyle: GoogleFonts.inter(
+        hintStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        errorStyle: GoogleFonts.inter(
+        errorStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -710,11 +794,11 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return AppColors.lightPrimary;
           }
           return Colors.transparent;
         }),
-        checkColor: WidgetStateProperty.all(AppColors.primaryForeground),
+        checkColor: WidgetStateProperty.all(AppColors.lightPrimaryForeground),
         side: const BorderSide(color: AppColors.lightBorder, width: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
@@ -723,7 +807,7 @@ class AppTheme {
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return AppColors.lightPrimary;
           }
           return AppColors.lightMutedForeground;
         }),
@@ -733,13 +817,13 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return AppColors.lightPrimary;
           }
           return AppColors.lightMutedForeground;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary.withValues(alpha: 0.5);
+            return AppColors.lightPrimary.withValues(alpha: 0.5);
           }
           return AppColors.lightMuted;
         }),
@@ -747,15 +831,15 @@ class AppTheme {
 
       // Slider
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.primary,
+        activeTrackColor: AppColors.lightPrimary,
         inactiveTrackColor: AppColors.lightMuted,
-        thumbColor: AppColors.primary,
-        overlayColor: AppColors.primary.withValues(alpha: 0.16),
+        thumbColor: AppColors.lightPrimary,
+        overlayColor: AppColors.lightPrimary.withValues(alpha: 0.16),
       ),
 
       // Progress Indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
+        color: AppColors.lightPrimary,
         linearTrackColor: AppColors.lightMuted,
         circularTrackColor: AppColors.lightMuted,
       ),
@@ -763,12 +847,13 @@ class AppTheme {
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.lightForeground,
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightBackground,
         ),
-        actionTextColor: AppColors.primary,
+        actionTextColor: AppColors.lightPrimary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -782,12 +867,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: GoogleFonts.sora(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -822,12 +909,14 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.lightForeground,
         iconColor: AppColors.lightMutedForeground,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        subtitleTextStyle: GoogleFonts.inter(
+        subtitleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -836,77 +925,92 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.sora(
+        displayLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displayMedium: GoogleFonts.sora(
+        displayMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displaySmall: GoogleFonts.sora(
+        displaySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineLarge: GoogleFonts.sora(
+        headlineLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineMedium: GoogleFonts.sora(
+        headlineMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineSmall: GoogleFonts.sora(
+        headlineSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleLarge: GoogleFonts.sora(
+        titleLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleMedium: GoogleFonts.sora(
+        titleMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleSmall: GoogleFonts.inter(
+        titleSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodySmall: GoogleFonts.inter(
+        bodySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        labelLarge: GoogleFonts.sora(
+        labelLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelMedium: GoogleFonts.inter(
+        labelMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelSmall: GoogleFonts.inter(
+        labelSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,

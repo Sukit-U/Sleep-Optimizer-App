@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/models/recommendation_model.dart';
@@ -13,6 +14,7 @@ void showRecommendationSheet(
   int unavailableCount = 0,
 }) {
   final colors = Theme.of(context).colorScheme;
+  final l10n = context.l10n;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -22,9 +24,10 @@ void showRecommendationSheet(
       minChildSize: 0.3,
       maxChildSize: 0.85,
       builder: (ctx, scrollController) => Container(
-        padding: const EdgeInsets.all(AppSpacing.px),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: colors.surface,
+          // The sheet body is the page; the cards on it are the raised surfaces.
+          color: Theme.of(ctx).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppSpacing.radius2xl),
           ),
@@ -44,26 +47,16 @@ void showRecommendationSheet(
                 ),
               ),
             ),
-            Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  size: AppSpacing.iconMd,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  'Recommendations',
-                  style: AppTypography.h2.copyWith(color: colors.onSurface),
-                ),
-              ],
+            Text(
+              l10n.recRecommendations,
+              style: AppTypography.h2.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: AppSpacing.sm),
             if (recs.isEmpty && unavailableCount == 0)
               Expanded(
                 child: Center(
                   child: Text(
-                    'No recommendations recorded for this assessment.',
+                    l10n.recBottomSheetNoneRecorded,
                     style: AppTypography.body.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -75,7 +68,7 @@ void showRecommendationSheet(
               Expanded(
                 child: Center(
                   child: Text(
-                    'Some recommendations could not be displayed.',
+                    l10n.recBottomSheetSomeUnavailable,
                     style: AppTypography.body.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -88,14 +81,15 @@ void showRecommendationSheet(
                 child: ListView.builder(
                   controller: scrollController,
                   itemCount: recs.length,
-                  itemBuilder: (ctx, i) => _RecommendationItem(rec: recs[i]),
+                  itemBuilder: (ctx, i) =>
+                      _RecommendationItem(rec: recs[i], l10n: l10n),
                 ),
               ),
               if (unavailableCount > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
-                    'Some recommendations could not be displayed.',
+                    l10n.recBottomSheetSomeUnavailable,
                     style: AppTypography.body.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -112,7 +106,8 @@ void showRecommendationSheet(
 
 class _RecommendationItem extends StatelessWidget {
   final Recommendation rec;
-  const _RecommendationItem({required this.rec});
+  final AppLocalizations l10n;
+  const _RecommendationItem({required this.rec, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -123,13 +118,7 @@ class _RecommendationItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: AppSpacing.cardShadow,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,12 +136,12 @@ class _RecommendationItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  rec.priority,
+                  l10n.recPriorityLabel(rec.priority) ?? 'ความสำคัญ',
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
               Text(
-                rec.factor,
+                l10n.recFactorLabel(rec.factor) ?? 'ปัจจัย',
                 style: AppTypography.caption.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -161,17 +150,17 @@ class _RecommendationItem extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            rec.title,
+            l10n.recTitleFor(rec.factor) ?? rec.title,
             style: AppTypography.h3.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            rec.description,
+            l10n.recDescriptionFor(rec.factor) ?? rec.description,
             style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Action: ${rec.action}',
+            l10n.recAction(l10n.recActionFor(rec.factor) ?? rec.action),
             style: AppTypography.caption.copyWith(
               color: colors.onSurfaceVariant,
             ),

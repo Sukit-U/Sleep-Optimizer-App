@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
+import 'package:snoozemate/shared/formatters/history_date_formatter.dart';
 
 /// A card displaying an SQI record in the history list.
 ///
@@ -21,6 +23,7 @@ class SQIRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -28,30 +31,16 @@ class SQIRecordCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(AppSpacing.roundedLg),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: AppSpacing.cardShadow,
-              color: colors.shadow.withValues(alpha: 0.45),
-              offset: Offset(0, AppSpacing.defaultSpacing - 6),
-            ),
-          ],
+          border: Border.all(color: colors.outline),
         ),
         child: Row(
           children: [
-            Container(
-              width: AppSpacing.iconXl,
-              height: AppSpacing.iconXl,
-              decoration: BoxDecoration(
-                color: colors.secondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppSpacing.roundedSm),
-              ),
-              child: Icon(
-                Icons.assignment_outlined,
-                size: AppSpacing.iconMd,
-                color: colors.secondary,
-              ),
+            Icon(
+              Icons.assignment_outlined,
+              size: AppSpacing.iconMd,
+              color: colors.secondary,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +55,7 @@ class SQIRecordCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        '· ${record.sleepQualityLevel}',
+                        '· ${l10n.sleepQualityLevel(record.sleepQualityLevel)}',
                         style: AppTypography.caption.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -75,7 +64,7 @@ class SQIRecordCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.spacingXs),
                   Text(
-                    _formatDate(record.createdAt),
+                    formatHistoryDate(record.createdAt, l10n),
                     style: AppTypography.caption.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -100,20 +89,5 @@ class SQIRecordCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    if (difference.inDays == 0) return 'Today, ${_formatTime(dateTime)}';
-    if (difference.inDays == 1) return 'Yesterday, ${_formatTime(dateTime)}';
-    if (difference.inDays < 7) return '${difference.inDays} days ago';
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-  }
-
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
-    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:${dateTime.minute.toString().padLeft(2, '0')} $period';
   }
 }

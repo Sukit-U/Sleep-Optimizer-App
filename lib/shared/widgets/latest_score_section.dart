@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 
 /// A section displaying the latest SQI score or a prompt to take the assessment.
@@ -18,6 +18,7 @@ class LatestScoreSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,8 +26,9 @@ class LatestScoreSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Latest score',
-              style: GoogleFonts.sora(
+              l10n.latestScoreTitle,
+              style: TextStyle(
+                fontFamily: 'Kanit',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: colors.onSurface,
@@ -35,8 +37,9 @@ class LatestScoreSection extends StatelessWidget {
             GestureDetector(
               onTap: onViewHistory,
               child: Text(
-                'View history',
-                style: GoogleFonts.inter(
+                l10n.viewHistory,
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 12,
                   color: colors.onSurfaceVariant,
                 ),
@@ -49,26 +52,27 @@ class LatestScoreSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.92),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
-            border: Border.all(color: colors.outline.withValues(alpha: 0.8)),
+            border: Border.all(color: colors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Sleep Quality Index',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                l10n.sleepQualitySubtitle,
+                style: TextStyle(
+                  fontFamily: 'Kanit',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                   color: colors.onSurfaceVariant,
-                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'Complete your first assessment to see your sleep quality score.',
-                style: GoogleFonts.inter(
+                l10n.sleepQualityPrompt,
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 14,
                   color: colors.onSurfaceVariant,
                   height: 1.4,
@@ -81,8 +85,9 @@ class LatestScoreSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Start Assessment',
-                      style: GoogleFonts.inter(
+                      l10n.startAssessment,
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: colors.primary,
