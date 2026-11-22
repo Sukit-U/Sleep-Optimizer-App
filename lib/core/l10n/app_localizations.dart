@@ -60,6 +60,7 @@ class AppLocalizations {
   String get homeGreetingMorning => _pick('Good morning', 'อรุณสวัสดิ์');
   String get homeGreetingAfternoon => _pick('Good afternoon', 'สวัสดีตอนบ่าย');
   String get homeGreetingEvening => _pick('Good evening', 'สวัสดีตอนเย็น');
+  String get homeGreetingNight => _pick('Good night', 'ราตรีสวัสดิ์');
   String get homeHeading => _pick('Home', 'หน้าหลัก');
 
   String get tonightCardHeading => _pick('Tonight', 'คืนนี้');

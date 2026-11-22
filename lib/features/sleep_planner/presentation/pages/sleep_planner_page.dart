@@ -879,7 +879,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     child: Text(
                       _readyToSleepTime == null
                           ? l10n.plannerReadyToSleepTimeHelper
-                          : _readyToSleepTime!.format(context),
+                          : l10n.formatTime(
+                              _readyToSleepTime!.hour,
+                              _readyToSleepTime!.minute,
+                            ),
                       style: TextStyle(
                         fontFamily: 'Kanit',
                         fontSize: 32,
@@ -925,7 +928,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     child: Text(
                       _plannedBedtime == null
                           ? l10n.plannedBedtimeHelper
-                          : _plannedBedtime!.format(context),
+                          : l10n.formatTime(
+                              _plannedBedtime!.hour,
+                              _plannedBedtime!.minute,
+                            ),
                       style: TextStyle(
                         fontFamily: 'Kanit',
                         fontSize: 32,

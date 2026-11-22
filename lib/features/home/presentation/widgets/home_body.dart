@@ -5,16 +5,29 @@ import 'package:snoozemate/shared/widgets/home_feature_card.dart';
 import 'package:snoozemate/shared/widgets/tonight_suggestion_card.dart';
 import 'package:snoozemate/shared/widgets/latest_score_section.dart';
 
+/// Selects the appropriate greeting based on the hour of day (local time).
+///
+/// Ranges (continuous, non-overlapping, no gaps):
+/// - 00:00–04:59: Late night
+/// - 05:00–11:59: Morning
+/// - 12:00–17:59: Afternoon
+/// - 18:00–21:59: Evening
+/// - 22:00–23:59: Night
+String selectGreeting(int hour, AppLocalizations l10n) {
+  if (hour < 5) return l10n.homeGreetingLateNight;
+  if (hour < 12) return l10n.homeGreetingMorning;
+  if (hour < 18) return l10n.homeGreetingAfternoon;
+  if (hour < 22) return l10n.homeGreetingEvening;
+  return l10n.homeGreetingNight;
+}
+
 class HomeBody extends StatelessWidget {
   const HomeBody({super.key});
 
   String _greet(BuildContext context) {
     final h = DateTime.now().hour;
     final l10n = context.l10n;
-    if (h < 5) return l10n.homeGreetingLateNight;
-    if (h < 12) return l10n.homeGreetingMorning;
-    if (h < 18) return l10n.homeGreetingAfternoon;
-    return l10n.homeGreetingEvening;
+    return selectGreeting(h, l10n);
   }
 
   @override
