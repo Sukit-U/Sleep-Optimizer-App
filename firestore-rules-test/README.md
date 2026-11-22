@@ -42,7 +42,7 @@ npm test
 ```
 
 `npm test` starts the Firestore emulator via `firebase emulators:exec`, runs
-the suite inside it, and shuts the emulator down. The Firestore emulator needs
+`firestore.rules.test.mjs` inside it, and shuts the emulator down. (`firestore.rules.hardening.test.mjs` also lives in this directory for supplemental hardening assertions and is not invoked by `run-emulator-tests.mjs`.) The Firestore emulator needs
 Java 11+ (firebase-tools needs 21+); if `JAVA_HOME` is not set, the runner
 defaults to the JDK bundled with Android Studio
 (`C:\Program Files\Android\Android Studio\jbr`) — set `JAVA_HOME` to override.

@@ -1,180 +1,54 @@
 # Database Design
 
 ## 1. Overview
-
-### Purpose
-
-Describe how application data is organized and stored.
-
-### Scope
-
-This document describes the logical database structure for Sleep Optimizer. It does not describe implementation code.
+Snoozemate uses **Cloud Firestore** for cloud persistence and **SharedPreferences** for local caching and offline fallback. All Firestore reads and writes pass through `FirestoreService` (`lib/services/firestore_service.dart`).
 
 ---
 
-## 2. Database Technology
+## 2. Firestore Collections (`firestore.rules`)
 
-### Platform
+*Note: There is no `users` collection; user settings live in `settings/{userId}`.*
 
-Firebase Firestore
+### 2.1 `settings/{userId}`
+- **Document ID**: Firebase Auth UID (`userId == request.auth.uid`)
+- **Fields**: `userId` (string <= 100), `theme` (`'light'` or `'dark'`)
+- **Rules**: Owner read, create, update; `allow delete: if false`.
 
-### Database Type
+### 2.2 `sleepPlans/{planId}`
+- **Fields**:
+  - `userId` (string 1..100, immutable)
+  - `wakeUpTime` (timestamp)
+  - `createdAt` (timestamp, immutable)
+  - `sleepCycles` (int 1..10)
+  - `suggestedBedtimes` (list 1..10 strings 1..100; parser expects 3 entries for `SleepPlanValid`)
+- **Rules**: Authenticated owner CRUD (`userId == request.auth.uid`).
 
-NoSQL Document Database
+### 2.3 `sqiRecords/{recordId}`
+- **Fields**:
+  - `userId` (string 1..100, immutable)
+  - `sqiScore` (int 0..100)
+  - `sleepQualityLevel` (`'poor' | 'fair' | 'good' | 'excellent'`)
+  - `questionnaireResponses` (map with exact 6 keys, int `1..5`)
+  - `createdAt` (timestamp, immutable)
+- **Rules**: Authenticated owner CRUD.
 
----
+### 2.4 `recommendations/{recommendationId}`
+- **Fields**:
+  - `userId` (string 1..100, immutable)
+  - `recordId` (string 1..100, immutable)
+  - `factor` (string 1..200)
+  - `title` (string 1..200)
+  - `description` (string 1..2000)
+  - `action` (string 1..2000)
+  - `priority` (`'critical' | 'high' | 'medium' | 'low'` or TitleCase variants)
+  - `createdAt` (timestamp, immutable)
+- **Rules**: Read requires `resource.data.userId == auth.uid`. Create/update require matching `userId` and ownership of parent `sqiRecords/$(recordId)`. Delete requires parent ownership.
 
-## 3. Collections
-
-### users
-
-Purpose
-
-Store user information.
-
-Fields
-
-- userId (String)
-- theme (String)
-
----
-
-### sleepPlans
-
-Purpose
-
-Store calculated sleep planning results.
-
-Fields
-
-- planId (String)
-- userId (String)
-- wakeUpTime (Timestamp)
-- createdAt (Timestamp)
-- sleepCycles (Integer)
-- suggestedBedtimes (Array&lt;String&gt;)
-
----
-
-### sqiRecords
-
-Purpose
-
-Store SQI assessment results.
-
-Fields
-
-- recordId (String)
-- userId (String)
-- sqiScore (Integer)
-- sleepQualityLevel (String)
-- questionnaireResponses (Map)
-- createdAt (Timestamp)
+### 2.5 Default Rule
+- `/{document=**}` denies all other reads and writes.
 
 ---
 
-### recommendations
-
-Purpose
-
-Store generated recommendations.
-
-Fields
-
-- recommendationId ('String')
-- userId (String) — owner of the parent SQI record
-- recordId (String)
-- factor (String)
-- title (String)
-- description (String)
-- action (String)
-- priority (String)
-- createdAt (Timestamp)
-
----
-
-### settings
-
-Purpose
-
-Store user preferences.
-
-Fields
-
-- userId (String)
-- theme (String)
-
----
-
-## 4. Relationships
-
-User (1)
-├── Sleep Plans (Many)
-├── SQI Records (Many)
-│    └── Recommendations (Many)
-└── Settings (1)
-
----
-
-## 5. Data Flow
-
-Sleep Planner
-
-User Input
-
-↓
-
-Calculation
-
-↓
-
-Sleep Plan
-
-↓
-
-Firestore
-
----
-
-SQI
-
-Questionnaire
-
-↓
-
-SQI Calculation
-
-├── SQI Record
-└── Recommendations
-
-↓
-
-Firestore
-
----
-
-## 6. Data Validation
-
-- userId is required.
-- Wake-up time is required.
-- Questionnaire responses are required.
-- Theme must be valid.
-
----
-
-## 7. Assumptions
-
-- Each user has one settings record.
-- Sleep Plans are independent from SQI records.
-- Recommendations belong to one SQI record.
-- A recommendation inherits that record's owner (`userId`); the rules only let
-  the owner read it, and the app query filters by `userId` as well.
-
----
-
-## 8. Future Improvements
-
-- User authentication
-- Cloud synchronization
-- Multiple devices
-- Offline support
+## 3. Local Storage Keys (`SharedPreferences`)
+- `StorageService`: `'theme'`, `'app_locale'` (saved as `'th'`), `'local_sleep_plans'`, `'deleted_sleep_plan_ids'`, `'local_sqi_assessments'`, `'sqi_history'`, `'so.welcomeSeen'`.
+- `PendingThemeStorage`: `'pending_settings_theme'`, `'pending_settings_user'`.

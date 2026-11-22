@@ -7,8 +7,9 @@ console, and no agent may touch the console.
 
 ## What the code does
 
-`lib/app/app_check.dart` picks the providers. `_bootFirebase` in
-`lib/app/bootstrap.dart` calls `activateAppCheck(env: appEnv, isDebugBuild: kDebugMode)`
+`lib/app/app_check.dart` picks the providers. `CloudConnectionService.connect()` in
+`lib/core/services/cloud_connection_service.dart` (called from `lib/app/bootstrap.dart`)
+calls `activateAppCheck(env: appEnv, isDebugBuild: kDebugMode)`
 right after `Firebase.initializeApp`, before the emulator switch, the anonymous
 sign-in and the first Firestore read. Requests made after that carry a token.
 
@@ -19,7 +20,7 @@ sign-in and the first Firestore read. Requests made after that carry a token.
 
 The debug provider mints tokens anyone can copy, so it is limited to dev debug
 builds. `test/app_check_providers_test.dart` fails if a production build ever
-selects it. The package is `firebase_app_check: ^0.4.9`; the provider classes
+selects it. The package is `firebase_app_check: ^0.5.1`; the provider classes
 come from the package's own exports, not from memory.
 
 ## What is still an owner step

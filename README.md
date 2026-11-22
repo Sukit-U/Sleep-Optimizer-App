@@ -1,49 +1,44 @@
-# Sleep Optimizer
+# Sleep Optimizer (Snoozemate)
 
 ## Overview
 
-Sleep Optimizer is an educational mobile application that helps high school students improve their sleep habits through sleep planning and sleep quality assessment.
+Snoozemate is a Flutter mobile application for high school students. It helps students plan bedtimes and assess daily sleep habits.
 
 ---
 
 ## Project Goal
 
-The project aims to help students make better sleep decisions within real-life academic constraints by combining a Sleep Planner and a Sleep Quality Score (SQI).
+The app helps students make practical sleep decisions within academic constraints. It combines a Sleep Planner and a Sleep Quality Score (SQI).
 
-The application focuses on education and behavior improvement rather than medical diagnosis or sleep tracking.
-
----
-
-## AI Development Notes
-
-When implementing this project:
-
-- Read the documentation in the recommended order.
-- Follow the Business Rules before implementing features.
-- Keep all features consistent with the Functional Requirements.
-- Do not introduce features outside the current project scope.
-- Prioritize simplicity and maintainability.
-- Reuse existing components whenever possible.
-- Keep documentation synchronized when requirements change.
-- Ask for clarification when requirements are ambiguous instead of making assumptions.
+The app focuses on education and habit improvement. It does not provide medical diagnosis or sleep tracking.
 
 ---
 
 ## Core Features
 
-- Sleep Planner
-- Sleep Quality Score (SQI)
-- Personalized Recommendations
-- History
-- Settings
+- **Sleep Planner**: Calculates bedtimes for 6, 5, and 4 cycles (90 minutes each) with configurable sleep latency (0–45 minutes) and feasibility checks.
+- **Sleep Quality Score (SQI)**: Assesses sleep behaviors across six weighted factors (0–100 scale).
+- **Personalized Recommendations**: Generates actionable tips based on SQI level and weak factors.
+- **History**: Displays saved SQI records and sleep plans from Cloud Firestore and local storage.
+- **Settings**: Provides Dark Mode toggle, Cloud Sync status with retry, and About info.
+
+---
+
+## Technology Stack
+
+- **Framework**: Flutter (Dart SDK `^3.12.2`)
+- **State Management**: `provider` (`^6.1.5+1`)
+- **Backend & Database**: `firebase_core` (`^5.1.0`), `cloud_firestore` (`^7.1.0`), `firebase_auth` (`^7.0.1`), `firebase_app_check` (`^0.5.1`)
+- **Authentication**: Anonymous Firebase Auth managed by `AuthService`. Firestore rules scope every collection by `request.auth.uid`.
+- **Data Access Layer**: All Firestore reads and writes go through `FirestoreService` (`lib/services/firestore_service.dart`).
+- **Local Storage**: `shared_preferences` (`^2.5.6`)
+- **Typography & Icons**: Bundled `Kanit` font (`assets/fonts/Kanit-*.ttf`) and Material Icons (`Icons.*`) / `cupertino_icons`.
 
 ---
 
 ## Environments & Builds
 
-The app has two build targets, and every command names the target with **both** a flavor and
-`APP_ENV` — the flavor picks `android/app/src/<flavor>/google-services.json`, `APP_ENV` picks
-the matching Dart Firebase config. See [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
+The app defines two build targets. Every command must specify both `--flavor` and `--dart-define=APP_ENV`. See [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
 
 | Target | Firebase project | Flags |
 | --- | --- | --- |
@@ -58,152 +53,70 @@ flutter run --flavor dev --dart-define=APP_ENV=dev
 flutter build apk --debug --flavor dev --dart-define=APP_ENV=dev
 ```
 
-Against the local Firebase emulator suite (nothing leaves the machine):
+Run against the local Firebase emulator suite:
 
 ```bash
 firebase emulators:start --only auth,firestore --project=demo-snoozemate
 flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EMULATOR=true
 ```
 
-Build prod (release signing comes from the gitignored `android/key.properties`; without it
-the artifacts are unsigned):
+Build prod (requires `android/key.properties` for release signing):
 
 ```bash
 flutter build apk --release --flavor prod --dart-define=APP_ENV=prod
 flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod
 ```
 
-Artifacts land at `build/app/outputs/flutter-apk/app-dev-debug.apk`,
-`build/app/outputs/flutter-apk/app-prod-release.apk` and
-`build/app/outputs/bundle/prodRelease/app-prod-release.aab`.
+Artifacts output to `build/app/outputs/flutter-apk/` and `build/app/outputs/bundle/prodRelease/`.
 
-`APP_ENV` defaults to `dev`; any value other than `dev`/`prod` fails at startup with a
-`StateError`. CI (`.github/workflows/ci.yml`) builds the dev debug APK, and
-`.github/workflows/release.yml` builds the prod AAB + APK on `v*` tags.
-
----
-
-## Planned Technology Stack
-
-Frontend
-
-- Flutter
-
-Backend
-
-- Firebase (planned)
-
-Development Tools
-
-- Figma
-- Lovable
-- Cline (Agentic AI Software Engineer)
-- GitHub
-- Git
-- VS Code
+`APP_ENV` defaults to `dev`. Any value other than `dev` or `prod` throws a `StateError` at startup.
 
 ---
 
 ## Project Constraints
 
-- Educational Information Systems project.
-- Three-member development team.
-- Expected duration: 2–4 months.
-- Mobile-first application.
+- Educational Information Systems project for high school students (15–18 years old).
+- Mobile-first targets (`android/`, `ios/`, `web/`).
 - No machine learning.
 - No wearable integration.
 - No medical diagnosis.
-- Focus on simple and explainable features.
 
 ---
 
-## Documentation Guide
+## Repository Structure
 
-The project documentation is organized as follows:
-
-| Document                | Purpose                  |
-| ----------------------- | ------------------------ |
-| App Specification       | Overall project overview |
-| Business Rules          | Business logic           |
-| Functional Requirements | System capabilities      |
-| Recommendation Logic    | Recommendation algorithm |
-| Data Model              | Logical data structure   |
-| Database Design         | Database schema          |
-| User Flows              | User interaction         |
-| UI Guidelines           | Screen guidelines        |
-| Design System           | Visual design rules      |
-
----
-
-## Recommended Reading Order
-
-Start reading in this order:
-
-1. App Specification
-2. Business Rules
-3. Functional Requirements
-4. Recommendation Logic
-5. Data Model
-6. Database Design
-7. User Flows
-8. UI Guidelines
-9. Design System
+```
+Sleep-Optimizer-App/
+├── .agents/                  # Agent skills and configuration
+├── .github/workflows/        # CI (ci.yml) and release (release.yml) pipelines
+├── android/                  # Android native project with dev/prod flavors
+├── assets/                   # Bundled Kanit fonts and assets
+├── docs/                     # Environment, App Check, calculation, and ops docs
+├── firestore-rules-test/     # Emulator test suite for firestore.rules
+├── ios/                      # iOS native project
+├── lib/
+│   ├── app/                  # Bootstrap, environment selection, and AppRouter
+│   ├── core/                 # Theme tokens, l10n, providers, and services
+│   ├── features/             # home, history, recommendation, settings, sleep_planner, sleep_quality, splash
+│   ├── models/               # Data models and Firestore read parsers
+│   ├── services/             # FirestoreService (single Firestore access layer)
+│   └── shared/               # Formatters and reusable UI widgets
+├── project/                  # Product and design specifications
+├── scripts/                  # Release versioning and Firestore migration scripts
+├── test/                     # 37 Dart/Flutter test files (*_test.dart)
+├── web/                      # Web target files
+├── firestore.rules           # Security rules scoping data by request.auth.uid
+└── pubspec.yaml              # Package dependencies and font assets
+```
 
 ---
 
-## Project Structure
+## Verification & CI
 
-Sleep Optimizer/
-│
-├── .agents/
-│   └── skills/
-│       ├── algorithm-explanation/
-│       ├── approval-gate/
-│       ├── documentation-sync/
-│       ├── firebase-development/
-│       ├── flutter-development/
-│       └── ui-review/
-│
-├── ai/
-│   └── sleep_optimization_context.md
-│
-├── assets/
-│
-├── project/
-│   ├── App-Specification.md
-│   ├── Business-Rules.md
-│   ├── Functional-Requirements.md
-│   ├── Recommendation-Logic.md
-│   ├── Data-Model.md
-│   ├── Database-Design.md
-│   ├── User-Flows.md
-│   ├── UI-Guidelines.md
-│   ├── Design-System.md
-│
-│
-├── research/
-│   └── SleepCycle_Analysis.md
-│
-├── .clinerules
-└── README.md
+Run formatting, static analysis, and all tests:
 
----
-
-## Current Status
-
-- Documentation: ✅ Complete
-- Research: ✅ Complete
-- UI Design: ⏳ In Progress
-- Development: ⏳ Not Started
-- Testing: ⏳ Planned
-
-## Repository Organization
-
-This repository is organized into several main sections:
-
-- project/ — Project documentation and specifications.
-- ai/ — Project context shared with AI coding assistants.
-- research/ — Supporting research and references.
-- .cline/ — AI skills, development rules, and coding workflows for Cline.
-- assets/ — Project assets.
-- README.md — Repository overview and documentation entry point.
+```powershell
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```

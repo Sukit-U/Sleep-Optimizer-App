@@ -63,3 +63,8 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
 Both scripts accept `--help`. Step-by-step instructions, including how to run
 the rules tests first, are in
 [`../docs/RULES_AND_BACKFILL_DEV.md`](../docs/RULES_AND_BACKFILL_DEV.md).
+
+## Additional Scripts & Tests
+
+- `android-release-version.sh` — derives `version_name` and `version_code` from release tags for `.github/workflows/release.yml` (includes `--self-test` run in CI).
+- `migrate_user_id.test.js` & `migrate_user_id.emulator.test.js` — Node test suites executed via `npm test` in `scripts/`.

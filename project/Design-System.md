@@ -1,425 +1,80 @@
 # Design System
 
 ## 1. Overview
-
-### Purpose
-
-Describe the visual design standards and UI consistency rules for Sleep Optimizer.
-
-### Scope
-
-- Colours
-- Fonts
-- Spacing
-- Components
-- UI design
-- Navigation
-- Accessibility
-
-### 2. Design Philosophy
-
-### Keywords
-
-- Modern
-- Clean
-- Minimal
-- Night-friendly
-- Student-focused
-
-### Design goals
-
-- Make sleep planning simple.
-- Reduce cognitive load.
-- Encourage healthy sleep habits.
-- Keep interfaces consistent.
-
-## 3. Color System
-
-### Primary Color
-
-Used for
-
-- Main buttons
-- Active cards
-
-### Secondary Color
-
-Used for
-
-- Secondary buttons
-- Less important actions
-
-### Accent color
-
-Used for
-
-- SQI score
-- Recommendation
-- Highlights
-
-### Background Colors
-
-Used for
-
-- Main Background
-- Card Background
-
-### Text Colors
-
-Used for
-
-- Primary Text
-- Secondary Text
-- Disabled Text
-
-### Status Colors
-
-Used for
-
-- Success
-- Warning
-- Error
-- Info
-
-## 4.Typography
-
-### Font family
-
-Sans serif
-
-### Heading
-
-Used when
-
-- Screen title
-
-### Subheading
-
-Used when
-
-- Section title
-
-### Body
-
-Used when
-
-- Normal text
-
-### Caption
-
-Used when
-
-- Helper text
-
-## 5. Spacing System
-
-### 4 px
-
-Used for
-
-- Small gaps between icons and text.
-
-### 8 px
-
-Used for
-
-- Spacing inside components.
-
-### 16 px
-
-Used for
-
-- Default spacing between UI elements.
-
-### 24 px
-
-Used for
-
-- Spacing between sections.
-
-### 32 px
-
-Used for
-
-- Large spacing between major layouts.
-
-## 6. Corner Radius
-
-### 6.1 Small
-
-Used for
-
-- Buttons
-
-### 6.2. Medium
-
-Used for
-
-- Cards
-
-### 6.3 Large
-
-Used for
-
-- Dialogs
-
-### 6.4 Circle
-
-Used for
-
-- Avatars
-- Circular icons
-
-## 7. Shadows
-
-### 7.1 Light
-
-Used for
-
-- Cards
-
-### 7.2 Medium
-
-Used for
-
-- Floating components
-
-### 7.3 Heavy
-
-Used for
-
-- Dialogs
-
-## 8. Icon Style
-
-Style
-
-- Rounded Outline Icons
-
-Size
-
-- 24 px
-
-Purpose
-
-- Keep the interface friendly and consistent.
-
-## 9. Butteons
-
-### Primary Button
-
-Purpose
-
-Used for the primary action on each screen.
-
-States
-
-- Default
-- Pressed
-- Disabled
-
-### Secondary Button
-
-Purpose
-
-Used for secondary text-based actions.
-States
-
-- Default
-- Pressed
-- Disabled
-
-### Text Button
-
-Purpose
-
-Used for text action on each screen.
-
-States
-
-- Default
-- Pressed
-- Disabled
-
-## 10. Input Fields
-
-### Time Picker
-
-Purpose
-
-Select wake-up time.
-
-Validation
-
-Required.
+Design tokens live in `lib/core/theme/` (`AppColors`, `AppTypography`, `AppSpacing`, `AppTheme`).
 
 ---
 
-### Questionnaire
-
-Purpose
-
-Collect sleep-related behavior.
-
-Validation
-
-All questions are required.
-
-## 11. Cards
-
-### Planner Card
-
-Purpose
-
-Navigate to Sleep Planner.
-
-Contains
-
-- Icon
-- Title
-- Description
-
-States
-
-- Default
-- Pressed
-
-### SQI Card
-
-Purpose
-
-Navigate to SQI.
-
-Contains
-
-- Icon
-- Title
-- Description
-
-States
-
-- Default
-- Pressed
-
-### History Card
-
-Purpose
-
-Navigate to History.
-
-Contains
-
-- Icon
-- Title
-- Description
-
-States
-
-- Default
-- Pressed
-
-### Recommendation Card
-
-Purpose
-
-Display personalized recommendations.
-
-Contains
-
-- Icon
-- Title
-- Description
-- Suggested Action
-
-States
-
-- Default
-- Pressed
-
-## 12. Navigation
-
-Navigation Style
-
-Top App Bar
-
-Used for screen titles.
-
-Back Button
-
-Returns to the previous screen or Home according to navigation rules.
-
-Bottom Navigation
-
-Not used in the current version.
-
-## 13. Feedback
-
-### Loading
-
-Show while calculation is in progress.
-
-### Success
-
-Show after successful calculation.
-
-### Warning
-
-Show for non-critical issues.
-
-### Error
-
-Show when calculation fails.
-
-### Empty
-
-Display when no history exists.
-
-## 14. Accessibilty
-
-- Minimum readable font size.
-- Sufficient color contrast.
-- Buttons should be easy to tap.
-
-## 15. Design Consistency
-
-- Use consistent spacing.
-- Use consistent button styles.
-- Reuse existing components whenever possible.
-- Avoid creating duplicate components.
-
-## 16. Responsive rules
-
-Phone Width
-
-Support common mobile screen sizes.
-
-Portrait
-
-Primary orientation.
-
-Landscape
-
-Optional.
-
-Support Android phones.
-
-Minimum width:
-320 px
-
-Recommended width:
-360–430 px
-
-## 17.Future Improvements
-
-- Tablet layout
-- Landscape mode
-- Enhanced Dark Theme
-- Material You
-- UI animations
-
-## 18.Design Constraints
-
-- Avoid unnecessary animations.
-- Avoid complex layouts.
-- Prioritize readability over decoration.
-- Keep every screen focused on one primary task.
+## 2. Typography (`AppTypography` & `AppTheme`)
+
+- **Font Family**: **`Kanit`** (`fontFamilyHeader = 'Kanit'`, `fontFamilyBody = 'Kanit'`, fallbacks `['Kanit', 'Segoe UI', 'sans-serif']`).
+- **Bundled Font Assets** (`pubspec.yaml`): `Kanit-Regular.ttf` (400), `Kanit-Medium.ttf` (500), `Kanit-SemiBold.ttf` (600), `Kanit-Bold.ttf` (700).
+- **Monospace**: `AppTypography.mono` uses `'monospace'` (11 px, w500, letterSpacing 0.02, height 1.4).
+
+### Scale (`AppTypography`)
+- `displayLarge`: 48 / w700 (w600 in `AppTheme`)
+- `displayMedium`: 36 / w700 (w600 in `AppTheme`)
+- `displaySmall`: 32 / w700 (w600 in `AppTheme`)
+- `h1`: 20 / w700 (w600 in `AppTheme`)
+- `h2`: 18 / w600
+- `h3`: 16 / w600
+- `h4`: 15 / w600
+- `h5`: 14 / w600
+- `bodyLarge`: 16 / w400
+- `body`: 14 / w400
+- `bodyMedium`: 14 / w500
+- `button`: 14 / w600
+- `label`: 14 / w500
+- `labelSmall`: 12 / w500 (w600 in `AppTheme`)
+- `caption` / `captionMuted`: 12 / w400
+- `small`: 11 / w500 (w400 in `AppTheme`)
+- `navLabel`: 10 / w500
+- `tabLabel`: 12 / w600
+
+---
+
+## 3. Color System (`AppColors`)
+
+### Brand & Accent
+- `primary`: `#7FA8E0` (`primaryLight`: `#A3C4F0`, `primaryDark`: `#5A82B8`, `primaryForeground`: `#0A1220`)
+- `accent` / `secondary`: `#7BBFC2` (`accentLight`: `#A2D8DA`, `accentDark`: `#4E8D90`)
+
+### Dark Theme (Default)
+- `background`: `#0B1220`
+- `card` / `surface`: `#141C2A`
+- `surfaceElevated`: `#1D2738`
+- `foreground`: `#E7EDF6`
+- `mutedForeground`: `#8FA0B7`
+- `muted`: `#1A2333`, `mutedBackground`: `#0F1724`
+- `border` / `inputBorder`: `#283649`
+- `inputBackground`: `#0F1725`
+
+### Light Theme
+- `lightBackground`: `#EDF1F7`
+- `lightCard`: `#FBFCFE`
+- `lightForeground`: `#16202E`
+- `lightMutedForeground`: `#5B6878`
+- `lightMuted`: `#E6EBF3`
+- `lightBorder`: `#D6DEE9`
+- `lightPrimary`: `#2A5C9E` (`lightPrimaryForeground`: `#F7FAFF`)
+- `lightAccent`: `#3F8A8D`
+
+### Status Colors
+- `success`: `#74C49E` (`successForeground`: `#08170F`)
+- `warning`: `#D6B36A` (`warningForeground`: `#17120A`)
+- `destructive`: `#E18D95` (`destructiveForeground`: `#1E0F12`)
+
+---
+
+## 4. Spacing & Radii (`AppSpacing`)
+
+- **Spacing**: `xs = 4.0`, `sm = 8.0`, `md = 16.0`, `lg = 24.0`, `xl = 32.0`, `xxl = 40.0`, `xxxl = 48.0`.
+- **Radii**: `radiusNone = 0`, `radiusXs = 4`, `radiusSm = 8`, `radiusMd = 12`, `radius = 16`, `radiusLg = 20`, `radiusXl = 24`, `radius2xl = 24`, `radius3xl = 28`, `radiusFull = 999`.
+  - `cardRadius = 24`, `suggestionCardRadius = 28`, `buttonRadius / pillRadius = 999`.
+
+---
+
+## 5. Navigation & Component Tokens
+
+- **Bottom Navigation**: Active in `HomePage` as a 5-tab floating pill bar (`radiusFull`, `colors.surface`, 1 px `colors.outline`, shadow blur 24, offset `(0, 8)`).
+- **Reusable Widgets** (`lib/shared/widgets/`): `AppCard`, `BedtimeOptionCard`, `EmptyStateCard`, `ErrorStateWidget`, `HistorySleepPlanCard`, `HistorySQIRecordCard`, `HomeFeatureCard`, `LatestScoreSection`, `PlannerSaveButton`, `RecommendationBottomSheet`, `SectionTitle`, `SQIQuestionCard`, `TonightSuggestionCard`.

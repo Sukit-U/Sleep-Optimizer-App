@@ -204,7 +204,7 @@ ever drift apart, so separating the environments cannot happen by accident.
 
 ### How the Dart side picks a project
 
-`lib/app/bootstrap.dart` calls `Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv))`.
+`CloudConnectionService.connect()` in `lib/core/services/cloud_connection_service.dart` (called by `lib/app/bootstrap.dart`) calls `Firebase.initializeApp(options: firebaseOptionsForEnv(appEnv))`.
 Both come from [`lib/app/firebase_environment.dart`](../lib/app/firebase_environment.dart):
 
 ```dart
@@ -280,7 +280,7 @@ flutter run --flavor dev --dart-define=APP_ENV=dev --dart-define=USE_FIREBASE_EM
 ```
 
 - The `demo-` prefix keeps the emulator fully offline; it never contacts a real project.
-- Ports are wired in `lib/app/bootstrap.dart`: Firestore `8080`, Auth `9099`.
+- Ports are wired in `lib/core/services/cloud_connection_service.dart`: Firestore `8080`, Auth `9099`.
 - Rules are enforced by the emulator, and that is where rule changes get tested:
   ```bash
   cd firestore-rules-test && npm test    # emulators:exec, project id "demo-rules-test"

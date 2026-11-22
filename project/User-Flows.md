@@ -1,238 +1,47 @@
 # User Flows
 
-## 1. Overview
+## 1. Navigation Structure (`lib/app/router.dart`)
 
-### Purpose
+```
+Splash / Welcome (/splash)
+  └─ Continue (saves so.welcomeSeen) → Home (/)
 
-Describe how users interact with the application to achieve each major function.
+Home (/)  [Bottom Nav Root]
+  ├── Sleep Planner (/sleep-planner)
+  ├── Sleep Quality (/sleep-quality) → RecommendationPage (pushed with SqiResult)
+  ├── History (/history)
+  └── Settings (/settings)
+```
 
-### Scope
-
-This document covers the user interaction flow for all core features of Sleep Optimizer.
-
----
-
-## 2. Main Navigation
-
-Welcome
-
-↓
-
-Home (Main menu)
-
-├── Sleep Planner
-
-├── Sleep Quality Score (SQI)
-
-├── History
-
-└── Settings
+- Tapping a bottom nav tab calls `pushNamedAndRemoveUntil(route, (r) => r.isFirst)`. `HomePage` stays as the stack root.
+- `/suggested-bedtimes` (`SuggestedBedtimesPage`) exists in `AppRouter` as a static placeholder screen and is not part of the active Sleep Planner flow.
 
 ---
 
-## 3. Sleep Planner Flow
-
-### 3.1 Goal
-
-Allow users to plan an appropriate bedtime.
-
-### 3.2 Preconditions
-
-- User has entered the application.
-- User is on the Home page.
-
-### 3.3 Main Flow
-
-1. User opens Home.
-2. User selects Sleep Planner.
-3. User enters wake-up time.
-4. User optionally selects daily constraints.
-5. User presses Calculate.
-6. System calculates sleep cycles.
-7. System displays multiple suggested bedtimes.
-8. User returns to Home.
-
-### 3.4 Alternative Flows
-
-Wake-up time is empty.
-
-↓
-
-Display validation message.
-
-↓
-
-Stay on current page.
-
-User cancels.
-
-↓
-
-Return Home.
-
-### 3.5 Postconditions
-
-The calculated sleep plan is available for later viewing.
-
----
-
-## 4. Sleep Quality Score (SQI) Flow
-
-### 4.1 Goal
-
-Evaluate sleep quality.
-
-### 4.2 Preconditions
-
-- User has entered the application.
-- User is on the Home page.
-
-### 4.3 Main Flow
-
-1. User opens Home.
-2. User selects SQI Score.
-3. User answers the questionnaire.
-4. User submits.
-5. System calculates SQI score.
-6. System displays SQI score.
-7. System displays recommendation.
-8. User returns to Home.
-
-### 4.4 Alternative Flows
-
-One or more required questions are unanswered.
-
-↓
-
-Display validation message.
-
-↓
-
-Stay on the current page.
-
-User cancels.
-
-↓
-
-Return Home.
-
-### 4.5 Postconditions
-
-The SQI result and recommendations are saved to History.
-
----
-
-## 5. History Flow
-
-### 5.1 Goal
-
-Allow users to review previous sleep records.
-
-### 5.2 Main Flow
-
-1. User opens Home.
-2. User selects History.
-3. User selects a history record.
-4. User views sleep plan details.
-5. User views SQI result and recommendations.
-6. User returns to Home.
-
----
-
-## 6. Settings Flow
-
-### 6.1 Goal
-
-Allow users to customize application preferences.
-
-### 6.2 Main Flow
-
-1. User opens Home.
-2. User selects Settings.
-3. User changes Theme.
-4. User saves.
-5. User returns to Home.
-
----
-
-## 7. Error Flows
-
-Missing wake-up time
-
-↓
-
-Display validation message
-
-Incomplete SQI questionnaire
-
-↓
-
-Display validation message
-
-Unexpected error
-
-↓
-
-Display friendly message
-
-Invalid wake-up time
-
-↓
-
-Display validation message
-
-↓
-
-Stay on current page
-
----
-
-## 8. Navigation Summary
-
-Welcome
-
-↓
-
-Home
-
-├── Planner
-
-│      ↓
-
-│   Result
-
-│      ↓
-
-│   Home
-
-│
-
-├── SQI
-
-│      ↓
-
-│   Result
-
-│      ↓
-
-│ Recommendation
-
-│      ↓
-
-│ Home
-
-│
-
-├── History
-
-│      ↓
-
-│ Home
-
-│
-
-└── Settings
-
-       ↓
-
-     Home
+## 2. Core Flows
+
+### 2.1 Welcome Flow
+1. App checks `so.welcomeSeen` on startup.
+2. User taps **Continue** on `/splash`.
+3. App saves `so.welcomeSeen = true` and navigates to `/` via `pushReplacementNamed`.
+
+### 2.2 Sleep Planner Flow
+1. User opens `/sleep-planner` from Home or the bottom nav.
+2. User selects wake-up time, adjusts sleep latency (`0–45` min), optionally sets ready-to-sleep time, and optionally toggles constraint chips.
+3. App updates `BedtimeOptionCard` results live inline (6, 5, and 4 cycles).
+4. User taps the save button (`PlannerSaveButton`) to store the plan.
+
+### 2.3 SQI & Recommendation Flow
+1. User opens `/sleep-quality` and answers all 6 questions (`1–5`).
+2. User taps the submit `FilledButton.icon`.
+3. App computes `SqiResult`, saves the record (to Firestore or local queue if offline), and pushes `RecommendationPage(result: result)`.
+4. User views the score ring, factor breakdown bars, and recommendation cards, then navigates to Home or History.
+
+### 2.4 History Flow
+1. User opens `/history`.
+2. User switches between SQI Records (`sqi`) and Sleep Plans (`plans`).
+3. Tapping an SQI card opens `showRecommendationSheet`; tapping delete opens a confirmation dialog (`confirmDeleteSqiRecord` / `confirmDeleteSleepPlan`).
+
+### 2.5 Settings Flow
+1. User opens `/settings`.
+2. User toggles Dark Mode (`Switch`), views Cloud Sync status (with Retry when needed), or reads the About card.

@@ -1,208 +1,35 @@
 # Functional Requirements
 
 ## 1. Overview
+This document defines the implemented functional capabilities of Snoozemate.
 
-### Purpose
-
-Describe what the system must do from the user's perspective.
-
-### Scope
-
-This document defines the functional capabilities of Sleep Optimizer and does not cover UI design or implementation details.
+---
 
 ## 2. Functional Requirements
 
-### FR-1 Sleep Planner
-
-Purpose
-
-Calculate recommended bedtimes.
-
-Requirements
-
-FR-1.1
-The system shall allow users to enter a wake-up time.
-
-FR-1.2
-The system shall calculate bedtime options based on 90-minute sleep cycles.
-
-FR-1.3
-The system shall consider sleep latency.
-
-FR-1.4
-The system shall display multiple bedtime options.
-
-FR-1.5
-The system shall save the generated sleep plan.
-
-### FR-2 Sleep Quality Score
-
-Purpose
-
-Evaluate users' sleep quality.
-
-Requirements
-
-FR-2.1
-The system shall display the SQI questionnaire.
-
-FR-2.2
-The system shall require all questions before submission.
-
-FR-2.3
-The system shall calculate the SQI score.
-
-FR-2.4
-The system shall categorize sleep quality.
-
-FR-2.5
-The system shall generate personalized recommendations.
-
-FR-2.6
-The system shall save the SQI result.
-
-### FR-3 Recommendation
-
-Purpose
-
-Provide personalized recommendations.
-
-Requirements
-
-FR-3.1
-The system shall identify weak assessment factors.
-
-FR-3.2
-The system shall select recommendations.
-
-FR-3.3
-The system shall prioritize recommendations.
-
-FR-3.4
-The system shall display at most three recommendations.
-
-### FR-4 History
-
-Purpose
-
-Allow users to review previous Sleep Plans and SQI records.
-
-Requirements
-
-FR-4.1
-The system shall display previous sleep plans.
-
-FR-4.2
-The system shall display previous SQI results.
-
-FR-4.3
-The system shall display recommendation history.
-
-FR-4.4
-The system shall sort records by date.
-
-### FR-5 Settings
-
-Purpose
-
-Allow users to customize the application.
-
-Requirements
-
-FR-5.1
-The system shall allow users to switch themes.
-
-FR-5.2
-The system shall remember the selected theme.
-
-FR-5.3
-The system shall display application information in the About page.
-
-### FR-6 Navigation
-
-Purpose
-
-Describe navigation requirements throughout the application.
-
-Requirements
-
-FR-6.1
-The system shall provide navigation from Home to every feature.
-
-FR-6.2
-The system shall allow users to return using the Back button.
-
-FR-6.3
-The system shall preserve data when users navigate between screens.
-
-### FR-7 Validation
-
-Purpose
-
-Ensure user inputs are valid before processing.
-
-Requirements
-
-FR-7.1
-The system shall validate wake-up time.
-
-FR-7.2
-The system shall validate required questionnaire answers.
-
-FR-7.3
-The system shall display validation messages.
-
-### FR-8 Error Handling
-
-Purpose
-
-Handle invalid input and unexpected situations gracefully.
-
-Requirements
-
-FR-8.1
-The system shall display user-friendly error messages.
-
-FR-8.2
-The system shall prevent application crashes.
-
-FR-8.3
-The system shall recover gracefully from unexpected errors.
-
-### FR-9 Data Persistence
-
-Purpose
-
-Store and retrieve application data.
-
-Requirements
-
-FR-9.1
-The system shall save Sleep Plan records.
-
-FR-9.2
-The system shall save SQI records.
-
-FR-9.3
-The system shall retrieve previously saved Sleep Plans and SQI records.
-
-FR-9.4
-The system shall store user preferences.
-
-### FR-10 Future Functional Requirements (Optional)
-
-Purpose
-
-Describe planned future capabilities that are outside the current project scope.
-
-FR-10.1
-Support adaptive recommendation optimization based on user behavior and sleep history.
-
-FR-10.2
-Support an AI sleep coach for personalized sleep guidance and education.
-
-FR-10.3
-Support wearable device integration for automatic sleep data collection.
-
-FR-10.4
-Support smart reminders and bedtime notifications based on the user's schedule.
+### FR-1: Sleep Planner
+- **FR-1.1**: The system shall allow users to pick a wake-up time, set sleep latency (`0–45` minutes), and optionally set a ready-to-sleep time.
+- **FR-1.2**: The system shall calculate bedtimes for `6`, `5`, and `4` 90-minute cycles.
+- **FR-1.3**: The system shall evaluate bedtime feasibility against the optional ready-to-sleep time.
+- **FR-1.4**: The system shall save the sleep plan to Cloud Firestore and local storage (`SharedPreferences`).
+
+### FR-2: Sleep Quality Score (SQI)
+- **FR-2.1**: The system shall display 6 sleep behavior questions rated from `1` to `5`.
+- **FR-2.2**: The system shall require all 6 answers before submitting.
+- **FR-2.3**: The system shall compute the weighted SQI score (`0–100`) and classify it (`poor`, `fair`, `good`, `excellent`).
+- **FR-2.4**: The system shall save the SQI record to Cloud Firestore or fall back to local storage (`local_sqi_assessments`) with retry support when offline.
+
+### FR-3: Recommendations
+- **FR-3.1**: The system shall identify the 2 lowest-scoring factors from the SQI assessment (`weakFactors`).
+- **FR-3.2**: The system shall generate recommendations via `GenerateRecommendations` based on `level` and `weakFactors`.
+- **FR-3.3**: The system shall persist generated recommendations to the `recommendations` collection linked by `recordId` and `userId`.
+
+### FR-4: History
+- **FR-4.1**: The system shall display saved SQI records and sleep plans in a segmented list (`sqi` / `plans`).
+- **FR-4.2**: The system shall display saved recommendations in a bottom sheet when an SQI record is tapped.
+- **FR-4.3**: The system shall allow users to delete individual sleep plans and SQI records (with cascade deletion of linked recommendations) after confirmation.
+
+### FR-5: Settings & Cloud Sync
+- **FR-5.1**: The system shall allow users to toggle Dark Mode (`ThemeProvider`).
+- **FR-5.2**: The system shall display Cloud Sync status and allow manual retry for pending sync items.
+- **FR-5.3**: The system shall display app version and educational disclaimer in the About card.

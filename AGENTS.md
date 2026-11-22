@@ -49,7 +49,7 @@ Before changing code or running Firebase-related commands:
 
 ## Entrypoints & Navigation
 
-- `lib/main.dart` — entrypoint only: `runApp(const AppBootstrap())`. The boot sequence (Firebase init, emulator switch, `ensureSignedIn()`, `StorageService`, `appStorage`, `ThemeProvider`) lives in `lib/app/bootstrap.dart`, which renders an error + Retry screen when boot fails.
+- `lib/main.dart` — entrypoint only: `runApp(const AppBootstrap())`. `lib/app/bootstrap.dart` runs `_bootFirebase()`, which delegates Firebase init, App Check, emulator switch, and `ensureSignedIn()` to `CloudConnectionService.connect()` (`lib/core/services/cloud_connection_service.dart`), initializes `StorageService`, `appStorage`, and `ThemeProvider`, and renders an error + Retry screen when boot fails.
 - `lib/app/app.dart` — `SnoozefriendApp`, root `MaterialApp`, and the shared `appStorage` global declaration. Theme controlled by `Provider<ThemeProvider>`.
 - `lib/app/router.dart` — `AppRouter.generateRoute` is the single navigator source of truth.
 
@@ -71,14 +71,14 @@ Before changing code or running Firebase-related commands:
 
 ## Tests
 
-- 2 existing tests: `test/widget_test.dart`, `test/sqi_calculator_test.dart` (the old `sleep_planner_calculator_test.dart` was removed with the deleted planner usecase)
+- 37 test files in `test/` (`*_test.dart`).
 - Run all: `flutter test`
 - No integration-test setup detected.
 
 ## Lint & Format
 
 - `flutter analyze` is the gate. Uses `flutter_lints` defaults only.
-- No custom lints, no `dart format` enforcement detected in config.
+- CI (`.github/workflows/ci.yml`) enforces `dart format --output=none --set-exit-if-changed lib test`.
 
 ## Docs
 

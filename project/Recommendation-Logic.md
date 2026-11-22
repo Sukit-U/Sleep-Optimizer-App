@@ -1,166 +1,35 @@
 # Recommendation Logic
 
 ## 1. Overview
-
-### Purpose
-
-Provide personalized suggestions that help users improve their sleep habits.
-
-### Inputs
-
-- SQI score
-- User responses
-- Assessment factors
-
-### Outputs
-
-- SQI score
-- Sleep quality level
-- Personalized recommendations
-- Recommendation priority
+`GenerateRecommendations` (`lib/features/recommendation/domain/usecases/generate_recommendations.dart`) produces actionable tips from an `SqiResult`.
 
 ---
 
-## 2. Recommendation Workflow
+## 2. Selection Rules
 
-### Step 1. Collect User Responses
-
-Collect users' responses from the SQI questionnaire.
-
-### Step 2. Calculate SQI
-
-Calculate the SQI score based on the defined scoring algorithm.
-
-### Step 3. Identify Weak Factors
-
-Identify the lowest-scoring factors that need improvement.
-
-### Step 4. Select Recommendations
-
-Select recommendations that match the identified weak factors.
-
-### Step 5. Display Results
-
-Display the SQI score, sleep quality level, and personalized recommendations.
+1. **If `level == 'excellent'`** (`score >= 80`):
+   - Returns **1** general recommendation (`factor: 'General'`, `title: 'Keep up the great habits!'`, `priority: 'low'`).
+2. **If `level == 'good'`** (`score 60–79`) and `weakFactors` is not empty:
+   - Returns **1** recommendation for `weakFactors.first` (if mapped in `_factorMap`).
+3. **Otherwise (`fair` or `poor`, or `good` with empty `weakFactors`)**:
+   - Iterates `weakFactors.take(3)` in the order emitted by `CalculateSqi` (ascending weighted score) and returns matching entries from `_factorMap` (up to 3; in practice `CalculateSqi` emits at most 2 `weakFactors`).
+   - *Note*: The implementation does not re-sort recommendations by `RecommendationPriority`.
 
 ---
 
-## 3. Recommendation Categories
+## 3. Factor Mapping (`_factorMap`)
 
-### Sleep Duration
-
-Recommendations related to getting sufficient sleep.
-
-### Sleep Regularity
-
-Recommendations related to maintaining a consistent sleep schedule.
-
-### Screen Time
-
-Recommendations related to reducing screen exposure before bedtime.
-
-### Exercise
-
-Recommendations related to physical activity.
-
-### Stress
-
-Recommendations related to stress management.
-
-### Caffeine
-
-Recommendations related to caffeine consumption.
+| Factor Key | Title | Priority |
+| --- | --- | --- |
+| `Sleep duration` | Aim for a consistent bedtime | `high` |
+| `Sleep regularity` | Keep a steady rhythm | `critical` |
+| `Screen time` | Reduce late screen exposure | `high` |
+| `Exercise` | Add light activity earlier in the day | `medium` |
+| `Stress` | Create a simple wind-down routine | `critical` |
+| `Caffeine` | Cut back on late caffeine | `high` |
 
 ---
 
-## 4. Recommendation Selection Rules
+## 4. Persistence Contract
 
-### Single Weak Factor
-
-If only one factor is poor, show recommendations only for that factor.
-
-### Multiple Weak Factors
-
-If multiple factors are poor, prioritize the lowest-scoring factors.
-
-### Good SQI
-
-If SQI is Good, provide recommendations only for the lowest-scoring factor.
-
-### Excellent SQI
-
-If SQI is Excellent, provide positive reinforcement.
-
-### Poor SQI
-
-If SQI is Poor, prioritize the most critical recommendations and encourage immediate improvement.
-
----
-
-## 5. Recommendation Priority
-
-### Critical
-
-Highest priority recommendations that should be shown first.
-
-### High
-
-Important recommendations with a strong impact on sleep quality.
-
-### Medium
-
-Recommendations with a moderate impact.
-
-### Low
-
-Minor suggestions for further improvement.
-
-## Recommendation Principles
-
-- Recommendations should be easy to understand.
-- Recommendations should be actionable.
-- Recommendations should be based on user responses.
-- Recommendations should encourage positive behavior rather than criticize users.
-- Recommendations should be realistic for high school students.
-
----
-
-## 6. Recommendation Format
-
-### Title
-
-Short recommendation title.
-
-### Description
-
-Brief explanation of why the recommendation is important.
-
-### Action
-
-Simple action that the user can perform.
-
----
-
-## 7. General Rules
-
-### Number of Recommendations
-
-Maximum 3 recommendations.
-
-### Duplicate Prevention
-
-No duplicate recommendations.
-
-### Personalization
-
-Recommendations should match user responses.
-
----
-
-## 8. Future Improvements
-
-- Adaptive recommendation optimization based on user behavior and sleep patterns.
-- AI-assisted sleep coaching with personalized guidance.
-- Learning user preferences to improve recommendation accuracy over time.
-- Integration with wearable devices for automatic sleep data collection.
-- Smart reminders and bedtime notifications based on the user's schedule.
+When saved via `SubmitSqiAssessment`, each recommendation receives ID `'$recordId-r$index'` and is written to the `recommendations` collection with `userId`, `recordId`, `factor`, `title`, `description`, `action`, `priority`, and `createdAt`.

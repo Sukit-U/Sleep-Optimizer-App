@@ -2,189 +2,57 @@
 
 ## 1. Sleep Planner Rules
 
-The Sleep Planner uses the user's desired wake-up time to calculate multiple recommended bedtimes based on 90-minute sleep cycles.
+### 1.1 Purpose
+Calculate bedtime options based on a target wake-up time using 90-minute sleep cycles and sleep latency.
 
-### 1.1 Planner Purpose
+### 1.2 Inputs
+- **Wake-up Time** (`DateTime`, required)
+- **Sleep Latency** (`int` in minutes, `0` to `45`; throws `ArgumentError` outside `0..45`)
+- **Ready-to-Sleep Time** (`DateTime?`, optional; used by `EvaluateBedtimeFeasibility`)
+- **Daily Constraint Chips** (UI selection chips on `SleepPlannerPage`)
 
-Help users plan an appropriate bedtime based on their desired wake-up time and daily constraints.
+### 1.3 Processing Rules (`CalculatePlannerBedtimes`)
+- Supported cycle counts: `6`, `5`, `4` (90 minutes per cycle: `540`, `450`, `360` minutes).
+- Formula: `bedtime = wakeUpTime.subtract(Duration(minutes: (cycles * 90) + latencyMinutes))`.
+- Feasibility (`EvaluateBedtimeFeasibility`): When `readyToSleepTime` is provided, an option is feasible if `!bedtimeDateTime.isBefore(readyToSleepTime)`.
 
-### 1.2 Planner Inputs
-
-- Wake-up Time (AM/PM) (required)
-- Daily Constraints (optional)
-  - Homework
-  - School projects
-  - Tutoring
-  - Late arrival home
-  - Personal activities
-
-### 1.3 Planner Processing Rules
-
-- Uses 90-minute sleep cycles
-- Considers sleep latency
-- Suggests multiple bedtime options
-
-### 1.4 Planner Outputs
-
-- Suggested bedtime (AM/PM)
-- Sleep cycles
-- Sleep duration
-
-### 1.5 Planner Validation Rules
-
-- Wake-up time cannot be empty
-- Time must be valid
-- Wake-up time must be within a 12-hour format (AM/PM).
-- The system should reject invalid time values.
+### 1.4 Outputs
+- `BedtimeOption` list containing `cycles` (`6`, `5`, `4`), `bedtimeString` (`h:mm AM/PM`), `bedtimeDateTime`, and `durationMinutes`.
 
 ---
 
-## 2. Sleep Quality Score Rules
+## 2. Sleep Quality Score (SQI) Rules
 
-The Sleep Quality Score (SQI) evaluates users' sleep-related behaviors using multiple weighted factors and categorizes the result into different sleep quality levels.
+### 2.1 Assessment Factors & Weights (`CalculateSqi`)
+| Factor Key | Weight | Input Range (UI & Rules) | Missing Key Default |
+| --- | --- | --- | --- |
+| `Sleep duration` | 20 | `1–5` (int) | `0` |
+| `Sleep regularity` | 20 | `1–5` (int) | `0` |
+| `Screen time` | 15 | `1–5` (int) | `0` |
+| `Exercise` | 15 | `1–5` (int) | `0` |
+| `Stress` | 15 | `1–5` (int) | `0` |
+| `Caffeine` | 15 | `1–5` (int) | `0` |
+| **Total** | **100** | | |
 
-### 2.1 Score Purpose
+### 2.2 Formula
+- Per-factor weighted score: `((value / 5) * weight).round()`
+- Total SQI score: sum of all 6 rounded factor scores (`0–100`)
+- Weak factors: the 2 lowest-scoring factors (`factorScores` sorted ascending, `.take(2)`).
 
-Provide an understandable indicator of users' sleep-related behaviors.
+### 2.3 Score Levels
+- `excellent`: `>= 80`
+- `good`: `60–79`
+- `fair`: `40–59`
+- `poor`: `0–39`
 
-### 2.2 Score Assessment Factors
-
-- Sleep duration
-- Sleep regularity
-- Screen time
-- Exercise
-- Stress
-- Caffeine
-
-### 2.3 Score Range
-
-0-100
-
-### 2.4 Score Levels
-
-The application categorizes users into one sleep quality level.
-
-- Excellent
-- Good
-- Fair
-- Poor
-
-### 2.5 Score Processing Rules
-
-- Each factor contributes to the total score.
-- Weighted scoring is applied.
-
-### 2.6 Score Validation Rules
-
-All questions should be answered.
+### 2.4 Validation Rules
+- In `SleepQualityPage`, all 6 questions must be answered (`1–5`) before submission.
+- `firestore.rules` enforces all 6 exact keys with integer values `1..5` on write.
 
 ---
 
-## 3. Recommendation Rules
+## 3. Data & Security Rules
 
-Based on SQI score and user behaviour.
-
-### 3.1 Recommendation Purpose
-
-Recommendations are provided for users to develop healthier sleep habits.
-
-### 3.2 Recommendation Trigger Conditions
-
-Recommendations are generated based on:
-
-- SQI score
-- Low-scoring assessment factors
-- User responses
-
-### 3.3 Recommendation Categories
-
-- Screen time
-- Stress
-- Exercise
-- Sleep schedule
-- Caffeine
-
-### 3.4 Recommendation Priority Rules
-
-- Show the most important recommendations first.
-- Use concise recommendation for each.
-
----
-
-## 4. History Rules
-
-Store users' historical sleep planning and SQI results.
-
-### 4.1 History Purpose
-
-History is provided for users to review previous SQI results and observe changes in their sleep habits over time.
-
-### 4.2 Stored Information
-
-- Date
-- SQI
-- Level
-- Planner Result
-
-### 4.3 History Update Rules
-
-- Save after SQI is completed.
-- If the user skips a day, it will not show that day.
-
----
-
-## 5. Settings Rules
-
-Settings allows users to customize basic application settings and help users know the application information.
-
-### 5.1 Settings Purpose
-
-Settings are provided for users to customize basic application settings and access application information.
-
-### 5.2 Available Settings
-
-- Theme
-- About
-
----
-
-## 6. General System Rules
-
-These rules apply across the entire application.
-
-### 6.1 Navigation Rules
-
-- Back button from result page should return to planner.
-- Back button from planner page should return to home.
-- Back button from SQI result page should return to SQI.
-- Back button from SQI page should return to home.
-- Back button from the rest of pages should return to home.
-- Users can access Sleep Planner and SQI only from Home.
-- Completing Planner or SQI should not automatically overwrite previous history.
-
-### 6.2 Error Handling
-
-- Display friendly messages.
-- Do not crash.
-- Display validation messages for missing required inputs.
-
-### 6.3 Default Values
-
-- Default theme is Dark.
-- No default wake-up time.
-- Default language follows device language.
-
-### Rule Priorities
-
-Critical
-
-- Wake-up time is required.
-- All SQI questions are required.
-
-Important
-
-- Recommendations should match the lowest-scoring factors.
-
-Optional
-
-- Daily constraints may be skipped.
+- Every Firestore document (`sleepPlans`, `sqiRecords`, `recommendations`, `settings`) is scoped to `request.auth.uid`.
+- `createdAt` and `userId` are immutable after creation.
+- `settings/{userId}` cannot be deleted (`allow delete: if false`).
