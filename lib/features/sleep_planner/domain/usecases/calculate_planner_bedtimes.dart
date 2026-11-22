@@ -36,6 +36,7 @@ class CalculatePlannerBedtimes {
         BedtimeOption(
           cycles: cycles,
           bedtimeString: _formatTime(bedtime),
+          bedtimeDateTime: bedtime,
           durationMinutes: cycles * _cycleDurationMinutes,
         ),
       );

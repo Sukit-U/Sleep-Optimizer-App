@@ -5,13 +5,16 @@ import 'package:intl/intl.dart';
 import '../../../../app/app.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
 import '../../../../shared/widgets/bedtime_option_card.dart';
 import '../../../../shared/widgets/planner_save_button.dart';
 import '../../data/repositories/sleep_plan_repository.dart';
 import '../../domain/usecases/calculate_planner_bedtimes.dart';
+import '../../domain/usecases/evaluate_bedtime_feasibility.dart';
 import '../../domain/entities/bedtime_option.dart';
+import '../../domain/entities/bedtime_feasibility_result.dart';
 
 class SleepPlannerPage extends StatefulWidget {
   const SleepPlannerPage({super.key, this.firestoreService});
@@ -32,6 +35,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
   DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
   double _latency = 15; // default 15 mins
+  TimeOfDay? _readyToSleepTime;
 
   List<String> get _allConstraints {
     final l10n = context.l10n;
@@ -56,7 +60,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   /// Retained across retries so the same plan is synced instead of creating a new one.
   Map<String, dynamic>? _pendingLocalPlan;
 
-  bool get _isDirty => _hasSelectedWakeUpTime || _chosenCycles != null;
+  bool get _isDirty =>
+      _hasSelectedWakeUpTime || _chosenCycles != null || _readyToSleepTime != null;
 
   void _toggleConstraint(String c) {
     setState(() {
@@ -111,6 +116,56 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     );
   }
 
+  /// Converts the ready-to-sleep time-of-day into an absolute DateTime on the
+  /// sleep night (the evening before the wake-up time) so it can be compared
+  /// against suggested bedtimes that may fall before or after midnight.
+  DateTime? _readyToSleepDateTime() {
+    if (_readyToSleepTime == null) return null;
+    final sleepNight = _wakeUpTime.subtract(const Duration(days: 1));
+    return DateTime(
+      sleepNight.year,
+      sleepNight.month,
+      sleepNight.day,
+      _readyToSleepTime!.hour,
+      _readyToSleepTime!.minute,
+    );
+  }
+
+  List<BedtimeFeasibilityResult> _evaluateOptions(List<BedtimeOption> options) {
+    return EvaluateBedtimeFeasibility().call(
+      options: options,
+      readyToSleepTime: _readyToSleepDateTime(),
+    );
+  }
+
+  Future<void> _selectReadyToSleepTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _readyToSleepTime ??
+          TimeOfDay.fromDateTime(
+            _wakeUpTime.subtract(const Duration(hours: 2)),
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _readyToSleepTime = picked;
+        // New ready-to-sleep time means a new plan; clear any pending retry.
+        _pendingLocalPlan = null;
+      });
+    }
+  }
+
   Future<void> _handleSave() async {
     // A second tap while the write is in flight would create a second plan.
     if (_isSaving) return;
@@ -137,10 +192,31 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     }
 
     final options = _getOptions();
+    final results = _evaluateOptions(options);
     final chosenOption = options.firstWhere(
       (o) => o.cycles == (_chosenCycles ?? 5),
       orElse: () => options[1],
     );
+    final chosenResult = results.firstWhere(
+      (r) => r.option.cycles == chosenOption.cycles,
+      orElse: () => BedtimeFeasibilityResult(
+        option: chosenOption,
+        isFeasible: true,
+        reason: '',
+      ),
+    );
+
+    // Infeasible options must not be saved or presented as a valid plan.
+    if (!chosenResult.isFeasible) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.plannerInfeasibleSave(chosenResult.reason)),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
 
     // If we have a pending local plan with the same wake-up time and cycles,
     // reuse it for retry. Otherwise create a new one.
@@ -284,6 +360,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final options = _getOptions();
+    final results = _evaluateOptions(options);
     final l10n = context.l10n;
 
     return PopScope(
@@ -409,7 +486,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     );
                   }).toList(),
                 ),
-
+                const SizedBox(height: 8),
+                Text(
+                  l10n.plannerActivityContext,
+                  style: TextStyle(
+                    fontFamily: 'Kanit',
+                    fontSize: 11,
+                    color: colors.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
                 const SizedBox(height: 32),
 
                 // ── Suggested Bedtimes ──
@@ -441,12 +527,22 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
                 Column(
                   children: options.map((o) {
+                    final result = results.firstWhere(
+                      (r) => r.option.cycles == o.cycles,
+                      orElse: () => BedtimeFeasibilityResult(
+                        option: o,
+                        isFeasible: true,
+                        reason: '',
+                      ),
+                    );
                     return BedtimeOptionCard(
                       cycles: o.cycles,
                       bedtimeString: o.bedtimeString,
                       durationMinutes: o.durationMinutes,
-                      isRecommended: o.cycles == 5,
+                      isRecommended: o.cycles == 5 && result.isFeasible,
                       isSelected: _chosenCycles == o.cycles,
+                      isFeasible: result.isFeasible,
+                      feasibilityReason: result.reason,
                       onTap: () => setState(() => _chosenCycles = o.cycles),
                     );
                   }).toList(),
@@ -557,6 +653,56 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               max: 45,
               divisions: 9,
               onChanged: (val) => setState(() => _latency = val),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.plannerReadyToSleepTime,
+            style: TextStyle(
+              fontFamily: 'Kanit',
+              fontSize: 14,
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _selectReadyToSleepTime(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colors.outline.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _readyToSleepTime == null
+                          ? l10n.plannerReadyToSleepTimeHelper
+                          : _readyToSleepTime!.format(context),
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.access_time,
+                    color: colors.primary,
+                    size: 24,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

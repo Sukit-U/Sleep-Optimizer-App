@@ -102,6 +102,24 @@ class AppLocalizations {
   String get constraintLateArrival => _pick('Late arrival', 'กลับบ้านดึก');
   String get constraintPersonalActivity =>
       _pick('Personal activity', 'กิจกรรมส่วนตัว');
+  String get plannerReadyToSleepTime => _pick(
+    'Ready-to-sleep time',
+    'เวลาที่พร้อมนอน',
+  );
+  String get plannerReadyToSleepTimeHelper => _pick(
+    'Earliest time you can go to sleep tonight',
+    'เวลาที่คุณพร้อมจะเข้านอนเร็วที่สุดคืนนี้',
+  );
+  String get plannerFeasibleLabel => _pick('Feasible', 'ทำได้');
+  String get plannerInfeasibleLabel => _pick('Infeasible', 'ทำไม่ได้');
+  String get plannerActivityContext => _pick(
+    'Activities are context only and do not change the calculation.',
+    'กิจกรรมเป็นข้อมูลประกอบเท่านั้น ไม่เปลี่ยนการคำนวณ',
+  );
+  String plannerInfeasibleSave(String reason) => _pick(
+    'Cannot save plan: $reason',
+    'แผนนี้ทำไม่ได้: $reason',
+  );
   String get plannerSuggestedBedtimes =>
       _pick('Suggested bedtimes', 'เวลาเข้านอนที่แนะนำ');
   String plannerWakeAt(String time) => _pick('Wake at $time', 'ตื่นเวลา $time');
