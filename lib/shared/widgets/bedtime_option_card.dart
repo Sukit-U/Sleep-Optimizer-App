@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 
 /// A bedtime option card showing cycles, duration, and bedtime string.
 ///
@@ -22,18 +22,21 @@ class BedtimeOptionCard extends StatelessWidget {
     this.onTap,
   });
 
-  String _formatDuration(int minutes) {
-    if (minutes == 0) return '0h';
+  String _formatDuration(BuildContext context) {
+    final l10n = context.l10n;
+    final minutes = durationMinutes;
+    if (minutes == 0) return l10n.plannerDurationZero();
     final h = minutes ~/ 60;
     final m = minutes % 60;
-    if (h == 0) return '${m}m';
-    if (m == 0) return '${h}h';
-    return '${h}h ${m}m';
+    if (h == 0) return l10n.plannerDurationM(m);
+    if (m == 0) return l10n.plannerDurationH(h);
+    return l10n.plannerDurationHM(h, m);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -58,7 +61,8 @@ class BedtimeOptionCard extends StatelessWidget {
                 children: [
                   Text(
                     bedtimeString,
-                    style: GoogleFonts.karla(
+                    style: TextStyle(
+                      fontFamily: 'Kanit',
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: colors.onSurface,
@@ -66,8 +70,9 @@ class BedtimeOptionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$cycles cycles • ${_formatDuration(durationMinutes)}',
-                    style: GoogleFonts.karla(
+                    '${l10n.plannerCycles(cycles)} • ${_formatDuration(context)}',
+                    style: TextStyle(
+                      fontFamily: 'Kanit',
                       fontSize: 12,
                       color: colors.onSurfaceVariant,
                     ),
@@ -92,8 +97,9 @@ class BedtimeOptionCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Recommended',
-                      style: GoogleFonts.karla(
+                      l10n.plannerRecommended,
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: colors.onSurface,

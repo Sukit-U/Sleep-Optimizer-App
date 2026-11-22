@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
@@ -21,6 +22,7 @@ class SQIRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -52,7 +54,7 @@ class SQIRecordCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        '· ${record.sleepQualityLevel}',
+                        '· ${l10n.sleepQualityLevel(record.sleepQualityLevel)}',
                         style: AppTypography.caption.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -61,7 +63,7 @@ class SQIRecordCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.spacingXs),
                   Text(
-                    _formatDate(record.createdAt),
+                    _formatDate(record.createdAt, l10n),
                     style: AppTypography.caption.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -88,18 +90,19 @@ class SQIRecordCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dateTime) {
+  String _formatDate(DateTime dateTime, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    if (difference.inDays == 0) return 'Today, ${_formatTime(dateTime)}';
-    if (difference.inDays == 1) return 'Yesterday, ${_formatTime(dateTime)}';
-    if (difference.inDays < 7) return '${difference.inDays} days ago';
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    if (difference.inDays == 0)
+      return l10n.historyDateToday(_formatTime(dateTime, l10n));
+    if (difference.inDays == 1)
+      return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
+    if (difference.inDays < 7)
+      return l10n.historyDateDaysAgo(difference.inDays);
+    return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
   }
 
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
-    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:${dateTime.minute.toString().padLeft(2, '0')} $period';
+  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
+    return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }

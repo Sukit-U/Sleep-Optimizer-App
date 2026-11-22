@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 
 /// A CTA card for the home screen suggesting to plan tonight's sleep.
@@ -14,6 +14,7 @@ class TonightSuggestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -26,16 +27,18 @@ class TonightSuggestionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tonight',
-            style: GoogleFonts.karla(
+            l10n.tonightCardHeading,
+            style: TextStyle(
+              fontFamily: 'Kanit',
               fontSize: 12,
               color: colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Plan tonight',
-            style: GoogleFonts.karla(
+            l10n.tonightCardTitle,
+            style: TextStyle(
+              fontFamily: 'Kanit',
               fontSize: 28,
               fontWeight: FontWeight.w600,
               color: colors.onSurface,
@@ -44,8 +47,9 @@ class TonightSuggestionCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Tell us when you need to wake up.',
-            style: GoogleFonts.karla(
+            l10n.tonightCardDescription,
+            style: TextStyle(
+              fontFamily: 'Kanit',
               fontSize: 15,
               color: colors.onSurfaceVariant,
               height: 1.4,
@@ -57,7 +61,7 @@ class TonightSuggestionCard extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onPlanTonight,
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: const Text('Open Sleep Planner'),
+              label: Text(l10n.tonightCardButton),
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
@@ -65,7 +69,8 @@ class TonightSuggestionCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                textStyle: GoogleFonts.karla(
+                textStyle: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),

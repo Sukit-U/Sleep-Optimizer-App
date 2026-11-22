@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 
 /// A feature card for the home screen grid.
@@ -41,7 +40,8 @@ class HomeFeatureCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               title,
-              style: GoogleFonts.karla(
+              style: TextStyle(
+                fontFamily: 'Kanit',
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: colors.onSurface,
@@ -50,7 +50,8 @@ class HomeFeatureCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               description,
-              style: GoogleFonts.karla(
+              style: TextStyle(
+                fontFamily: 'Kanit',
                 fontSize: 12,
                 color: colors.onSurfaceVariant,
               ),
