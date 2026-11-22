@@ -3,6 +3,7 @@ import '../../../../services/firestore_service.dart';
 
 abstract class SettingsRepository {
   Future<void> saveSettings(Map<String, dynamic> payload);
+  Future<void> syncSettings({required String userId, required String theme});
   Future<Map<String, dynamic>?> loadSettings(String userId);
 }
 
@@ -29,6 +30,12 @@ class FirestoreSettingsRepository {
     }
   }
 
+  Future<void> syncSettings({required String userId, required String theme}) async {
+    await _firestoreService.saveSettings({'userId': userId, 'theme': theme});
+    final storage = await StorageService.create();
+    await storage.saveTheme(theme);
+  }
+
   Future<Map<String, dynamic>?> loadSettings(String userId) async {
     try {
       // Try Firestore first
@@ -48,3 +55,4 @@ class FirestoreSettingsRepository {
     return null;
   }
 }
+
