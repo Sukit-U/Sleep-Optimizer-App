@@ -103,8 +103,7 @@ void main() {
         .widgetList<Text>(find.byType(Text))
         .map((text) => text.data)
         .firstWhere(
-          (data) =>
-              data != null && RegExp(r'^\d{2}:\d{2} [AP]M$').hasMatch(data),
+          (data) => data != null && RegExp(r'^\d{2}:\d{2}$').hasMatch(data),
         )!;
     await tester.tap(find.text(timeLabel), warnIfMissed: false);
     await tester.pumpAndSettle();

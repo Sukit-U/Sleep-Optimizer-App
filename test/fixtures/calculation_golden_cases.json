@@ -487,17 +487,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "10:00 PM",
+          "bedtimeString": "22:00",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "11:30 PM",
+          "bedtimeString": "23:30",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "1:00 AM",
+          "bedtimeString": "01:00",
           "durationMinutes": 360
         }
       ]
@@ -512,17 +512,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "9:45 PM",
+          "bedtimeString": "21:45",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "11:15 PM",
+          "bedtimeString": "23:15",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "12:45 AM",
+          "bedtimeString": "00:45",
           "durationMinutes": 360
         }
       ]
@@ -537,17 +537,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "9:15 PM",
+          "bedtimeString": "21:15",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "10:45 PM",
+          "bedtimeString": "22:45",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "12:15 AM",
+          "bedtimeString": "00:15",
           "durationMinutes": 360
         }
       ]
@@ -562,17 +562,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "4:00 PM",
+          "bedtimeString": "16:00",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "5:30 PM",
+          "bedtimeString": "17:30",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "7:00 PM",
+          "bedtimeString": "19:00",
           "durationMinutes": 360
         }
       ]
@@ -587,17 +587,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "9:00 PM",
+          "bedtimeString": "21:00",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "10:30 PM",
+          "bedtimeString": "22:30",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "12:00 AM",
+          "bedtimeString": "00:00",
           "durationMinutes": 360
         }
       ]
@@ -612,17 +612,17 @@
       "expectedOutput": [
         {
           "cycles": 6,
-          "bedtimeString": "11:00 PM",
+          "bedtimeString": "23:00",
           "durationMinutes": 540
         },
         {
           "cycles": 5,
-          "bedtimeString": "12:30 AM",
+          "bedtimeString": "00:30",
           "durationMinutes": 450
         },
         {
           "cycles": 4,
-          "bedtimeString": "2:00 AM",
+          "bedtimeString": "02:00",
           "durationMinutes": 360
         }
       ]
