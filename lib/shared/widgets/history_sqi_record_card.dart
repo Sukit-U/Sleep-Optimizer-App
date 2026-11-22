@@ -3,6 +3,7 @@ import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
+import 'package:snoozemate/shared/formatters/history_date_formatter.dart';
 
 /// A card displaying an SQI record in the history list.
 ///
@@ -63,7 +64,7 @@ class SQIRecordCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.spacingXs),
                   Text(
-                    _formatDate(record.createdAt, l10n),
+                    formatHistoryDate(record.createdAt, l10n),
                     style: AppTypography.caption.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -88,24 +89,5 @@ class SQIRecordCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime dateTime, AppLocalizations l10n) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    if (difference.inDays == 0) {
-      return l10n.historyDateToday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays == 1) {
-      return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays < 7) {
-      return l10n.historyDateDaysAgo(difference.inDays);
-    }
-    return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
-  }
-
-  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
-    return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }

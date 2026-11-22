@@ -9,6 +9,7 @@ import 'package:snoozemate/services/firestore_service.dart';
 import 'package:snoozemate/models/sleep_plan_model.dart';
 import 'package:snoozemate/models/sqi_record_model.dart';
 import 'package:snoozemate/models/recommendation_model.dart';
+import 'package:snoozemate/shared/formatters/history_date_formatter.dart';
 import 'package:snoozemate/shared/widgets/history_sqi_record_card.dart';
 import 'package:snoozemate/shared/widgets/history_sleep_plan_card.dart';
 import 'package:snoozemate/shared/widgets/empty_state_card.dart';
@@ -511,7 +512,7 @@ class _HistoryPageState extends State<HistoryPage> {
           if (partial.createdAt != null) ...[
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
-              _formatDate(partial.createdAt!, l10n),
+              formatHistoryDate(partial.createdAt!, l10n),
               style: AppTypography.caption.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -603,7 +604,7 @@ class _HistoryPageState extends State<HistoryPage> {
               if (partial.wakeUpTime != null) ...[
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  '→ ${_formatTime(partial.wakeUpTime!, l10n)}',
+                  '→ ${formatHistoryTime(partial.wakeUpTime!, l10n)}',
                   style: AppTypography.h3.copyWith(color: colors.onSurface),
                 ),
               ],
@@ -627,7 +628,7 @@ class _HistoryPageState extends State<HistoryPage> {
           if (partial.createdAt != null || partial.sleepCycles != null) ...[
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
-              '${l10n.plannerCycles(partial.sleepCycles ?? 0)} · ${partial.createdAt != null ? _formatDate(partial.createdAt!, l10n) : l10n.historyDateUnavailable}',
+              '${l10n.plannerCycles(partial.sleepCycles ?? 0)} · ${partial.createdAt != null ? formatHistoryDate(partial.createdAt!, l10n) : l10n.historyDateUnavailable}',
               style: AppTypography.caption.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -666,24 +667,5 @@ class _HistoryPageState extends State<HistoryPage> {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dateTime, AppLocalizations l10n) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    if (difference.inDays == 0) {
-      return l10n.historyDateToday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays == 1) {
-      return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays < 7) {
-      return l10n.historyDateDaysAgo(difference.inDays);
-    }
-    return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
-  }
-
-  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
-    return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }

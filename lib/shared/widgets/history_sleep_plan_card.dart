@@ -3,6 +3,7 @@ import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
 import 'package:snoozemate/models/sleep_plan_model.dart';
+import 'package:snoozemate/shared/formatters/history_date_formatter.dart';
 
 /// A card displaying a sleep plan in the history list.
 ///
@@ -41,12 +42,12 @@ class HistorySleepPlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$firstBedtime → ${_formatTime(plan.wakeUpTime, l10n)}',
+                  '$firstBedtime → ${formatHistoryTime(plan.wakeUpTime, l10n)}',
                   style: AppTypography.h3.copyWith(color: colors.onSurface),
                 ),
                 const SizedBox(height: AppSpacing.spacingXs),
                 Text(
-                  '${l10n.plannerCycles(plan.sleepCycles)} · ${_formatDate(plan.createdAt, l10n)}',
+                  '${l10n.plannerCycles(plan.sleepCycles)} · ${formatHistoryDate(plan.createdAt, l10n)}',
                   style: AppTypography.caption.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -70,24 +71,5 @@ class HistorySleepPlanCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime dateTime, AppLocalizations l10n) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    if (difference.inDays == 0) {
-      return l10n.historyDateToday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays == 1) {
-      return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
-    }
-    if (difference.inDays < 7) {
-      return l10n.historyDateDaysAgo(difference.inDays);
-    }
-    return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
-  }
-
-  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
-    return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }
