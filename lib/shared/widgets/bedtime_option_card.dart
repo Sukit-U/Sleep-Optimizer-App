@@ -61,10 +61,7 @@ class BedtimeOptionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: borderColor,
-            width: borderWidth,
-          ),
+          border: Border.all(color: borderColor, width: borderWidth),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +139,9 @@ class BedtimeOptionCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (!feasible && feasibilityReason != null && feasibilityReason!.isNotEmpty) ...[
+            if (!feasible &&
+                feasibilityReason != null &&
+                feasibilityReason!.isNotEmpty) ...[
               const SizedBox(height: 10),
               Row(
                 children: [

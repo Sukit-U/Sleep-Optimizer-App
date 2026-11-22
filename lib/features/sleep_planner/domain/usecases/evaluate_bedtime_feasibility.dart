@@ -35,7 +35,7 @@ class EvaluateBedtimeFeasibility {
       final reason = isFeasible
           ? ''
           : 'เข้านอนเวลา ${o.bedtimeString} ก่อนเวลาที่พร้อมนอน '
-              '${_formatTime(readyToSleepTime)} จึงทำแผนนี้ไม่ได้';
+                '${_formatTime(readyToSleepTime)} จึงทำแผนนี้ไม่ได้';
       return BedtimeFeasibilityResult(
         option: o,
         isFeasible: isFeasible,

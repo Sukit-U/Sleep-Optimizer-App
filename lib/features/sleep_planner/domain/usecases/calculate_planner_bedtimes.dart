@@ -45,12 +45,6 @@ class CalculatePlannerBedtimes {
   }
 
   String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour;
-    final minute = dateTime.minute;
-    final isPM = hour >= 12;
-    final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    final period = isPM ? 'PM' : 'AM';
-    final minuteStr = minute.toString().padLeft(2, '0');
-    return '$hour12:$minuteStr $period';
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

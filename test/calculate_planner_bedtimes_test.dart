@@ -22,7 +22,7 @@ void main() {
       // 6 cycles * 90 min = 540 min = 9 hours
       // 7:00 AM - 9 hours = 10:00 PM previous day
       final option6 = options.firstWhere((o) => o.cycles == 6);
-      expect(option6.bedtimeString, '10:00 PM');
+      expect(option6.bedtimeString, '22:00');
       expect(option6.durationMinutes, 540);
     });
 
@@ -33,7 +33,7 @@ void main() {
       // 5 cycles * 90 min = 450 min = 7.5 hours
       // 7:00 AM - 7.5 hours = 11:30 PM previous day
       final option5 = options.firstWhere((o) => o.cycles == 5);
-      expect(option5.bedtimeString, '11:30 PM');
+      expect(option5.bedtimeString, '23:30');
       expect(option5.durationMinutes, 450);
     });
 
@@ -44,7 +44,7 @@ void main() {
       // 4 cycles * 90 min = 360 min = 6 hours
       // 7:00 AM - 6 hours = 1:00 AM same day
       final option4 = options.firstWhere((o) => o.cycles == 4);
-      expect(option4.bedtimeString, '1:00 AM');
+      expect(option4.bedtimeString, '01:00');
       expect(option4.durationMinutes, 360);
     });
 
@@ -55,7 +55,7 @@ void main() {
       // 5 cycles * 90 + 15 = 465 min = 7h 45m
       // 7:00 AM - 7h 45m = 11:15 PM
       final option5 = options.firstWhere((o) => o.cycles == 5);
-      expect(option5.bedtimeString, '11:15 PM');
+      expect(option5.bedtimeString, '23:15');
     });
 
     test('default latency of 15 minutes matches existing behavior', () {
@@ -66,9 +66,9 @@ void main() {
       final option5 = options.firstWhere((o) => o.cycles == 5);
       final option4 = options.firstWhere((o) => o.cycles == 4);
 
-      expect(option6.bedtimeString, '9:45 PM');
-      expect(option5.bedtimeString, '11:15 PM');
-      expect(option4.bedtimeString, '12:45 AM');
+      expect(option6.bedtimeString, '21:45');
+      expect(option5.bedtimeString, '23:15');
+      expect(option4.bedtimeString, '00:45');
     });
 
     test('maximum latency of 45 minutes', () {
@@ -78,7 +78,7 @@ void main() {
       final option5 = options.firstWhere((o) => o.cycles == 5);
       // 5*90 + 45 = 495 min = 8h 15m
       // 7:00 AM - 8h 15m = 10:45 PM
-      expect(option5.bedtimeString, '10:45 PM');
+      expect(option5.bedtimeString, '22:45');
     });
 
     test('handles date rollover across midnight', () {
@@ -87,11 +87,11 @@ void main() {
 
       final option6 = options.firstWhere((o) => o.cycles == 6);
       // 1:00 AM - 9h = 4:00 PM previous day
-      expect(option6.bedtimeString, '4:00 PM');
+      expect(option6.bedtimeString, '16:00');
 
       final option4 = options.firstWhere((o) => o.cycles == 4);
       // 1:00 AM - 6h = 7:00 PM previous day
-      expect(option4.bedtimeString, '7:00 PM');
+      expect(option4.bedtimeString, '19:00');
     });
 
     test('different wake-up times produce correct bedtimes', () {
@@ -106,8 +106,8 @@ void main() {
       final opt1 = options1.firstWhere((o) => o.cycles == 6);
       final opt2 = options2.firstWhere((o) => o.cycles == 6);
 
-      expect(opt1.bedtimeString, '9:00 PM');
-      expect(opt2.bedtimeString, '11:00 PM');
+      expect(opt1.bedtimeString, '21:00');
+      expect(opt2.bedtimeString, '23:00');
     });
 
     test('ordering is always 6, 5, 4 cycles', () {

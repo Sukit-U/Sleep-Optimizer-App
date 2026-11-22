@@ -13,8 +13,10 @@ import '../../../../shared/widgets/planner_save_button.dart';
 import '../../data/repositories/sleep_plan_repository.dart';
 import '../../domain/usecases/calculate_planner_bedtimes.dart';
 import '../../domain/usecases/evaluate_bedtime_feasibility.dart';
+import '../../domain/usecases/evaluate_planned_bedtime.dart';
 import '../../domain/entities/bedtime_option.dart';
 import '../../domain/entities/bedtime_feasibility_result.dart';
+import '../../domain/entities/planned_bedtime_evaluation.dart';
 
 class SleepPlannerPage extends StatefulWidget {
   const SleepPlannerPage({super.key, this.firestoreService});
@@ -36,6 +38,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
   double _latency = 15; // default 15 mins
   TimeOfDay? _readyToSleepTime;
+  TimeOfDay? _plannedBedtime;
 
   List<String> get _allConstraints {
     final l10n = context.l10n;
@@ -61,7 +64,10 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   Map<String, dynamic>? _pendingLocalPlan;
 
   bool get _isDirty =>
-      _hasSelectedWakeUpTime || _chosenCycles != null || _readyToSleepTime != null;
+      _hasSelectedWakeUpTime ||
+      _chosenCycles != null ||
+      _readyToSleepTime != null ||
+      _plannedBedtime != null;
 
   void _toggleConstraint(String c) {
     setState(() {
@@ -79,13 +85,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_wakeUpTime),
       builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(
-              context,
-            ).colorScheme.copyWith(primary: colors.primary),
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(
+                context,
+              ).colorScheme.copyWith(primary: colors.primary),
+            ),
+            child: child!,
           ),
-          child: child!,
         );
       },
     );
@@ -141,18 +150,22 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   Future<void> _selectReadyToSleepTime(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: _readyToSleepTime ??
+      initialTime:
+          _readyToSleepTime ??
           TimeOfDay.fromDateTime(
             _wakeUpTime.subtract(const Duration(hours: 2)),
           ),
       builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).colorScheme.primary,
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: Theme.of(context).colorScheme.primary,
+              ),
             ),
+            child: child!,
           ),
-          child: child!,
         );
       },
     );
@@ -164,6 +177,52 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
         _pendingLocalPlan = null;
       });
     }
+  }
+
+  Future<void> _selectPlannedBedtime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _plannedBedtime ?? TimeOfDay.fromDateTime(_wakeUpTime),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            child: child!,
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _plannedBedtime = picked;
+        // New planned bedtime means a new plan; clear any pending retry.
+        _pendingLocalPlan = null;
+      });
+    }
+  }
+
+  /// Converts a TimeOfDay to minutes from midnight for domain-layer comparison.
+  int? _timeOfDayToMinutes(TimeOfDay? time) {
+    if (time == null) return null;
+    return time.hour * 60 + time.minute;
+  }
+
+  /// Evaluates planned bedtime sufficiency using the domain use case.
+  PlannedBedtimeEvaluation? _evaluatePlannedBedtimeResult() {
+    if (_plannedBedtime == null) return null;
+    return EvaluatePlannedBedtime().call(
+      plannedBedtimeMinutesFromMidnight: _timeOfDayToMinutes(_plannedBedtime),
+      wakeUpTime: _wakeUpTime,
+      sleepLatencyMinutes: _latency.round(),
+      targetMinutes: ((_chosenCycles ?? 5) * 90),
+      readyToSleepMinutesFromMidnight: _timeOfDayToMinutes(_readyToSleepTime),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -361,6 +420,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     final colors = Theme.of(context).colorScheme;
     final options = _getOptions();
     final results = _evaluateOptions(options);
+    final plannedBedtimeEvaluation = _evaluatePlannedBedtimeResult();
+    final anyFeasible = results.any((r) => r.isFeasible);
     final l10n = context.l10n;
 
     return PopScope(
@@ -498,6 +559,118 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 ),
                 const SizedBox(height: 32),
 
+                // ── Planned Bedtime Evaluation ──
+                if (plannedBedtimeEvaluation != null) ...[
+                  if (plannedBedtimeEvaluation.hasConflictWithReadyToSleep)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber,
+                            size: 16,
+                            color: AppColors.warning,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.conflictReadyToSleep,
+                              style: TextStyle(
+                                fontFamily: 'Kanit',
+                                fontSize: 12,
+                                color: AppColors.warning,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: colors.outline),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.estimatedSleepDuration,
+                                style: TextStyle(
+                                  fontFamily: 'Kanit',
+                                  fontSize: 12,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                l10n.plannerDurationHM(
+                                  plannedBedtimeEvaluation
+                                          .estimatedSleepMinutes ~/
+                                      60,
+                                  plannedBedtimeEvaluation
+                                          .estimatedSleepMinutes %
+                                      60,
+                                ),
+                                style: TextStyle(
+                                  fontFamily: 'Kanit',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                plannedBedtimeEvaluation.isSufficient
+                                    ? l10n.sleepSufficient
+                                    : l10n.sleepInsufficient,
+                                style: TextStyle(
+                                  fontFamily: 'Kanit',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: plannedBedtimeEvaluation.isSufficient
+                                      ? AppColors.success
+                                      : AppColors.warning,
+                                ),
+                              ),
+                              if (plannedBedtimeEvaluation.isInsufficient)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    l10n.sleepInsufficientWarning(
+                                      plannedBedtimeEvaluation
+                                          .estimatedSleepMinutes,
+                                      plannedBedtimeEvaluation.targetMinutes,
+                                    ),
+                                    style: TextStyle(
+                                      fontFamily: 'Kanit',
+                                      fontSize: 11,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 // ── Suggested Bedtimes ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -524,6 +697,27 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
+
+                if (!anyFeasible)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.noFeasibleBedtime,
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
+                        fontSize: 13,
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
 
                 Column(
                   children: options.map((o) {
@@ -605,7 +799,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 ),
               ),
               child: Text(
-                DateFormat('hh:mm a').format(_wakeUpTime),
+                DateFormat('HH:mm').format(_wakeUpTime),
                 style: TextStyle(
                   fontFamily: 'Kanit',
                   fontSize: 32,
@@ -696,11 +890,53 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(
-                    Icons.access_time,
-                    color: colors.primary,
-                    size: 24,
+                  Icon(Icons.access_time, color: colors.primary, size: 24),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.plannedBedtimeLabel,
+            style: TextStyle(
+              fontFamily: 'Kanit',
+              fontSize: 14,
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _selectPlannedBedtime(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colors.outline.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _plannedBedtime == null
+                          ? l10n.plannedBedtimeHelper
+                          : _plannedBedtime!.format(context),
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
+                        color: colors.onSurface,
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.access_time, color: colors.primary, size: 24),
                 ],
               ),
             ),

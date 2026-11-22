@@ -102,10 +102,8 @@ class AppLocalizations {
   String get constraintLateArrival => _pick('Late arrival', 'กลับบ้านดึก');
   String get constraintPersonalActivity =>
       _pick('Personal activity', 'กิจกรรมส่วนตัว');
-  String get plannerReadyToSleepTime => _pick(
-    'Ready-to-sleep time',
-    'เวลาที่พร้อมนอน',
-  );
+  String get plannerReadyToSleepTime =>
+      _pick('Ready-to-sleep time', 'เวลาที่พร้อมนอน');
   String get plannerReadyToSleepTimeHelper => _pick(
     'Earliest time you can go to sleep tonight',
     'เวลาที่คุณพร้อมจะเข้านอนเร็วที่สุดคืนนี้',
@@ -116,10 +114,8 @@ class AppLocalizations {
     'Activities are context only and do not change the calculation.',
     'กิจกรรมเป็นข้อมูลประกอบเท่านั้น ไม่เปลี่ยนการคำนวณ',
   );
-  String plannerInfeasibleSave(String reason) => _pick(
-    'Cannot save plan: $reason',
-    'แผนนี้ทำไม่ได้: $reason',
-  );
+  String plannerInfeasibleSave(String reason) =>
+      _pick('Cannot save plan: $reason', 'แผนนี้ทำไม่ได้: $reason');
   String get plannerSuggestedBedtimes =>
       _pick('Suggested bedtimes', 'เวลาเข้านอนที่แนะนำ');
   String plannerWakeAt(String time) => _pick('Wake at $time', 'ตื่นเวลา $time');
@@ -155,6 +151,28 @@ class AppLocalizations {
   String get plannerBtnSave => _pick('Save plan', 'บันทึกแผน');
 
   String get plannerLatencyMin => _pick('min', 'นาที');
+
+  // Planner planned bedtime
+  String get plannedBedtimeLabel =>
+      _pick('Planned bedtime', 'เวลาที่ตั้งใจจะนอน');
+  String get plannedBedtimeHelper =>
+      _pick('The time you intend to go to bed', 'เวลาที่คุณตั้งใจจะเข้านอน');
+  String get sleepSufficient => _pick('Sufficient sleep', 'นอนเพียงพอ');
+  String get sleepInsufficient => _pick('Insufficient sleep', 'นอนไม่เพียงพอ');
+  String get estimatedSleepDuration =>
+      _pick('Estimated sleep duration', 'ระยะเวลานอนโดยประมาณ');
+  String sleepInsufficientWarning(int estimated, int target) => _pick(
+    'Your planned sleep ($estimated min) is shorter than the target ($target min)',
+    'เวลานอนโดยประมาณ ($estimated นาที) น้อยกว่าเป้าหมาย ($target นาที)',
+  );
+  String get conflictReadyToSleep => _pick(
+    'Planned bedtime is earlier than ready-to-sleep time',
+    'เวลาที่ตั้งใจจะนอนเร็วกว่าเวลาที่พร้อมนอน',
+  );
+  String get noFeasibleBedtime => _pick(
+    'No feasible bedtime for your ready-to-sleep time',
+    'ไม่มีเวลาเข้านอนที่เหมาะกับเวลาที่คุณพร้อมนอน',
+  );
 
   String get retry => _pick('Retry', 'ลองใหม่');
 
