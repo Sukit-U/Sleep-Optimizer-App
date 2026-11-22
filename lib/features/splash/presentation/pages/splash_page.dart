@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snoozemate/app/router.dart';
 
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 
 const _welcomeKey = 'so.welcomeSeen';
@@ -54,8 +54,8 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Snoozefriend',
-                    style: GoogleFonts.karla(
+                    context.l10n.splashTitle,
+                    style: TextStyle(fontFamily: 'Kanit', 
                       fontSize: 34,
                       fontWeight: FontWeight.w600,
                       color: colors.onSurface,
@@ -64,9 +64,8 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: AppSpacing.sm + AppSpacing.xs),
                   Text(
-                    'Work out when to go to bed tonight, based on when you '
-                    'need to be up.',
-                    style: GoogleFonts.karla(
+                    context.l10n.splashSubtitle,
+                    style: TextStyle(fontFamily: 'Kanit', 
                       fontSize: 16,
                       color: colors.onSurfaceVariant,
                       height: 1.5,
@@ -84,19 +83,19 @@ class _SplashPageState extends State<SplashPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        textStyle: GoogleFonts.karla(
+                        textStyle: TextStyle(fontFamily: 'Kanit', 
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: const Text('Continue'),
+                      child: Text(context.l10n.splashContinue),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'An educational tool, not a medical device.',
+                    context.l10n.splashDisclaimer,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.karla(
+                    style: TextStyle(fontFamily: 'Kanit', 
                       fontSize: 12,
                       color: colors.onSurfaceVariant,
                     ),
@@ -111,3 +110,5 @@ class _SplashPageState extends State<SplashPage> {
     );
   }
 }
+
+

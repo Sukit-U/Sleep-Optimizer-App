@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 
 /// Shown when the delete batch cannot be confirmed.
 ///
@@ -15,25 +16,24 @@ const String sqiDeleteUnconfirmedMessage =
 /// outside the dialog or dismissing it with the system back gesture all count
 /// as "no", so the caller must not start deleting unless this returns `true`.
 Future<bool> confirmDeleteSqiRecord(BuildContext context) async {
+  final l10n = context.l10n;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Delete this assessment?'),
-      content: const Text(
-        'This deletes the assessment and every recommendation that belongs to it. '
-        'It cannot be undone.',
-      ),
+      title: Text(l10n.historyDialogDeleteSqiTitle),
+      content: Text(l10n.historyDialogDeleteSqiContent),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Cancel'),
+          child: Text(l10n.historyBtnCancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Delete'),
+          child: Text(l10n.historyBtnDelete),
         ),
       ],
     ),
   );
   return confirmed ?? false;
 }
+

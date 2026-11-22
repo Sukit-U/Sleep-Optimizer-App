@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/app.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../services/firestore_service.dart';
 import '../../../../models/sleep_plan_model.dart';
@@ -33,13 +33,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   DateTime _wakeUpTime = DateTime.now().add(const Duration(hours: 8));
   double _latency = 15; // default 15 mins
 
-  final List<String> _allConstraints = [
-    'Homework',
-    'Tutoring',
-    'Project',
-    'Late arrival',
-    'Personal activity',
-  ];
+  List<String> get _allConstraints {
+    final l10n = context.l10n;
+    return <String>[
+      l10n.constraintHomework,
+      l10n.constraintTutoring,
+      l10n.constraintProject,
+      l10n.constraintLateArrival,
+      l10n.constraintPersonalActivity,
+    ];
+  }
   final Set<String> _selectedConstraints = {};
 
   bool _hasSelectedWakeUpTime = false;
@@ -122,13 +125,14 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     final colors = Theme.of(context).colorScheme;
     final auth = context.read<AuthService>();
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
 
     // Validate the local inputs before touching the network: a plan needs a
     // wake-up time whether it is saved to the cloud or only on this device.
     if (!_hasSelectedWakeUpTime) {
       setState(() => _showWakeUpTimeError = true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a wake-up time first.')),
+        SnackBar(content: Text(l10n.errSelectWakeUpTime)),
       );
       return;
     }
@@ -192,7 +196,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       if (!mounted) return;
       setState(() => _isSaving = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not save plan locally: $e')),
+        SnackBar(content: Text('${l10n.errSaveLocal}: $e')),
       );
       return;
     }
@@ -206,12 +210,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       setState(() => _isSaving = false);
       messenger.showSnackBar(
         SnackBar(
-          content: const Text(
-            'Saved on this device only. It was not synced to the cloud — '
-            'reconnect and save to sync.',
-          ),
+          content: Text(l10n.msgSavedLocalOnly),
           action: SnackBarAction(
-            label: 'Retry',
+            label: l10n.retry,
             textColor: colors.primary,
             onPressed: _handleSave,
           ),
@@ -262,11 +263,9 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       );
       messenger.showSnackBar(
         SnackBar(
-          content: const Text(
-            'Could not sync to cloud. Saved on this device — tap Retry to sync.',
-          ),
+          content: Text(l10n.msgSyncFailed),
           action: SnackBarAction(
-            label: 'Retry',
+            label: l10n.retry,
             textColor: colors.primary,
             onPressed: _handleSave,
           ),
@@ -286,6 +285,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final options = _getOptions();
+    final l10n = context.l10n;
 
     return PopScope(
       canPop: !_isDirty,
@@ -294,18 +294,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
         final discard = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Discard changes?'),
-            content: const Text(
-              'You have unsaved planner changes. Do you want to discard them?',
-            ),
+            title: Text(l10n.dialogDiscardChangesTitle),
+            content: Text(l10n.dialogDiscardChangesContent),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Stay'),
+                child: Text(l10n.dialogStay),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Discard'),
+                child: Text(l10n.dialogDiscard),
               ),
             ],
           ),
@@ -321,8 +319,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           foregroundColor: colors.onSurface,
           elevation: 0,
           title: Text(
-            'Sleep Planner',
-            style: GoogleFonts.karla(
+            l10n.plannerAppBarTitle,
+            style: TextStyle(fontFamily: 'Kanit', 
               fontSize: 12,
               color: colors.onSurfaceVariant,
             ),
@@ -343,8 +341,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'When should I sleep?',
-                          style: GoogleFonts.karla(
+                          l10n.plannerWhenShouldISleep,
+                          style: TextStyle(fontFamily: 'Kanit', 
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: colors.onSurface,
@@ -364,8 +362,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
                 // ── Constraints ──
                 Text(
-                  'Tonight I also have…',
-                  style: GoogleFonts.karla(
+                  l10n.plannerTonightIAlsoHave,
+                  style: TextStyle(fontFamily: 'Kanit', 
                     fontSize: 14,
                     color: colors.onSurfaceVariant,
                   ),
@@ -394,7 +392,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         ),
                         child: Text(
                           c,
-                          style: GoogleFonts.karla(
+                          style: TextStyle(fontFamily: 'Kanit', 
                             fontSize: 12,
                             fontWeight: isOn
                                 ? FontWeight.w500
@@ -416,16 +414,18 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Suggested bedtimes',
-                      style: GoogleFonts.karla(
+                      l10n.plannerSuggestedBedtimes,
+                      style: TextStyle(fontFamily: 'Kanit', 
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         color: colors.onSurface,
                       ),
                     ),
                     Text(
-                      'Wake at ${DateFormat('HH:mm').format(_wakeUpTime)}',
-                      style: GoogleFonts.karla(
+                      l10n.plannerWakeAt(
+                        DateFormat('HH:mm').format(_wakeUpTime),
+                      ),
+                      style: TextStyle(fontFamily: 'Kanit', 
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
                       ),
@@ -466,6 +466,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
 
   Widget _buildInputsCard() {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -478,8 +479,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Wake-up time',
-            style: GoogleFonts.karla(
+            l10n.plannerWakeUpTime,
+            style: TextStyle(fontFamily: 'Kanit', 
               fontSize: 14,
               color: colors.onSurfaceVariant,
             ),
@@ -503,7 +504,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               ),
               child: Text(
                 DateFormat('hh:mm a').format(_wakeUpTime),
-                style: GoogleFonts.karla(
+                style: TextStyle(fontFamily: 'Kanit', 
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -516,15 +517,15 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           Row(
             children: [
               Text(
-                'Time to fall asleep: ',
-                style: GoogleFonts.karla(
+                l10n.plannerTimeToFallAsleep,
+                style: TextStyle(fontFamily: 'Kanit', 
                   fontSize: 14,
                   color: colors.onSurfaceVariant,
                 ),
               ),
               Text(
-                '${_latency.toInt()} min',
-                style: GoogleFonts.karla(
+                '${_latency.toInt()} ${l10n.plannerLatencyMin}',
+                style: TextStyle(fontFamily: 'Kanit', 
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: colors.onSurface,
@@ -554,3 +555,5 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     );
   }
 }
+
+

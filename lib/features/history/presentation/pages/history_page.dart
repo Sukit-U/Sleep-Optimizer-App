@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:snoozemate/app/app.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/services/auth_service.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
@@ -55,6 +56,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _loadHistory() async {
     final auth = context.read<AuthService>();
+    final l10n = context.l10n;
     final userId = await auth.ensureSignedIn();
 
     setState(() {
@@ -82,7 +84,7 @@ class _HistoryPageState extends State<HistoryPage> {
         _planBatch = null;
         _sqiBatch = null;
         _isLoading = false;
-        _error = 'Could not sign in. Showing local plans only.';
+        _error = l10n.historySignInFailed;
       });
       return;
     }
@@ -159,14 +161,13 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> _deleteSQIRecord(String recordId) async {
     final confirmed = await confirmDeleteSqiRecord(context);
     if (!confirmed || !mounted) return;
+    final l10n = context.l10n;
 
     final userId = context.read<AuthService>().uid;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not sign in. Check your connection and try again.',
-          ),
+        SnackBar(
+          content: Text(l10n.historySnackSignInFailed),
         ),
       );
       return;
@@ -183,8 +184,8 @@ class _HistoryPageState extends State<HistoryPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: const Text(sqiDeleteUnconfirmedMessage),
-          action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
+          content: Text(l10n.historySnackDeleteUnconfirmed),
+          action: SnackBarAction(label: l10n.retry, onPressed: _loadHistory),
         ),
       );
       return;
@@ -201,6 +202,7 @@ class _HistoryPageState extends State<HistoryPage> {
     if (!confirmed || !mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
 
     // Check if it's a local-only plan (not in cloud)
     final isLocalOnly =
@@ -219,7 +221,7 @@ class _HistoryPageState extends State<HistoryPage> {
       } catch (e) {
         if (!mounted) return;
         messenger.showSnackBar(
-          SnackBar(content: Text('Could not delete local plan: $e')),
+          SnackBar(content: Text(l10n.historySnackDeleteLocalFailed(e.toString()))),
         );
       }
       return;
@@ -232,8 +234,8 @@ class _HistoryPageState extends State<HistoryPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: const Text(sleepPlanDeleteUnconfirmedMessage),
-          action: SnackBarAction(label: 'Refresh', onPressed: _loadHistory),
+          content: Text(l10n.historySnackDeleteUnconfirmed),
+          action: SnackBarAction(label: l10n.retry, onPressed: _loadHistory),
         ),
       );
       return;
@@ -252,11 +254,11 @@ class _HistoryPageState extends State<HistoryPage> {
         // Best effort; loadLocalSleepPlans filters tombstoned ids.
       }
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Plan deleted from cloud. Local cleanup failed: $e'),
-        ),
-      );
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(l10n.historySnackPlanDeletedCloud(e.toString())),
+            ),
+          );
       await _loadHistory();
       return;
     }
@@ -266,6 +268,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _openRecommendations(String recordId, String userId) async {
+    final l10n = context.l10n;
     if (_recsCache.containsKey(recordId)) {
       if (!mounted) return;
       showRecommendationSheet(
@@ -298,7 +301,7 @@ class _HistoryPageState extends State<HistoryPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load recommendations.')),
+        SnackBar(content: Text(l10n.historySnackCouldNotLoadRecs)),
       );
     }
   }
@@ -306,10 +309,11 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'History',
+          l10n.historyPageTitle,
           style: AppTypography.h1.copyWith(color: colors.onSurface),
         ),
         leading: const BackButton(),
@@ -331,7 +335,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
                     ? ErrorStateWidget(
-                        message: 'Failed to load history',
+                        message: l10n.historyLoadFailed,
                         detail: _error,
                         onRetry: _loadHistory,
                       )
@@ -348,6 +352,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Widget _buildSegmentedControl() {
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spacingXs),
       decoration: BoxDecoration(
@@ -370,7 +375,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 child: Center(
                   child: Text(
-                    'SQI records',
+                    l10n.historyTabSqi,
                     style: AppTypography.tabLabel.copyWith(
                       color: _selectedTab == 'sqi'
                           ? colors.onPrimary
@@ -394,7 +399,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 child: Center(
                   child: Text(
-                    'Sleep plans',
+                    l10n.historyTabPlans,
                     style: AppTypography.tabLabel.copyWith(
                       color: _selectedTab == 'plans'
                           ? colors.onPrimary
@@ -411,6 +416,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildSQIList() {
+    final l10n = context.l10n;
     final batch = _sqiBatch;
     final validRecords = _validSqiRecords();
     final legacyCount = batch?.legacyCount ?? 0;
@@ -419,8 +425,8 @@ class _HistoryPageState extends State<HistoryPage> {
 
     if (total == 0) {
       return EmptyStateCard(
-        label: 'No assessments yet.',
-        ctaLabel: 'Take assessment',
+        label: l10n.historyEmptySqiLabel,
+        ctaLabel: l10n.historyEmptySqiCta,
         onCtaPressed: () => Navigator.of(context).pushNamed('/sleep-quality'),
       );
     }
@@ -430,7 +436,7 @@ class _HistoryPageState extends State<HistoryPage> {
       children: [
         if (invalidCount > 0)
           _unreadableBanner(
-            '$invalidCount record(s) could not be read and are hidden.',
+            l10n.historyUnreadableRecords(invalidCount.toString()),
           ),
         Expanded(
           child: ListView.separated(
@@ -461,6 +467,7 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _legacySQIRow(SQIRecordLegacy legacy) {
     final partial = legacy.partial;
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -479,7 +486,7 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                '· ${partial.sleepQualityLevel ?? 'quality level unavailable'}',
+                '· ${partial.sleepQualityLevel ?? l10n.historyQualityUnavailable}',
                 style: AppTypography.caption.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -495,7 +502,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  'legacy record',
+                  l10n.historyLegacyRecord,
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
@@ -504,7 +511,7 @@ class _HistoryPageState extends State<HistoryPage> {
           if (partial.createdAt != null) ...[
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
-              _formatDate(partial.createdAt!),
+              _formatDate(partial.createdAt!, l10n),
               style: AppTypography.caption.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -514,7 +521,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.spacingXs),
               child: Text(
-                'Questionnaire details unavailable for this record.',
+                l10n.historyQuestionnaireUnavailable,
                 style: AppTypography.caption.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -526,6 +533,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildPlansList() {
+    final l10n = context.l10n;
     final batch = _planBatch;
     final validPlans = _validSleepPlans();
     final legacyCount = batch?.legacyCount ?? 0;
@@ -533,8 +541,8 @@ class _HistoryPageState extends State<HistoryPage> {
 
     if (validPlans.isEmpty && legacyCount == 0) {
       return EmptyStateCard(
-        label: 'No plans saved yet.',
-        ctaLabel: 'Open planner',
+        label: l10n.historyEmptyPlansLabel,
+        ctaLabel: l10n.historyEmptyPlansCta,
         onCtaPressed: () => Navigator.of(context).pushNamed('/sleep-planner'),
       );
     }
@@ -544,7 +552,7 @@ class _HistoryPageState extends State<HistoryPage> {
       children: [
         if (invalidCount > 0)
           _unreadableBanner(
-            '$invalidCount plan(s) could not be read and are hidden.',
+            l10n.historyUnreadablePlans(invalidCount.toString()),
           ),
         Expanded(
           child: ListView.separated(
@@ -573,6 +581,7 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _legacyPlanRow(SleepPlanLegacy legacy) {
     final partial = legacy.partial;
     final colors = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -588,13 +597,13 @@ class _HistoryPageState extends State<HistoryPage> {
               Text(
                 partial.verifiedBedtimeEntries.isNotEmpty
                     ? partial.verifiedBedtimeEntries.first
-                    : 'bedtime unavailable',
+                    : l10n.historyBedtimeUnavailable,
                 style: AppTypography.h3.copyWith(color: colors.onSurface),
               ),
               if (partial.wakeUpTime != null) ...[
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  '→ ${_formatTime(partial.wakeUpTime!)}',
+                  '→ ${_formatTime(partial.wakeUpTime!, l10n)}',
                   style: AppTypography.h3.copyWith(color: colors.onSurface),
                 ),
               ],
@@ -609,7 +618,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  'legacy record',
+                  l10n.historyLegacyRecord,
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
@@ -618,7 +627,7 @@ class _HistoryPageState extends State<HistoryPage> {
           if (partial.createdAt != null || partial.sleepCycles != null) ...[
             const SizedBox(height: AppSpacing.spacingXs),
             Text(
-              '${partial.sleepCycles ?? '?'} cycles · ${partial.createdAt != null ? _formatDate(partial.createdAt!) : 'date unavailable'}',
+              '${l10n.plannerCycles(partial.sleepCycles ?? 0)} · ${partial.createdAt != null ? _formatDate(partial.createdAt!, l10n) : l10n.historyDateUnavailable}',
               style: AppTypography.caption.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -659,18 +668,17 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  String _formatDate(DateTime dateTime) {
+  String _formatDate(DateTime dateTime, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    if (difference.inDays == 0) return 'Today, ${_formatTime(dateTime)}';
-    if (difference.inDays == 1) return 'Yesterday, ${_formatTime(dateTime)}';
-    if (difference.inDays < 7) return '${difference.inDays} days ago';
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    if (difference.inDays == 0) return l10n.historyDateToday(_formatTime(dateTime, l10n));
+    if (difference.inDays == 1) return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
+    if (difference.inDays < 7) return l10n.historyDateDaysAgo(difference.inDays);
+    return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
   }
 
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
-    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:${dateTime.minute.toString().padLeft(2, '0')} $period';
+  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
+    return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }
+

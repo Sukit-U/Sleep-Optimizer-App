@@ -3,6 +3,7 @@ import 'package:snoozemate/app/router.dart';
 import 'package:snoozemate/core/theme/app_colors.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import '../../../../models/recommendation_model.dart';
 import '../../domain/usecases/generate_recommendations.dart';
 import '../../../sleep_quality/domain/entities/sqi_result.dart';
@@ -29,6 +30,8 @@ class _RecommendationPageState extends State<RecommendationPage> {
             level: result.level.name,
           );
 
+    final l10n = context.l10n;
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -38,35 +41,34 @@ class _RecommendationPageState extends State<RecommendationPage> {
           ),
           children: [
             // Inline header (Lovable reference: back button + caption + title)
-            _buildHeader(),
+            _buildHeader(l10n),
 
             // SQI Score display
             if (result != null) ...[
-              _buildSQIScoreDisplay(result),
+              _buildSQIScoreDisplay(result, l10n),
               const SizedBox(height: AppSpacing.lg),
 
               // Factor breakdown
-              _buildFactorBreakdown(result),
+              _buildFactorBreakdown(l10n),
               const SizedBox(height: AppSpacing.lg),
 
               // Recommendations
-              _buildRecommendations(recommendations),
+              _buildRecommendations(l10n),
             ],
 
             // Empty state or recommendations
             if (recommendations.isEmpty && result == null)
               _buildEmptyState(
-                label:
-                    'Complete your SQI to receive personalized recommendations.',
+                label: l10n.recEmptyNeedSQI,
               )
             else
               ...recommendations.isEmpty
                   ? [
                       _buildEmptyState(
-                        label: 'Your habits look great — keep it up!',
+                        label: l10n.recEmptyGreatHabits,
                       ),
                     ]
-                  : recommendations.map((r) => _buildRecommendationItem(r)),
+                  : recommendations.map((r) => _buildRecommendationItem(r, l10n)),
 
             // Navigation buttons
             if (result != null) ...[
@@ -75,7 +77,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 children: [
                   Expanded(
                     child: _buildGhostButton(
-                      label: 'Home',
+                      label: l10n.recButtonHome,
                       icon: Icons.home,
                       onPressed: () {
                         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -88,7 +90,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _buildPrimaryButton(
-                      label: 'View history',
+                      label: l10n.recButtonViewHistory,
                       onPressed: () {
                         Navigator.of(context).pushNamed(AppRoutes.history);
                       },
@@ -104,7 +106,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Inline header (Lovable reference: back button pill + caption + title)
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg), // mb-6
@@ -133,13 +135,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your result',
+                  l10n.recYourResult,
                   style: AppTypography.caption.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  'Sleep Quality Index',
+                  l10n.recSleepQualityIndex,
                   style: AppTypography.h1.copyWith(color: colors.onSurface),
                 ),
               ],
@@ -153,7 +155,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
   // Implementation of various UI components matching Lovable design
 
   /// SQI Score display with circular gradient
-  Widget _buildSQIScoreDisplay(SqiResult result) {
+  Widget _buildSQIScoreDisplay(SqiResult result, AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
     final scoreColor = _getScoreColor(result.score);
 
@@ -204,7 +206,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                         ),
                       ),
                       Text(
-                        '/ 100',
+                        l10n.recScoreSuffix,
                         style: AppTypography.caption.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -227,7 +229,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
               borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
             ),
             child: Text(
-              result.level.name,
+              l10n.sleepQualityLevel(result.level.name),
               style: AppTypography.labelSmall.copyWith(color: scoreColor),
             ),
           ),
@@ -237,24 +239,24 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Factor breakdown section with progress bars
-  Widget _buildFactorBreakdown(SqiResult result) {
+  Widget _buildFactorBreakdown(AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Factor breakdown',
+          l10n.recFactorBreakdown,
           style: AppTypography.h2.copyWith(color: colors.onSurface),
         ),
         const SizedBox(height: AppSpacing.md),
-        ..._buildFactorItems(result),
+        ..._buildFactorItems(l10n),
       ],
     );
   }
 
-  List<Widget> _buildFactorItems(SqiResult result) {
+  List<Widget> _buildFactorItems(AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
-    final entries = result.factorScores.entries.toList()
+    final entries = widget.result!.factorScores.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return entries.map((f) {
@@ -275,7 +277,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    f.key,
+                    l10n.recFactorLabel(f.key) ?? f.key,
                     style: AppTypography.body.copyWith(color: colors.onSurface),
                   ),
                   Text(
@@ -315,13 +317,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Recommendations section header with sparkle icon
-  Widget _buildRecommendations(List<Recommendation> recommendations) {
+  Widget _buildRecommendations(AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recommendations',
+          l10n.recRecommendations,
           style: AppTypography.h2.copyWith(color: colors.onSurface),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -330,7 +332,8 @@ class _RecommendationPageState extends State<RecommendationPage> {
   }
 
   /// Detailed recommendation card
-  Widget _buildRecommendationItem(Recommendation recommendation) {
+  Widget _buildRecommendationItem(
+      Recommendation recommendation, AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -356,40 +359,44 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   borderRadius: BorderRadius.circular(AppSpacing.roundedFull),
                 ),
                 child: Text(
-                  'Priority ${recommendation.priority}',
+                  l10n.recPriorityLabel(recommendation.priority) ??
+                      recommendation.priority,
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
-              Text(
-                recommendation.factor,
-                style: AppTypography.caption.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
+               Text(
+                 l10n.recFactorLabel(recommendation.factor) ??
+                     recommendation.factor,
+                 style: AppTypography.caption.copyWith(
+                   color: colors.onSurfaceVariant,
+                 ),
+               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            recommendation.title,
-            style: AppTypography.h3.copyWith(color: colors.onSurface),
-          ),
+           Text(
+             l10n.recTitleFor(recommendation.factor) ?? recommendation.title,
+             style: AppTypography.h3.copyWith(color: colors.onSurface),
+           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            recommendation.description,
-            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-          ),
+           Text(
+             l10n.recDescriptionFor(recommendation.factor) ??
+                 recommendation.description,
+             style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+           ),
           const SizedBox(height: AppSpacing.md),
-          Text(
-            'Action: ${recommendation.action}',
-            style: AppTypography.caption.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
+           Text(
+             l10n.recAction(l10n.recActionFor(recommendation.factor) ??
+                 recommendation.action),
+             style: AppTypography.caption.copyWith(
+               color: colors.onSurfaceVariant,
+             ),
+           ),
           const SizedBox(height: AppSpacing.spacingXs),
-          Text(
-            'Factor: ${recommendation.factor}',
-            style: AppTypography.caption.copyWith(color: colors.secondary),
-          ),
+           Text(
+             l10n.recFactor(recommendation.factor),
+             style: AppTypography.caption.copyWith(color: colors.secondary),
+           ),
         ],
       ),
     );
@@ -484,3 +491,4 @@ class _RecommendationPageState extends State<RecommendationPage> {
     }
   }
 }
+

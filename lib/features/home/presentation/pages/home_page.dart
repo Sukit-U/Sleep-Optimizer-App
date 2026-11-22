@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:snoozemate/app/router.dart';
+import 'package:snoozemate/core/l10n/app_localizations.dart';
 import 'package:snoozemate/core/theme/app_spacing.dart';
 import 'package:snoozemate/core/theme/app_typography.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:snoozemate/features/home/presentation/widgets/home_body.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,24 +24,39 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<_TabItem> _tabs = [
-    _TabItem(route: AppRoutes.home, label: 'Home', icon: Icons.home),
+    _TabItem(route: AppRoutes.home, icon: Icons.home),
     _TabItem(
       route: AppRoutes.sleepPlanner,
-      label: 'Planner',
       icon: Icons.nightlight_round,
     ),
     _TabItem(
       route: AppRoutes.sleepQuality,
-      label: 'SQI',
       icon: Icons.checklist_rtl_rounded,
     ),
-    _TabItem(route: AppRoutes.history, label: 'History', icon: Icons.history),
+    _TabItem(route: AppRoutes.history, icon: Icons.history),
     _TabItem(
       route: AppRoutes.settings,
-      label: 'Settings',
       icon: Icons.settings,
     ),
   ];
+
+  String _tabLabel(String route) {
+    final l10n = context.l10n;
+    switch (route) {
+      case AppRoutes.home:
+        return l10n.navHome;
+      case AppRoutes.sleepPlanner:
+        return l10n.navPlanner;
+      case AppRoutes.sleepQuality:
+        return l10n.navSqi;
+      case AppRoutes.history:
+        return l10n.navHistory;
+      case AppRoutes.settings:
+        return l10n.navSettings;
+      default:
+        return route;
+    }
+  }
 
   void _onTabTapped(int index) {
     if (_currentIndex == index) return;
@@ -125,8 +140,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: AppSpacing.xs - 2),
                         Text(
-                          tab.label,
-                          style: GoogleFonts.karla(
+                          _tabLabel(tab.route),
+                          style: TextStyle(fontFamily: 'Kanit', 
                             fontSize: AppTypography.navLabel.fontSize,
                             fontWeight: active
                                 ? FontWeight.w600
@@ -151,12 +166,12 @@ class _HomePageState extends State<HomePage> {
 
 class _TabItem {
   final String route;
-  final String label;
   final IconData icon;
 
   const _TabItem({
     required this.route,
-    required this.label,
     required this.icon,
   });
 }
+
+

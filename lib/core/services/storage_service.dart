@@ -20,6 +20,16 @@ class StorageService {
     return _prefs.getString('theme');
   }
 
+  static const _localeKey = 'app_locale';
+
+  Future<void> saveLocale(String locale) async {
+    await _prefs.setString(_localeKey, locale);
+  }
+
+  String? loadLocale() {
+    return _prefs.getString(_localeKey);
+  }
+
   Future<void> saveHistoryEntry(String key, Map<String, dynamic> entry) async {
     final existing = _prefs.getStringList(key) ?? <String>[];
     existing.add(jsonEncode(entry));
