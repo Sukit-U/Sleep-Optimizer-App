@@ -11,11 +11,9 @@ class SettingsSyncService extends ChangeNotifier {
   SettingsSyncService({
     required this.userId,
     SettingsRepository? repository,
-    StorageService? storage,
-    PendingThemeStorage? pendingStorage,
-  })  : _repository = repository ?? FirestoreSettingsRepository(),
-        _storage = storage,
-        _pendingStorage = pendingStorage;
+    this._storage,
+    this._pendingStorage,
+  }) : _repository = repository ?? FirestoreSettingsRepository();
 
   final String userId;
   final dynamic _repository;
@@ -36,7 +34,8 @@ class SettingsSyncService extends ChangeNotifier {
       _storage ?? await StorageService.create();
 
   Future<PendingThemeStorage> get _pendingStore async =>
-      _pendingStorage ?? PendingThemeStorage(await SharedPreferences.getInstance());
+      _pendingStorage ??
+      PendingThemeStorage(await SharedPreferences.getInstance());
 
   Future<void> saveTheme(String theme) async {
     final storage = await _store;

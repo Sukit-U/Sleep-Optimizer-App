@@ -137,10 +137,8 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         final discard = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-             title: Text(context.l10n.sqDialogDiscardTitle),
-             content: Text(
-               context.l10n.sqDialogDiscardContent,
-             ),
+            title: Text(context.l10n.sqDialogDiscardTitle),
+            content: Text(context.l10n.sqDialogDiscardContent),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -166,15 +164,19 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-               SectionTitle(title: context.l10n.sqCheckInTitle),
+              SectionTitle(title: context.l10n.sqCheckInTitle),
               const SizedBox(height: 8),
               ..._questions.map(
-                 (question) => SQIQuestionCard(
-                   label: context.l10n.recFactorLabel(question.label) ?? question.label,
-                   helper: context.l10n.sqHelperLabel(question.label) ?? question.helper,
-                   selectedValue: _responses[question.label],
-                   hasError: _unansweredTouched.contains(question.label),
-                   onSelected: (value) {
+                (question) => SQIQuestionCard(
+                  label:
+                      context.l10n.recFactorLabel(question.label) ??
+                      question.label,
+                  helper:
+                      context.l10n.sqHelperLabel(question.label) ??
+                      question.helper,
+                  selectedValue: _responses[question.label],
+                  hasError: _unansweredTouched.contains(question.label),
+                  onSelected: (value) {
                     setState(() {
                       _responses[question.label] = value;
                       _unansweredTouched.remove(question.label);
@@ -186,7 +188,11 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
               FilledButton.icon(
                 onPressed: _isSubmitting ? null : _submit,
                 icon: const Icon(Icons.assessment_rounded),
-                 label: Text(_isSubmitting ? context.l10n.sqButtonSaving : context.l10n.sqButtonCalculate),
+                label: Text(
+                  _isSubmitting
+                      ? context.l10n.sqButtonSaving
+                      : context.l10n.sqButtonCalculate,
+                ),
               ),
 
               // A calculated result is kept even when the cloud save fails or
@@ -203,7 +209,7 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
                     );
                   },
                   icon: const Icon(Icons.insights_outlined),
-                   label: Text(context.l10n.sqButtonViewLastResult),
+                  label: Text(context.l10n.sqButtonViewLastResult),
                 ),
               ],
             ],
@@ -229,11 +235,9 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       setState(() {
         _unansweredTouched.addAll(unanswered.map((q) => q.label));
       });
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(
-           content: Text(context.l10n.sqSnackAnswerEvery),
-         ),
-       );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.sqSnackAnswerEvery)));
       return;
     }
 
@@ -278,9 +282,11 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
         } catch (e) {
           if (!mounted) return;
           setState(() => _isSubmitting = false);
-           messenger.showSnackBar(
-             SnackBar(content: Text('${context.l10n.sqSnackCouldNotSaveLocal}: $e')),
-           );
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('${context.l10n.sqSnackCouldNotSaveLocal}: $e'),
+            ),
+          );
           return;
         }
         _currentAssessment = assessment;
@@ -383,8 +389,11 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
           if (!mounted) return;
           messenger.showSnackBar(
             SnackBar(
-               content: Text(context.l10n.sqSnackSavedButRecsFailed),
-               action: SnackBarAction(label: context.l10n.retry, onPressed: _submit),
+              content: Text(context.l10n.sqSnackSavedButRecsFailed),
+              action: SnackBarAction(
+                label: context.l10n.retry,
+                onPressed: _submit,
+              ),
             ),
           );
           return;
@@ -404,13 +413,16 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
             userId: userId,
             lastSyncError: 'unconfirmed',
           );
-           if (!mounted) return;
-           messenger.showSnackBar(
-             SnackBar(
-               content: Text(context.l10n.sqSnackCouldNotConfirm),
-               action: SnackBarAction(label: context.l10n.retry, onPressed: _submit),
-             ),
-           );
+          if (!mounted) return;
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.sqSnackCouldNotConfirm),
+              action: SnackBarAction(
+                label: context.l10n.retry,
+                onPressed: _submit,
+              ),
+            ),
+          );
           return;
       }
     } finally {
@@ -435,21 +447,21 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
     final choice = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-         title: Text(context.l10n.sqOfflineDialogTitle),
-          content: Text(
-            context.l10n.sqOfflineDialogContent(
-              '${result.score}',
-              context.l10n.sleepQualityLevel(result.level.name),
-            ),
+        title: Text(context.l10n.sqOfflineDialogTitle),
+        content: Text(
+          context.l10n.sqOfflineDialogContent(
+            '${result.score}',
+            context.l10n.sleepQualityLevel(result.level.name),
           ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-             child: Text(context.l10n.sqOfflineViewResult),
+            child: Text(context.l10n.sqOfflineViewResult),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-             child: Text(context.l10n.sqOfflineRetrySave),
+            child: Text(context.l10n.sqOfflineRetrySave),
           ),
         ],
       ),
@@ -470,10 +482,8 @@ class _SleepQualityPageState extends State<SleepQualityPage> {
       // Dismissed without choosing: keep the result recoverable from a snackbar.
       messenger.showSnackBar(
         SnackBar(
-           content: Text(
-             context.l10n.sqOfflineSnack('${result.score}'),
-           ),
-           action: SnackBarAction(label: context.l10n.retry, onPressed: _submit),
+          content: Text(context.l10n.sqOfflineSnack('${result.score}')),
+          action: SnackBarAction(label: context.l10n.retry, onPressed: _submit),
         ),
       );
     }
@@ -485,4 +495,3 @@ class _Question {
   final String label;
   final String helper;
 }
-

@@ -165,4 +165,3 @@ Future<AppDependencies> _bootFirebase() {
     },
   );
 }
-

@@ -31,4 +31,3 @@ Future<bool> confirmDeleteSleepPlan(BuildContext context) async {
   );
   return confirmed ?? false;
 }
-

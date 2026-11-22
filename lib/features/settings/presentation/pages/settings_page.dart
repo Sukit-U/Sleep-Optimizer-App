@@ -18,6 +18,7 @@ class SettingsPage extends StatefulWidget {
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
+
 class _SettingsPageState extends State<SettingsPage> {
   SettingsSyncService? _syncService;
   SettingsSyncState _syncState = SettingsSyncState.idle;
@@ -146,18 +147,26 @@ class _SettingsPageState extends State<SettingsPage> {
                   final isInitializing = cloud.isInitializing;
                   final syncState = _syncService?.state ?? _syncState;
                   final statusText = (syncState != SettingsSyncState.idle)
-                      ? (syncState == SettingsSyncState.pending ? 'รอซิงค์' : syncState == SettingsSyncState.syncing ? 'กำลังซิงค์' : syncState == SettingsSyncState.synced ? 'ซิงค์แล้ว' : 'ซิงค์ไม่สำเร็จ')
+                      ? (syncState == SettingsSyncState.pending
+                            ? 'รอซิงค์'
+                            : syncState == SettingsSyncState.syncing
+                            ? 'กำลังซิงค์'
+                            : syncState == SettingsSyncState.synced
+                            ? 'ซิงค์แล้ว'
+                            : 'ซิงค์ไม่สำเร็จ')
                       : switch (cloud.state) {
-                    CloudConnectionState.ready => l10n.statusConnected,
-                    CloudConnectionState.initializing => l10n.statusConnecting,
-                    CloudConnectionState.notInitialized =>
-                      l10n.statusNotConnected,
-                    CloudConnectionState.unavailable => l10n.statusUnavailable,
-                    CloudConnectionState.firebaseInitialized =>
-                      l10n.statusFirebaseReadyAppCheckPending,
-                    CloudConnectionState.appCheckCompleted =>
-                      l10n.statusCloudReadySignInPending,
-                  };
+                          CloudConnectionState.ready => l10n.statusConnected,
+                          CloudConnectionState.initializing =>
+                            l10n.statusConnecting,
+                          CloudConnectionState.notInitialized =>
+                            l10n.statusNotConnected,
+                          CloudConnectionState.unavailable =>
+                            l10n.statusUnavailable,
+                          CloudConnectionState.firebaseInitialized =>
+                            l10n.statusFirebaseReadyAppCheckPending,
+                          CloudConnectionState.appCheckCompleted =>
+                            l10n.statusCloudReadySignInPending,
+                        };
                   return Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
@@ -257,14 +266,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-

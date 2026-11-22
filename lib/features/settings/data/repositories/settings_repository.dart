@@ -30,7 +30,10 @@ class FirestoreSettingsRepository {
     }
   }
 
-  Future<void> syncSettings({required String userId, required String theme}) async {
+  Future<void> syncSettings({
+    required String userId,
+    required String theme,
+  }) async {
     await _firestoreService.saveSettings({'userId': userId, 'theme': theme});
     final storage = await StorageService.create();
     await storage.saveTheme(theme);
@@ -55,4 +58,3 @@ class FirestoreSettingsRepository {
     return null;
   }
 }
-

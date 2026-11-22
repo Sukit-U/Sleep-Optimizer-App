@@ -25,19 +25,10 @@ class _HomePageState extends State<HomePage> {
 
   final List<_TabItem> _tabs = [
     _TabItem(route: AppRoutes.home, icon: Icons.home),
-    _TabItem(
-      route: AppRoutes.sleepPlanner,
-      icon: Icons.nightlight_round,
-    ),
-    _TabItem(
-      route: AppRoutes.sleepQuality,
-      icon: Icons.checklist_rtl_rounded,
-    ),
+    _TabItem(route: AppRoutes.sleepPlanner, icon: Icons.nightlight_round),
+    _TabItem(route: AppRoutes.sleepQuality, icon: Icons.checklist_rtl_rounded),
     _TabItem(route: AppRoutes.history, icon: Icons.history),
-    _TabItem(
-      route: AppRoutes.settings,
-      icon: Icons.settings,
-    ),
+    _TabItem(route: AppRoutes.settings, icon: Icons.settings),
   ];
 
   String _tabLabel(String route) {
@@ -141,7 +132,8 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: AppSpacing.xs - 2),
                         Text(
                           _tabLabel(tab.route),
-                          style: TextStyle(fontFamily: 'Kanit', 
+                          style: TextStyle(
+                            fontFamily: 'Kanit',
                             fontSize: AppTypography.navLabel.fontSize,
                             fontWeight: active
                                 ? FontWeight.w600
@@ -168,10 +160,5 @@ class _TabItem {
   final String route;
   final IconData icon;
 
-  const _TabItem({
-    required this.route,
-    required this.icon,
-  });
+  const _TabItem({required this.route, required this.icon});
 }
-
-

@@ -101,7 +101,9 @@ void main() {
     );
   });
 
-  testWidgets('all seven known factors render localized labels', (tester) async {
+  testWidgets('all seven known factors render localized labels', (
+    tester,
+  ) async {
     for (final factor in _factors) {
       await _open(tester, recs: [_recFor(factor, 'high')]);
       final l10n = AppLocalizations(const Locale('en'));
@@ -111,21 +113,17 @@ void main() {
     }
   });
 
-  testWidgets('unknown factor falls back to Thai generic label', (tester) async {
-    await _open(
-      tester,
-      recs: [_recFor('UnknownFactor', 'high')],
-    );
+  testWidgets('unknown factor falls back to Thai generic label', (
+    tester,
+  ) async {
+    await _open(tester, recs: [_recFor('UnknownFactor', 'high')]);
     expect(find.text('ปัจจัย'), findsOneWidget);
   });
 
   testWidgets('unknown priority falls back to Thai generic label', (
     tester,
   ) async {
-    await _open(
-      tester,
-      recs: [_recFor('Caffeine', 'bogus')],
-    );
+    await _open(tester, recs: [_recFor('Caffeine', 'bogus')]);
     expect(find.text('ความสำคัญ'), findsOneWidget);
   });
 }

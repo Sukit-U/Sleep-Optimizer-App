@@ -81,7 +81,8 @@ void showRecommendationSheet(
                 child: ListView.builder(
                   controller: scrollController,
                   itemCount: recs.length,
-                  itemBuilder: (ctx, i) => _RecommendationItem(rec: recs[i], l10n: l10n),
+                  itemBuilder: (ctx, i) =>
+                      _RecommendationItem(rec: recs[i], l10n: l10n),
                 ),
               ),
               if (unavailableCount > 0)
@@ -148,18 +149,18 @@ class _RecommendationItem extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-           Text(
-             l10n.recTitleFor(rec.factor) ?? rec.title,
-             style: AppTypography.h3.copyWith(color: colors.onSurface),
-           ),
+          Text(
+            l10n.recTitleFor(rec.factor) ?? rec.title,
+            style: AppTypography.h3.copyWith(color: colors.onSurface),
+          ),
           const SizedBox(height: AppSpacing.xs),
-           Text(
-             l10n.recDescriptionFor(rec.factor) ?? rec.description,
-             style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-           ),
+          Text(
+            l10n.recDescriptionFor(rec.factor) ?? rec.description,
+            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(
-             l10n.recAction(l10n.recActionFor(rec.factor) ?? rec.action),
+            l10n.recAction(l10n.recActionFor(rec.factor) ?? rec.action),
             style: AppTypography.caption.copyWith(
               color: colors.onSurfaceVariant,
             ),
@@ -169,4 +170,3 @@ class _RecommendationItem extends StatelessWidget {
     );
   }
 }
-

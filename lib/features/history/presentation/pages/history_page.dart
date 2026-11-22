@@ -165,11 +165,9 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final userId = context.read<AuthService>().uid;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.historySnackSignInFailed),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.historySnackSignInFailed)));
       return;
     }
 
@@ -221,7 +219,9 @@ class _HistoryPageState extends State<HistoryPage> {
       } catch (e) {
         if (!mounted) return;
         messenger.showSnackBar(
-          SnackBar(content: Text(l10n.historySnackDeleteLocalFailed(e.toString()))),
+          SnackBar(
+            content: Text(l10n.historySnackDeleteLocalFailed(e.toString())),
+          ),
         );
       }
       return;
@@ -254,11 +254,11 @@ class _HistoryPageState extends State<HistoryPage> {
         // Best effort; loadLocalSleepPlans filters tombstoned ids.
       }
       if (!mounted) return;
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(l10n.historySnackPlanDeletedCloud(e.toString())),
-            ),
-          );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.historySnackPlanDeletedCloud(e.toString())),
+        ),
+      );
       await _loadHistory();
       return;
     }
@@ -671,9 +671,15 @@ class _HistoryPageState extends State<HistoryPage> {
   String _formatDate(DateTime dateTime, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    if (difference.inDays == 0) return l10n.historyDateToday(_formatTime(dateTime, l10n));
-    if (difference.inDays == 1) return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
-    if (difference.inDays < 7) return l10n.historyDateDaysAgo(difference.inDays);
+    if (difference.inDays == 0) {
+      return l10n.historyDateToday(_formatTime(dateTime, l10n));
+    }
+    if (difference.inDays == 1) {
+      return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
+    }
+    if (difference.inDays < 7) {
+      return l10n.historyDateDaysAgo(difference.inDays);
+    }
     return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
   }
 
@@ -681,4 +687,3 @@ class _HistoryPageState extends State<HistoryPage> {
     return l10n.formatTime(dateTime.hour, dateTime.minute);
   }
 }
-

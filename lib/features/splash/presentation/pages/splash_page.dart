@@ -55,7 +55,8 @@ class _SplashPageState extends State<SplashPage> {
                   const SizedBox(height: AppSpacing.lg),
                   Text(
                     context.l10n.splashTitle,
-                    style: TextStyle(fontFamily: 'Kanit', 
+                    style: TextStyle(
+                      fontFamily: 'Kanit',
                       fontSize: 34,
                       fontWeight: FontWeight.w600,
                       color: colors.onSurface,
@@ -65,7 +66,8 @@ class _SplashPageState extends State<SplashPage> {
                   const SizedBox(height: AppSpacing.sm + AppSpacing.xs),
                   Text(
                     context.l10n.splashSubtitle,
-                    style: TextStyle(fontFamily: 'Kanit', 
+                    style: TextStyle(
+                      fontFamily: 'Kanit',
                       fontSize: 16,
                       color: colors.onSurfaceVariant,
                       height: 1.5,
@@ -83,7 +85,8 @@ class _SplashPageState extends State<SplashPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        textStyle: TextStyle(fontFamily: 'Kanit', 
+                        textStyle: TextStyle(
+                          fontFamily: 'Kanit',
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -95,7 +98,8 @@ class _SplashPageState extends State<SplashPage> {
                   Text(
                     context.l10n.splashDisclaimer,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: 'Kanit', 
+                    style: TextStyle(
+                      fontFamily: 'Kanit',
                       fontSize: 12,
                       color: colors.onSurfaceVariant,
                     ),
@@ -110,5 +114,3 @@ class _SplashPageState extends State<SplashPage> {
     );
   }
 }
-
-

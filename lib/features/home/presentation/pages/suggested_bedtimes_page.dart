@@ -55,4 +55,3 @@ class _BedtimeCard extends StatelessWidget {
     );
   }
 }
-

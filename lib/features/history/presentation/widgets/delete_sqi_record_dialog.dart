@@ -36,4 +36,3 @@ Future<bool> confirmDeleteSqiRecord(BuildContext context) async {
   );
   return confirmed ?? false;
 }
-

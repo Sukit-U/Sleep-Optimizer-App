@@ -69,10 +69,14 @@ void main() {
       expect(l10n.sleepQualityLevel('good'), 'ดี');
       expect(l10n.sleepQualityLevel('fair'), 'ปานกลาง');
       expect(l10n.sleepQualityLevel('poor'), 'ควรปรับปรุง');
-      expect(l10n.historySignInFailed,
-          'Could not sign in. Showing local plans only.');
-      expect(l10n.settingsCloudError,
-          'Could not connect to the cloud. Please try again.');
+      expect(
+        l10n.historySignInFailed,
+        'Could not sign in. Showing local plans only.',
+      );
+      expect(
+        l10n.settingsCloudError,
+        'Could not connect to the cloud. Please try again.',
+      );
     });
 
     test('returns Thai strings for th locale', () {
@@ -94,10 +98,14 @@ void main() {
       expect(l10n.sleepQualityLevel('good'), 'ดี');
       expect(l10n.sleepQualityLevel('fair'), 'ปานกลาง');
       expect(l10n.sleepQualityLevel('poor'), 'ควรปรับปรุง');
-      expect(l10n.historySignInFailed,
-          'ไม่สามารถเข้าสู่ระบบได้ แสดงเฉพาะแผนในเครื่องเท่านั้น');
-      expect(l10n.settingsCloudError,
-          'เชื่อมต่อคลาวด์ไม่ได้ โปรดลองใหม่อีกครั้ง');
+      expect(
+        l10n.historySignInFailed,
+        'ไม่สามารถเข้าสู่ระบบได้ แสดงเฉพาะแผนในเครื่องเท่านั้น',
+      );
+      expect(
+        l10n.settingsCloudError,
+        'เชื่อมต่อคลาวด์ไม่ได้ โปรดลองใหม่อีกครั้ง',
+      );
     });
 
     test('bedtime label is translated', () {
@@ -143,8 +151,10 @@ void main() {
     test('recommendation title mappings are translated for th locale', () {
       final th = AppLocalizations(const Locale('th'));
       expect(th.recTitleFor('Sleep duration'), 'เข้านอนให้เป็นเวลา');
-      expect(th.recTitleFor('Sleep regularity'),
-          'รักษาจังหวะการนอนให้สม่ำเสมอ');
+      expect(
+        th.recTitleFor('Sleep regularity'),
+        'รักษาจังหวะการนอนให้สม่ำเสมอ',
+      );
       expect(th.recTitleFor('Screen time'), 'ลดการใช้หน้าจอก่อนนอน');
       expect(th.recTitleFor('Exercise'), 'ขยับร่างกายเบาๆ ช่วงบ่าย');
       expect(th.recTitleFor('Stress'), 'สร้างกิจวัตรผ่อนคลายก่อนนอน');
@@ -152,23 +162,36 @@ void main() {
       expect(th.recTitleFor('General'), 'นิสัยการนอนยอดเยี่ยม');
     });
 
-    test('recommendation description mappings are translated for th locale', () {
-      final th = AppLocalizations(const Locale('th'));
-      expect(th.recDescriptionFor('Sleep duration'),
-          'เข้านอนเวลาเดิมทุกวันช่วยให้นาฬิกาชีวิตทำงานดีขึ้น');
-      expect(th.recDescriptionFor('Screen time'),
-          'หน้าจอก่อนนอนทำให้เมลาโทนินหลั่งช้าลง');
-      expect(th.recDescriptionFor('Caffeine'),
-          'คาเฟอีนช่วงเย็นรบกวนการเริ่มหลับ');
-      expect(th.recDescriptionFor('General'), 'รักษาพฤติกรรมการนอนที่ดีต่อไป');
-    });
+    test(
+      'recommendation description mappings are translated for th locale',
+      () {
+        final th = AppLocalizations(const Locale('th'));
+        expect(
+          th.recDescriptionFor('Sleep duration'),
+          'เข้านอนเวลาเดิมทุกวันช่วยให้นาฬิกาชีวิตทำงานดีขึ้น',
+        );
+        expect(
+          th.recDescriptionFor('Screen time'),
+          'หน้าจอก่อนนอนทำให้เมลาโทนินหลั่งช้าลง',
+        );
+        expect(
+          th.recDescriptionFor('Caffeine'),
+          'คาเฟอีนช่วงเย็นรบกวนการเริ่มหลับ',
+        );
+        expect(
+          th.recDescriptionFor('General'),
+          'รักษาพฤติกรรมการนอนที่ดีต่อไป',
+        );
+      },
+    );
 
     test('recommendation action mappings are translated for th locale', () {
       final th = AppLocalizations(const Locale('th'));
-      expect(th.recActionFor('Sleep duration'),
-          'ตั้งเวลาเข้านอนคงที่และทำตามทุกวัน');
-      expect(th.recActionFor('Screen time'),
-          'หยุดใช้หน้าจอ 1 ชั่วโมงก่อนนอน');
+      expect(
+        th.recActionFor('Sleep duration'),
+        'ตั้งเวลาเข้านอนคงที่และทำตามทุกวัน',
+      );
+      expect(th.recActionFor('Screen time'), 'หยุดใช้หน้าจอ 1 ชั่วโมงก่อนนอน');
       expect(th.recActionFor('Caffeine'), 'เลี่ยงคาเฟอีนหลัง 14:00 น.');
       expect(th.recActionFor('General'), 'รักษาวิถีการนอนปัจจุบัน');
     });
@@ -207,7 +230,10 @@ void main() {
 
     test('recAction prefixes action with Thai label', () {
       final th = AppLocalizations(const Locale('th'));
-      expect(th.recAction('ดื่มน้ำเปล่ามากขึ้น'), 'สิ่งที่ควรทำ: ดื่มน้ำเปล่ามากขึ้น');
+      expect(
+        th.recAction('ดื่มน้ำเปล่ามากขึ้น'),
+        'สิ่งที่ควรทำ: ดื่มน้ำเปล่ามากขึ้น',
+      );
     });
 
     test('recPriority prefixes priority with Thai label', () {
@@ -240,8 +266,10 @@ void main() {
       // Planner
       expect(th.plannerAppBarTitle, isNot(equals('Sleep Planner')));
       expect(th.plannerSuggestedBedtimes, isNot(equals('Suggested bedtimes')));
-      expect(th.errSelectWakeUpTime,
-          isNot(equals('Please select a wake-up time first.')));
+      expect(
+        th.errSelectWakeUpTime,
+        isNot(equals('Please select a wake-up time first.')),
+      );
 
       // Sleep Quality
       expect(th.sqPageTitle, isNot(equals('Sleep Quality')));
@@ -254,10 +282,16 @@ void main() {
       expect(th.recScoreSuffix, isNot(equals('/ 100')));
       expect(th.recFactorBreakdown, isNot(equals('Factor breakdown')));
       expect(th.recRecommendations, isNot(equals('Recommendations')));
-      expect(th.recEmptyNeedSQI,
-          isNot(equals('Complete your SQI to receive personalized recommendations.')));
-      expect(th.recEmptyGreatHabits,
-          isNot(equals('Your habits look great — keep it up!')));
+      expect(
+        th.recEmptyNeedSQI,
+        isNot(
+          equals('Complete your SQI to receive personalized recommendations.'),
+        ),
+      );
+      expect(
+        th.recEmptyGreatHabits,
+        isNot(equals('Your habits look great — keep it up!')),
+      );
 
       // History
       expect(th.historyPageTitle, isNot(equals('History')));

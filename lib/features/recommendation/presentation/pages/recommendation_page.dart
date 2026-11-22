@@ -58,17 +58,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
             // Empty state or recommendations
             if (recommendations.isEmpty && result == null)
-              _buildEmptyState(
-                label: l10n.recEmptyNeedSQI,
-              )
+              _buildEmptyState(label: l10n.recEmptyNeedSQI)
             else
               ...recommendations.isEmpty
-                  ? [
-                      _buildEmptyState(
-                        label: l10n.recEmptyGreatHabits,
-                      ),
-                    ]
-                  : recommendations.map((r) => _buildRecommendationItem(r, l10n)),
+                  ? [_buildEmptyState(label: l10n.recEmptyGreatHabits)]
+                  : recommendations.map(
+                      (r) => _buildRecommendationItem(r, l10n),
+                    ),
 
             // Navigation buttons
             if (result != null) ...[
@@ -333,7 +329,9 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   /// Detailed recommendation card
   Widget _buildRecommendationItem(
-      Recommendation recommendation, AppLocalizations l10n) {
+    Recommendation recommendation,
+    AppLocalizations l10n,
+  ) {
     final colors = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -364,39 +362,40 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   style: AppTypography.small.copyWith(color: colors.primary),
                 ),
               ),
-               Text(
-                 l10n.recFactorLabel(recommendation.factor) ??
-                     recommendation.factor,
-                 style: AppTypography.caption.copyWith(
-                   color: colors.onSurfaceVariant,
-                 ),
-               ),
+              Text(
+                l10n.recFactorLabel(recommendation.factor) ??
+                    recommendation.factor,
+                style: AppTypography.caption.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-           Text(
-             l10n.recTitleFor(recommendation.factor) ?? recommendation.title,
-             style: AppTypography.h3.copyWith(color: colors.onSurface),
-           ),
+          Text(
+            l10n.recTitleFor(recommendation.factor) ?? recommendation.title,
+            style: AppTypography.h3.copyWith(color: colors.onSurface),
+          ),
           const SizedBox(height: AppSpacing.xs),
-           Text(
-             l10n.recDescriptionFor(recommendation.factor) ??
-                 recommendation.description,
-             style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
-           ),
+          Text(
+            l10n.recDescriptionFor(recommendation.factor) ??
+                recommendation.description,
+            style: AppTypography.body.copyWith(color: colors.onSurfaceVariant),
+          ),
           const SizedBox(height: AppSpacing.md),
-           Text(
-             l10n.recAction(l10n.recActionFor(recommendation.factor) ??
-                 recommendation.action),
-             style: AppTypography.caption.copyWith(
-               color: colors.onSurfaceVariant,
-             ),
-           ),
+          Text(
+            l10n.recAction(
+              l10n.recActionFor(recommendation.factor) ?? recommendation.action,
+            ),
+            style: AppTypography.caption.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: AppSpacing.spacingXs),
-           Text(
-             l10n.recFactor(recommendation.factor),
-             style: AppTypography.caption.copyWith(color: colors.secondary),
-           ),
+          Text(
+            l10n.recFactor(recommendation.factor),
+            style: AppTypography.caption.copyWith(color: colors.secondary),
+          ),
         ],
       ),
     );
@@ -491,4 +490,3 @@ class _RecommendationPageState extends State<RecommendationPage> {
     }
   }
 }
-

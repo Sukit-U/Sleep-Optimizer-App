@@ -24,4 +24,3 @@ class LocaleProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-

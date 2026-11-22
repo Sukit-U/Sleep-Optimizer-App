@@ -59,7 +59,8 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
@@ -82,12 +83,14 @@ class AppTheme {
         unselectedItemColor: AppColors.mutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),
-        unselectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
@@ -102,13 +105,15 @@ class AppTheme {
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return TextStyle(fontFamily: 'Kanit', 
+            return TextStyle(
+              fontFamily: 'Kanit',
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
             );
           }
-          return TextStyle(fontFamily: 'Kanit', 
+          return TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.mutedForeground,
@@ -144,11 +149,13 @@ class AppTheme {
         backgroundColor: AppColors.muted,
         selectedColor: AppColors.primary,
         disabledColor: AppColors.mutedBackground,
-        labelStyle: TextStyle(fontFamily: 'Kanit', 
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: 14,
           color: AppColors.foreground,
         ),
-        secondaryLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryForeground,
@@ -170,7 +177,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -187,7 +195,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -199,7 +208,8 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -256,17 +266,20 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: TextStyle(fontFamily: 'Kanit', 
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.mutedForeground,
         ),
-        hintStyle: TextStyle(fontFamily: 'Kanit', 
+        hintStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        errorStyle: TextStyle(fontFamily: 'Kanit', 
+        errorStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -330,7 +343,8 @@ class AppTheme {
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
@@ -349,12 +363,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -389,12 +405,14 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.foreground,
         iconColor: AppColors.mutedForeground,
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        subtitleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        subtitleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -403,77 +421,92 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Kanit', 
+        displayLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displayMedium: TextStyle(fontFamily: 'Kanit', 
+        displayMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        displaySmall: TextStyle(fontFamily: 'Kanit', 
+        displaySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineLarge: TextStyle(fontFamily: 'Kanit', 
+        headlineLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineMedium: TextStyle(fontFamily: 'Kanit', 
+        headlineMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        headlineSmall: TextStyle(fontFamily: 'Kanit', 
+        headlineSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleLarge: TextStyle(fontFamily: 'Kanit', 
+        titleLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleMedium: TextStyle(fontFamily: 'Kanit', 
+        titleMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        titleSmall: TextStyle(fontFamily: 'Kanit', 
+        titleSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        bodyLarge: TextStyle(fontFamily: 'Kanit', 
+        bodyLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodyMedium: TextStyle(fontFamily: 'Kanit', 
+        bodyMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.foreground,
         ),
-        bodySmall: TextStyle(fontFamily: 'Kanit', 
+        bodySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
         ),
-        labelLarge: TextStyle(fontFamily: 'Kanit', 
+        labelLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelMedium: TextStyle(fontFamily: 'Kanit', 
+        labelMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.foreground,
         ),
-        labelSmall: TextStyle(fontFamily: 'Kanit', 
+        labelSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.mutedForeground,
@@ -531,7 +564,8 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
@@ -554,12 +588,14 @@ class AppTheme {
         unselectedItemColor: AppColors.lightMutedForeground,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightPrimary,
         ),
-        unselectedLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.navLabel.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
@@ -574,13 +610,15 @@ class AppTheme {
         height: AppSpacing.bottomNavHeight,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return TextStyle(fontFamily: 'Kanit', 
+            return TextStyle(
+              fontFamily: 'Kanit',
               fontSize: AppTypography.navLabel.fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.lightPrimary,
             );
           }
-          return TextStyle(fontFamily: 'Kanit', 
+          return TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.navLabel.fontSize,
             fontWeight: FontWeight.w600,
             color: AppColors.lightMutedForeground,
@@ -615,11 +653,13 @@ class AppTheme {
         backgroundColor: AppColors.lightMuted,
         selectedColor: AppColors.lightPrimary,
         disabledColor: AppColors.lightMuted,
-        labelStyle: TextStyle(fontFamily: 'Kanit', 
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: 14,
           color: AppColors.lightForeground,
         ),
-        secondaryLabelStyle: TextStyle(fontFamily: 'Kanit', 
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.lightPrimaryForeground,
@@ -641,7 +681,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           ),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -658,7 +699,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -670,7 +712,8 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.lightPrimary,
           padding: EdgeInsets.all(AppSpacing.buttonPadding),
-          textStyle: TextStyle(fontFamily: 'Kanit', 
+          textStyle: TextStyle(
+            fontFamily: 'Kanit',
             fontSize: AppTypography.button.fontSize,
             fontWeight: FontWeight.w600,
           ),
@@ -727,17 +770,20 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
           borderSide: const BorderSide(color: AppColors.destructive, width: 2),
         ),
-        labelStyle: TextStyle(fontFamily: 'Kanit', 
+        labelStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightMutedForeground,
         ),
-        hintStyle: TextStyle(fontFamily: 'Kanit', 
+        hintStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        errorStyle: TextStyle(fontFamily: 'Kanit', 
+        errorStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.destructive,
@@ -801,7 +847,8 @@ class AppTheme {
       // Snack Bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.lightForeground,
-        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightBackground,
@@ -820,12 +867,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        contentTextStyle: TextStyle(fontFamily: 'Kanit', 
+        contentTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -860,12 +909,14 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: AppColors.lightForeground,
         iconColor: AppColors.lightMutedForeground,
-        titleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        titleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        subtitleTextStyle: TextStyle(fontFamily: 'Kanit', 
+        subtitleTextStyle: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -874,77 +925,92 @@ class AppTheme {
 
       // Text Theme
       textTheme: TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Kanit', 
+        displayLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayLarge.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displayMedium: TextStyle(fontFamily: 'Kanit', 
+        displayMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displayMedium.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        displaySmall: TextStyle(fontFamily: 'Kanit', 
+        displaySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.displaySmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineLarge: TextStyle(fontFamily: 'Kanit', 
+        headlineLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h1.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineMedium: TextStyle(fontFamily: 'Kanit', 
+        headlineMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h2.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        headlineSmall: TextStyle(fontFamily: 'Kanit', 
+        headlineSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleLarge: TextStyle(fontFamily: 'Kanit', 
+        titleLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h3.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleMedium: TextStyle(fontFamily: 'Kanit', 
+        titleMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.h4.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        titleSmall: TextStyle(fontFamily: 'Kanit', 
+        titleSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.label.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        bodyLarge: TextStyle(fontFamily: 'Kanit', 
+        bodyLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.bodyLarge.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodyMedium: TextStyle(fontFamily: 'Kanit', 
+        bodyMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.body.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightForeground,
         ),
-        bodySmall: TextStyle(fontFamily: 'Kanit', 
+        bodySmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
         ),
-        labelLarge: TextStyle(fontFamily: 'Kanit', 
+        labelLarge: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.button.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelMedium: TextStyle(fontFamily: 'Kanit', 
+        labelMedium: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.labelSmall.fontSize,
           fontWeight: FontWeight.w600,
           color: AppColors.lightForeground,
         ),
-        labelSmall: TextStyle(fontFamily: 'Kanit', 
+        labelSmall: TextStyle(
+          fontFamily: 'Kanit',
           fontSize: AppTypography.small.fontSize,
           fontWeight: FontWeight.w400,
           color: AppColors.lightMutedForeground,
@@ -953,5 +1019,3 @@ class AppTheme {
     );
   }
 }
-
-

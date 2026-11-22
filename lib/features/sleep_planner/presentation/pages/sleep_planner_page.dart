@@ -43,6 +43,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
       l10n.constraintPersonalActivity,
     ];
   }
+
   final Set<String> _selectedConstraints = {};
 
   bool _hasSelectedWakeUpTime = false;
@@ -131,9 +132,7 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     // wake-up time whether it is saved to the cloud or only on this device.
     if (!_hasSelectedWakeUpTime) {
       setState(() => _showWakeUpTimeError = true);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errSelectWakeUpTime)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errSelectWakeUpTime)));
       return;
     }
 
@@ -320,7 +319,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
           elevation: 0,
           title: Text(
             l10n.plannerAppBarTitle,
-            style: TextStyle(fontFamily: 'Kanit', 
+            style: TextStyle(
+              fontFamily: 'Kanit',
               fontSize: 12,
               color: colors.onSurfaceVariant,
             ),
@@ -342,7 +342,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       children: [
                         Text(
                           l10n.plannerWhenShouldISleep,
-                          style: TextStyle(fontFamily: 'Kanit', 
+                          style: TextStyle(
+                            fontFamily: 'Kanit',
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: colors.onSurface,
@@ -363,7 +364,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                 // ── Constraints ──
                 Text(
                   l10n.plannerTonightIAlsoHave,
-                  style: TextStyle(fontFamily: 'Kanit', 
+                  style: TextStyle(
+                    fontFamily: 'Kanit',
                     fontSize: 14,
                     color: colors.onSurfaceVariant,
                   ),
@@ -392,7 +394,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                         ),
                         child: Text(
                           c,
-                          style: TextStyle(fontFamily: 'Kanit', 
+                          style: TextStyle(
+                            fontFamily: 'Kanit',
                             fontSize: 12,
                             fontWeight: isOn
                                 ? FontWeight.w500
@@ -415,7 +418,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                   children: [
                     Text(
                       l10n.plannerSuggestedBedtimes,
-                      style: TextStyle(fontFamily: 'Kanit', 
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         color: colors.onSurface,
@@ -425,7 +429,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
                       l10n.plannerWakeAt(
                         DateFormat('HH:mm').format(_wakeUpTime),
                       ),
-                      style: TextStyle(fontFamily: 'Kanit', 
+                      style: TextStyle(
+                        fontFamily: 'Kanit',
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
                       ),
@@ -480,7 +485,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
         children: [
           Text(
             l10n.plannerWakeUpTime,
-            style: TextStyle(fontFamily: 'Kanit', 
+            style: TextStyle(
+              fontFamily: 'Kanit',
               fontSize: 14,
               color: colors.onSurfaceVariant,
             ),
@@ -504,7 +510,8 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
               ),
               child: Text(
                 DateFormat('hh:mm a').format(_wakeUpTime),
-                style: TextStyle(fontFamily: 'Kanit', 
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -518,14 +525,16 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
             children: [
               Text(
                 l10n.plannerTimeToFallAsleep,
-                style: TextStyle(fontFamily: 'Kanit', 
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 14,
                   color: colors.onSurfaceVariant,
                 ),
               ),
               Text(
                 '${_latency.toInt()} ${l10n.plannerLatencyMin}',
-                style: TextStyle(fontFamily: 'Kanit', 
+                style: TextStyle(
+                  fontFamily: 'Kanit',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: colors.onSurface,
@@ -555,5 +564,3 @@ class _SleepPlannerPageState extends State<SleepPlannerPage> {
     );
   }
 }
-
-

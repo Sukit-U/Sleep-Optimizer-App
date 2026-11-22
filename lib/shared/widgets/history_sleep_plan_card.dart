@@ -75,12 +75,15 @@ class HistorySleepPlanCard extends StatelessWidget {
   String _formatDate(DateTime dateTime, AppLocalizations l10n) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    if (difference.inDays == 0)
+    if (difference.inDays == 0) {
       return l10n.historyDateToday(_formatTime(dateTime, l10n));
-    if (difference.inDays == 1)
+    }
+    if (difference.inDays == 1) {
       return l10n.historyDateYesterday(_formatTime(dateTime, l10n));
-    if (difference.inDays < 7)
+    }
+    if (difference.inDays < 7) {
       return l10n.historyDateDaysAgo(difference.inDays);
+    }
     return l10n.formatDateFull(dateTime.day, dateTime.month, dateTime.year);
   }
 
