@@ -46,10 +46,6 @@ class StorageService {
   static const _localSleepPlansKey = 'local_sleep_plans';
   static const _deletedSleepPlanIdsKey = 'deleted_sleep_plan_ids';
 
-  /// Persists (or updates) a durable sleep plan record on this device.
-  ///
-  /// Plans are keyed by `planId`, so saving an updated status for an
-  /// existing plan overwrites in place instead of appending a duplicate.
   Future<void> saveLocalSleepPlan(Map<String, dynamic> plan) async {
     final existing = loadLocalSleepPlans();
     final id = plan['planId'];
@@ -65,10 +61,6 @@ class StorageService {
     );
   }
 
-  /// Every durable sleep plan saved on this device, oldest first.
-  /// Malformed entries are skipped so one bad record cannot break loading.
-  /// Tombstoned (deleted) plans are filtered out so a stale local copy
-  /// cannot resurrect a plan that was deleted from the cloud.
   List<Map<String, dynamic>> loadLocalSleepPlans() {
     final deleted = loadDeletedSleepPlanIds();
     final raw = _prefs.getStringList(_localSleepPlansKey) ?? <String>[];
@@ -83,14 +75,11 @@ class StorageService {
           }
           result.add(decoded);
         }
-      } catch (_) {
-        // Skip malformed entries.
-      }
+      } catch (_) {}
     }
     return result;
   }
 
-  /// Deletes a local sleep plan by planId.
   Future<void> deleteLocalSleepPlan(String planId) async {
     final existing = loadLocalSleepPlans();
     final filtered = existing.where((e) => e['planId'] != planId).toList();
@@ -98,20 +87,15 @@ class StorageService {
       _localSleepPlansKey,
       filtered.map(jsonEncode).toList(),
     );
-    // Also tombstone so a stale copy cannot resurrect.
     await markSleepPlanDeleted(planId);
   }
 
-  /// Records a sleep plan ID as tombstoned (deleted) so that any stale
-  /// local copy is filtered out on load. Used when a cloud deletion
-  /// succeeds but the local deletion fails.
   Future<void> markSleepPlanDeleted(String planId) async {
     final deleted = loadDeletedSleepPlanIds();
     deleted.add(planId);
     await _prefs.setStringList(_deletedSleepPlanIdsKey, deleted.toList());
   }
 
-  /// Returns the set of tombstoned sleep plan IDs.
   Set<String> loadDeletedSleepPlanIds() {
     final raw = _prefs.getStringList(_deletedSleepPlanIdsKey) ?? <String>[];
     return raw.toSet();
@@ -119,10 +103,6 @@ class StorageService {
 
   static const _localSqiAssessmentsKey = 'local_sqi_assessments';
 
-  /// Persists (or updates) a durable SQI assessment record on this device.
-  ///
-  /// Records are keyed by `assessmentId`, so saving an updated status for an
-  /// existing assessment overwrites in place instead of appending a duplicate.
   Future<void> saveLocalSqiAssessment(Map<String, dynamic> assessment) async {
     final existing = loadLocalSqiAssessments();
     final id = assessment['assessmentId'];
@@ -138,8 +118,6 @@ class StorageService {
     );
   }
 
-  /// Every durable SQI assessment saved on this device, oldest first.
-  /// Malformed entries are skipped so one bad record cannot break loading.
   List<Map<String, dynamic>> loadLocalSqiAssessments() {
     final raw = _prefs.getStringList(_localSqiAssessmentsKey) ?? <String>[];
     final result = <Map<String, dynamic>>[];
@@ -149,9 +127,7 @@ class StorageService {
         if (decoded is Map<String, dynamic>) {
           result.add(decoded);
         }
-      } catch (_) {
-        // Skip malformed entries.
-      }
+      } catch (_) {}
     }
     return result;
   }
