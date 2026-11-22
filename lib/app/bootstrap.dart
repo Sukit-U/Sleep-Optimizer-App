@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/providers/theme_provider.dart';
+import '../core/providers/locale_provider.dart';
 import '../core/services/auth_service.dart';
 import '../core/services/cloud_connection_service.dart';
 import '../core/services/storage_service.dart';
@@ -16,11 +17,13 @@ class AppDependencies {
   const AppDependencies({
     required this.authService,
     required this.themeProvider,
+    required this.localeProvider,
     required this.cloudConnectionService,
   });
 
   final AuthService authService;
   final ThemeProvider themeProvider;
+  final LocaleProvider localeProvider;
   final CloudConnectionService cloudConnectionService;
 }
 
@@ -72,7 +75,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
     if (dependencies == null) {
       final error = _error;
       return MaterialApp(
-        title: 'Sleep Optimizer',
+        title: 'Snozemate',
         theme: AppTheme.darkTheme,
         home: Scaffold(
           body: SafeArea(
@@ -81,7 +84,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
             child: error == null
                 ? const Center(child: CircularProgressIndicator())
                 : ErrorStateWidget(
-                    message: "Snoozefriend couldn't start",
+                    message: 'Snoozemate เริ่มต้นไม่ได้',
                     detail: '$error',
                     onRetry: _retry,
                   ),
@@ -93,6 +96,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: dependencies.themeProvider),
+        ChangeNotifierProvider.value(value: dependencies.localeProvider),
         Provider<AuthService>.value(value: dependencies.authService),
         ChangeNotifierProvider<CloudConnectionService>.value(
           value: dependencies.cloudConnectionService,
@@ -140,6 +144,7 @@ Future<AppDependencies> bootDependencies({
   return AppDependencies(
     authService: authService,
     themeProvider: ThemeProvider(storageService: storage),
+    localeProvider: LocaleProvider(storageService: storage)..loadLocale(),
     cloudConnectionService: cloudConnectionService,
   );
 }
@@ -160,3 +165,4 @@ Future<AppDependencies> _bootFirebase() {
     },
   );
 }
+
