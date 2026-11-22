@@ -61,6 +61,6 @@ void main() {
     await tester.tap(find.text('View result'));
     await tester.pumpAndSettle();
     expect(find.text('60'), findsOneWidget);
-    expect(find.text('good'), findsOneWidget);
+    expect(find.text('ดี'), findsOneWidget);
   });
 }

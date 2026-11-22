@@ -269,7 +269,7 @@ void main() {
 
     // The action re-reads the list instead of retrying the delete.
     final loadsBeforeRefresh = service.loadCount;
-    await tester.tap(find.text('Refresh'));
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
     expect(service.loadCount, loadsBeforeRefresh + 1);

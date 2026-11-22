@@ -95,7 +95,7 @@ void main() {
     );
 
     // The SnackBar action re-reads the list rather than retrying the delete.
-    await tester.tap(find.text('Refresh'));
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
     expect(service.loadCount, 2);

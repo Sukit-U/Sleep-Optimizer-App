@@ -13,7 +13,7 @@ void main() {
     await tester.pumpWidget(AppBootstrap(boot: () => boot.future));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text("Snoozefriend couldn't start"), findsNothing);
+    expect(find.text("Snoozemate เริ่มต้นไม่ได้"), findsNothing);
 
     // A boot that never finishes must keep showing progress, not an error.
     await tester.pump(const Duration(seconds: 5));
@@ -23,7 +23,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text("Snoozefriend couldn't start"), findsOneWidget);
+    expect(find.text("Snoozemate เริ่มต้นไม่ได้"), findsOneWidget);
     expect(find.textContaining('firebase exploded'), findsOneWidget);
   });
 
@@ -42,7 +42,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text("Snoozefriend couldn't start"), findsOneWidget);
+      expect(find.text("Snoozemate เริ่มต้นไม่ได้"), findsOneWidget);
       expect(find.textContaining('firebase exploded'), findsOneWidget);
       expect(attempts, 1);
 
