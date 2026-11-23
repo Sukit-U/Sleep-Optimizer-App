@@ -1,18 +1,39 @@
 name: Release
 
-# Production artifacts only. Every build here is tagged `vMAJOR.MINOR.PATCH` and
-# produces the prod flavor; branch/PR checks live in ci.yml.
+# Builds signed Android AAB and APK artifacts for:
+# - Beta tags (`vMAJOR.MINOR.PATCH-beta.N`): produces the `dev` flavor with
+#   `--dart-define=APP_ENV=dev` (`com.snoozefriend.snoozemate.dev`, Firebase
+#   project `sleep-optimizer-dev`).
+# - Production tags (`vMAJOR.MINOR.PATCH`): produces the `prod` flavor with
+#   `--dart-define=APP_ENV=prod` (`com.snoozefriend.snoozemate`, Firebase
+#   project `sleep-optimizer-59c83`).
 #
 # A release is never published unsigned: the signing secrets are required, and
 # the built artifacts are verified to carry the upload key's certificate before
-# they are uploaded. See docs/RELEASE_SIGNING.md §5.
+# they are uploaded. See docs/RELEASE_SIGNING.md §5 and
+# docs/ANDROID_BETA_DISTRIBUTION.md.
 on:
   push:
     tags: ['v*']
-  # Manual runs must be dispatched from a tag ref (the UI asks for it):
-  #   gh workflow run release.yml --ref v1.2.3
-  # A dispatch from a branch has no tag to take the version from and fails.
+  # Manual runs can either be dispatched from a tag ref or provide a release_tag
+  # input with an explicit target_env (`dev` default for beta safety):
+  #   gh workflow run release.yml --ref v1.0.0-beta.1
+  #   gh workflow run release.yml -f target_env=dev -f release_tag=v1.0.0-beta.1
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Firebase environment / flavor (dev for Beta, prod for Production)'
+        required: false
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+      release_tag:
+        description: 'Release or beta tag (e.g. v1.0.0-beta.1 or v1.0.0) when not dispatched from a tag ref'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: release-${{ github.ref }}
@@ -21,10 +42,14 @@ concurrency:
 env:
   # Keep in step with ci.yml / the SDK used locally.
   FLUTTER_VERSION: '3.44.8'
-# Production build identity: --flavor prod selects
-# android/app/src/prod/google-services.json (sleep-optimizer-59c83) and
-# --dart-define=APP_ENV=prod selects lib/firebase_options.dart. The two must
-# always travel together on every build below.
+# Build identity:
+# - Beta (`dev`): --flavor dev selects android/app/src/dev/google-services.json
+#   (sleep-optimizer-dev) and --dart-define=APP_ENV=dev selects
+#   lib/firebase_options_dev.dart.
+# - Production (`prod`): --flavor prod selects
+#   android/app/src/prod/google-services.json (sleep-optimizer-59c83) and
+#   --dart-define=APP_ENV=prod selects lib/firebase_options.dart.
+# The flavor and APP_ENV must always travel together on every build below.
 
 jobs:
   verify:
@@ -59,9 +84,11 @@ jobs:
         run: sh scripts/android-release-version.sh --self-test
 
   build-android:
-    name: Build signed prod AAB + APK
+    name: Build signed Android AAB + APK
     needs: [verify]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       # Repository secrets (Settings → Secrets and variables → Actions).
       # See docs/RELEASE_SIGNING.md §5. The first three are required: a run
@@ -89,34 +116,77 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # The tag decides the version, so a dispatch from a branch stops here
-      # rather than inventing one.
-      - name: Derive the version from the release tag
+      # The tag decides the version and default environment (`v*-beta.*` -> dev,
+      # `vMAJOR.MINOR.PATCH` -> prod unless overridden by workflow_dispatch
+      # target_env=dev).
+      - name: Derive the version and environment from the release tag
         id: version
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+          INPUT_ENV: ${{ inputs.target_env }}
         run: |
           set -euo pipefail
-          if [ "$REF_TYPE" != "tag" ]; then
-            echo "::error::release builds run from a vMAJOR.MINOR.PATCH tag, but this run is on $REF_TYPE '$REF_NAME'. Dispatch it from the tag instead (gh workflow run release.yml --ref vX.Y.Z)."
+          if [ "$REF_TYPE" = "tag" ]; then
+            TAG_TO_USE="$REF_NAME"
+          elif [ -n "${INPUT_TAG:-}" ]; then
+            TAG_TO_USE="$INPUT_TAG"
+          else
+            echo "::error::release builds require a vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-beta.N tag (or workflow_dispatch input 'release_tag'), but this run is on $REF_TYPE '$REF_NAME'."
             exit 1
           fi
-          # The outputs are read by the build steps below; the summary job
-          # record prints them once the artifacts exist.
-          sh scripts/android-release-version.sh "$REF_NAME" >> "$GITHUB_OUTPUT"
+
+          derived=$(sh scripts/android-release-version.sh --allow-beta "$TAG_TO_USE")
+          printf '%s\n' "$derived" >> "$GITHUB_OUTPUT"
+
+          release_channel=$(printf '%s\n' "$derived" | sed -n 's/^release_channel=//p')
+          tag_target_env=$(printf '%s\n' "$derived" | sed -n 's/^target_env=//p')
+
+          # Beta tags (`v*-beta.*`) always target `dev` (`sleep-optimizer-dev`)
+          # and can never be routed to production (`sleep-optimizer-59c83`).
+          if [ "$release_channel" = "beta" ]; then
+            if [ "${INPUT_ENV:-}" = "prod" ]; then
+              echo "::error::beta tag '$TAG_TO_USE' cannot target prod ('sleep-optimizer-59c83'). Beta builds must use dev ('sleep-optimizer-dev')."
+              exit 1
+            fi
+            FLAVOR="dev"
+            APP_ENV="dev"
+          elif [ "${INPUT_ENV:-}" = "dev" ]; then
+            FLAVOR="dev"
+            APP_ENV="dev"
+          else
+            FLAVOR="$tag_target_env"
+            APP_ENV="$tag_target_env"
+          fi
+
+          if [ "$FLAVOR" = "dev" ]; then
+            EXPECTED_PACKAGE="com.snoozefriend.snoozemate.dev"
+            FIREBASE_PROJECT="sleep-optimizer-dev"
+          else
+            EXPECTED_PACKAGE="com.snoozefriend.snoozemate"
+            FIREBASE_PROJECT="sleep-optimizer-59c83"
+          fi
+
+          {
+            echo "tag_used=$TAG_TO_USE"
+            echo "flavor=$FLAVOR"
+            echo "app_env=$APP_ENV"
+            echo "expected_package=$EXPECTED_PACKAGE"
+            echo "firebase_project=$FIREBASE_PROJECT"
+          } >> "$GITHUB_OUTPUT"
 
       # The tag decides the version, so a stale pubspec must not ride along
       # silently: the artifact would say one version and the source another.
       - name: Check pubspec matches the tag
         env:
-          EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_BASE_NAME: ${{ steps.version.outputs.base_version_name }}
         run: |
           set -euo pipefail
           declared=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -1 | tr -d '\r')
           declared_name=${declared%%+*}
-          if [ "$declared_name" != "$EXPECTED_NAME" ]; then
-            echo "::error::pubspec.yaml declares version $declared_name but the tag is v$EXPECTED_NAME; bump pubspec.yaml (or retag) so both name the same version."
+          if [ "$declared_name" != "$EXPECTED_BASE_NAME" ]; then
+            echo "::error::pubspec.yaml declares version $declared_name but the tag base version is $EXPECTED_BASE_NAME; bump pubspec.yaml (or retag) so both name the same version."
             exit 1
           fi
 
@@ -170,32 +240,36 @@ jobs:
 
       - name: Build App Bundle
         run: >-
-          flutter build appbundle --release --flavor prod
-          --dart-define=APP_ENV=prod
+          flutter build appbundle --release
+          --flavor ${{ steps.version.outputs.flavor }}
+          --dart-define=APP_ENV=${{ steps.version.outputs.app_env }}
           --build-name=${{ steps.version.outputs.version_name }}
           --build-number=${{ steps.version.outputs.version_code }}
 
       - name: Build APK
         run: >-
-          flutter build apk --release --flavor prod
-          --dart-define=APP_ENV=prod
+          flutter build apk --release
+          --flavor ${{ steps.version.outputs.flavor }}
+          --dart-define=APP_ENV=${{ steps.version.outputs.app_env }}
           --build-name=${{ steps.version.outputs.version_name }}
           --build-number=${{ steps.version.outputs.version_code }}
 
-      # Gradle silently emits app-prod-release-unsigned.apk when the signing
+      # Gradle silently emits app-<flavor>-release-unsigned.apk when the signing
       # config is missing, so the artifacts are checked, not assumed: the AAB
       # must verify as a signed JAR, the APK must verify with apksigner, the
       # signing certificate must be the one in the restored keystore, and the
-      # version inside the APK must be the tag's.
+      # package name + version inside the APK must match the target flavor & tag.
       - name: Verify the artifacts are signed with the upload key
         env:
+          FLAVOR: ${{ steps.version.outputs.flavor }}
+          EXPECTED_PACKAGE: ${{ steps.version.outputs.expected_package }}
           EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
           EXPECTED_CODE: ${{ steps.version.outputs.version_code }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          aab="build/app/outputs/bundle/prodRelease/app-prod-release.aab"
-          apk="build/app/outputs/flutter-apk/app-prod-release.apk"
+          aab="build/app/outputs/bundle/${FLAVOR}Release/app-${FLAVOR}-release.aab"
+          apk="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
           logs="$RUNNER_TEMP/signing-check"
           mkdir -p "$logs"
 
@@ -243,10 +317,14 @@ jobs:
             exit 1
           fi
 
-          # What Play reads as versionCode/versionName, straight from the APK.
+          # What Android/Play reads as package name, versionCode and versionName, straight from the APK.
           "${build_tools}aapt2" dump badging "$apk" > "$logs/badging.txt" 2>/dev/null \
             || "${build_tools}aapt" dump badging "$apk" > "$logs/badging.txt"
           first=$(head -1 "$logs/badging.txt")
+          case $first in
+            *"name='$EXPECTED_PACKAGE'"*) ;;
+            *) echo "::error::APK package name is not $EXPECTED_PACKAGE: $first"; exit 1 ;;
+          esac
           case $first in
             *"versionCode='$EXPECTED_CODE'"*) ;;
             *) echo "::error::APK versionCode is not $EXPECTED_CODE: $first"; exit 1 ;;
@@ -255,7 +333,14 @@ jobs:
             *"versionName='$EXPECTED_NAME'"*) ;;
             *) echo "::error::APK versionName is not $EXPECTED_NAME: $first"; exit 1 ;;
           esac
-          echo "signed by the upload key, version $EXPECTED_NAME ($EXPECTED_CODE)"
+
+          sha256sum "$apk" "$aab" > "$RUNNER_TEMP/artifact-sha256.txt"
+          echo "signed by the upload key, package $EXPECTED_PACKAGE, version $EXPECTED_NAME ($EXPECTED_CODE)"
+
+      - name: Clean up temporary keystore files
+        if: always()
+        run: |
+          rm -f android/upload-keystore.jks android/key.properties
 
       # Flavored outputs are named app-<flavor>-<buildType>.* and live under a
       # <flavor><BuildType> directory. Exact paths, no glob: an unsigned build
@@ -263,32 +348,79 @@ jobs:
       - name: Upload App Bundle
         uses: actions/upload-artifact@v7
         with:
-          name: app-prod-release-aab
-          path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          name: app-${{ steps.version.outputs.flavor }}-release-aab
+          path: build/app/outputs/bundle/${{ steps.version.outputs.flavor }}Release/app-${{ steps.version.outputs.flavor }}-release.aab
           if-no-files-found: error
           retention-days: 14
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: app-prod-release-apk
-          path: build/app/outputs/flutter-apk/app-prod-release.apk
+          name: app-${{ steps.version.outputs.flavor }}-release-apk
+          path: build/app/outputs/flutter-apk/app-${{ steps.version.outputs.flavor }}-release.apk
           if-no-files-found: error
           retention-days: 14
 
+      # For beta tags (`vMAJOR.MINOR.PATCH-beta.N`), creates a draft GitHub
+      # pre-release with the signed `app-dev-release.apk` and its SHA-256
+      # checksum attached so a maintainer can review and share with beta testers.
+      # Draft status ensures nothing is published publicly without human review.
+      - name: Create GitHub Pre-Release Draft for Beta Testers
+        if: steps.version.outputs.release_channel == 'beta' && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_USED: ${{ steps.version.outputs.tag_used }}
+          FLAVOR: ${{ steps.version.outputs.flavor }}
+          FIREBASE_PROJECT: ${{ steps.version.outputs.firebase_project }}
+          EXPECTED_PACKAGE: ${{ steps.version.outputs.expected_package }}
+          EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_CODE: ${{ steps.version.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          apk="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
+          checksum_file="$RUNNER_TEMP/app-${FLAVOR}-release.apk.sha256"
+          sha256sum "$apk" > "$checksum_file"
+          notes_file="$RUNNER_TEMP/beta-release-notes.md"
+          cat > "$notes_file" <<NOTES
+          ## Snoozemate Android Beta ($TAG_USED)
+
+          - **Application ID:** \`$EXPECTED_PACKAGE\`
+          - **Firebase Environment:** \`$FLAVOR\` (\`$FIREBASE_PROJECT\`)
+          - **Version Name / Code:** \`$EXPECTED_NAME\` (\`$EXPECTED_CODE\`)
+          - **Artifact:** \`app-${FLAVOR}-release.apk\` (signed with the upload keystore)
+
+          See \`docs/ANDROID_BETA_DISTRIBUTION.md\` and \`docs/testing/android-beta-smoke-checklist.md\` before sharing with testers.
+          NOTES
+          if ! gh release view "$TAG_USED" > /dev/null 2>&1; then
+            gh release create "$TAG_USED" "$apk" "$checksum_file" \
+              --draft \
+              --prerelease \
+              --title "Snoozemate Beta $TAG_USED" \
+              --notes-file "$notes_file"
+          fi
+
       - name: Write the build summary
         env:
+          TAG_USED: ${{ steps.version.outputs.tag_used }}
+          CHANNEL: ${{ steps.version.outputs.release_channel }}
+          FLAVOR: ${{ steps.version.outputs.flavor }}
+          APP_ENV: ${{ steps.version.outputs.app_env }}
+          EXPECTED_PACKAGE: ${{ steps.version.outputs.expected_package }}
+          FIREBASE_PROJECT: ${{ steps.version.outputs.firebase_project }}
           EXPECTED_NAME: ${{ steps.version.outputs.version_name }}
           EXPECTED_CODE: ${{ steps.version.outputs.version_code }}
         run: |
           {
-            echo "### Release $GITHUB_REF_NAME"
+            echo "### Release $TAG_USED ($CHANNEL)"
             echo ""
             echo "| Field | Value |"
             echo "|---|---|"
+            echo "| release_channel | \`$CHANNEL\` |"
             echo "| versionName | \`$EXPECTED_NAME\` |"
             echo "| versionCode | \`$EXPECTED_CODE\` |"
-            echo "| flavor / APP_ENV | \`prod\` / \`prod\` |"
+            echo "| flavor / APP_ENV | \`$FLAVOR\` / \`$APP_ENV\` |"
+            echo "| applicationId | \`$EXPECTED_PACKAGE\` |"
+            echo "| Firebase project | \`$FIREBASE_PROJECT\` |"
             echo "| signing | verified against the upload key in \`ANDROID_KEYSTORE_BASE64\` |"
             echo "| Upload to Play | not performed by this workflow |"
           } >> "$GITHUB_STEP_SUMMARY"

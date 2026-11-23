@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -10,7 +11,7 @@ plugins {
 }
 
 // Release signing reads android/key.properties (gitignored).
-// Falls back to debug signing so fresh checkouts still build a runnable APK.
+// Never falls back to debug signing; missing signing config leaves release unsigned.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -28,6 +29,48 @@ if (keystoreProperties["storeFile"] == null) {
     logger.warn("android/key.properties not found — release builds will be UNSIGNED. See docs/RELEASE_SIGNING.md")
 } else if (storePasswordValue == null) {
     logger.warn("No keystore password: set ANDROID_KEYSTORE_PASSWORD — release builds will be UNSIGNED. See docs/RELEASE_SIGNING.md")
+}
+
+// Decodes Flutter's -Pdart-defines (comma-separated base64 entries) to inspect
+// --dart-define=APP_ENV=<env> and enforce flavor/APP_ENV alignment at build time.
+fun resolveDartDefineAppEnv(): String? {
+    val rawDefines = project.findProperty("dart-defines") as String? ?: return null
+    return rawDefines
+        .split(",")
+        .mapNotNull { entry ->
+            val trimmed = entry.trim()
+            if (trimmed.isEmpty()) return@mapNotNull null
+            runCatching {
+                String(Base64.getDecoder().decode(trimmed), Charsets.UTF_8)
+            }.getOrNull()
+        }
+        .firstOrNull { it.startsWith("APP_ENV=") }
+        ?.removePrefix("APP_ENV=")
+        ?.trim()
+}
+
+val dartAppEnv = resolveDartDefineAppEnv()
+val variantTaskPattern = Regex("(Dev|Prod)(Debug|Profile|Release)")
+
+gradle.taskGraph.whenReady {
+    for (task in allTasks) {
+        if (task.project != project) continue
+        val match = variantTaskPattern.find(task.name) ?: continue
+        val flavorName = match.groupValues[1].lowercase()
+        val buildTypeName = match.groupValues[2].lowercase()
+
+        if (dartAppEnv != null && dartAppEnv != flavorName) {
+            throw GradleException(
+                "Flavor '$flavorName' does not match --dart-define=APP_ENV=$dartAppEnv (task '${task.name}'). " +
+                    "Always pair --flavor dev with --dart-define=APP_ENV=dev and --flavor prod with --dart-define=APP_ENV=prod."
+            )
+        }
+        if (flavorName == "prod" && buildTypeName == "release" && dartAppEnv != "prod") {
+            throw GradleException(
+                "Production release build requires explicit --dart-define=APP_ENV=prod (task '${task.name}')."
+            )
+        }
+    }
 }
 
 android {
