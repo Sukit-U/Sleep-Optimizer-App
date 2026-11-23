@@ -1,4 +1,4 @@
-# Sleep Optimizer (Snoozemate)
+# Snoozemate
 
 ## Overview
 

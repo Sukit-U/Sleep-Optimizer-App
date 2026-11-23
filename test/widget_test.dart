@@ -15,7 +15,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        title: 'Sleep Optimizer',
+        title: 'Snoozemate',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
