@@ -1,4 +1,4 @@
-# Release Signing Guide — Snoozefriend
+# Release Signing Guide — Snoozemate
 
 How Android release builds are signed, and the steps left for you because the
 keystore itself must be created and owned by you.

@@ -71,13 +71,62 @@ void main() {
         .widgetList<Text>(find.byType(Text))
         .map((text) => text.data)
         .firstWhere(
-          (data) =>
-              data != null && RegExp(r'^\d{2}:\d{2} [AP]M$').hasMatch(data),
+          (data) => data != null && RegExp(r'^\d{2}:\d{2}$').hasMatch(data),
         )!;
     await tester.tap(find.text(timeLabel), warnIfMissed: false);
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
+  }
+
+  /// เลือกเวลาพร้อมนอนจาก TimePicker แล้วกดยืนยัน
+  Future<void> chooseReadyToSleepTime(WidgetTester tester) async {
+    final helperText = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((text) => text.data)
+        .firstWhere(
+          (data) =>
+              data != null &&
+              !RegExp(r'^\d{2}:\d{2}$').hasMatch(data) &&
+              (data.contains('sleep tonight') ||
+                  data.contains('พร้อมจะเข้านอนเร็วที่สุด')),
+          orElse: () => null,
+        );
+    if (helperText == null) return;
+    await tester.tap(find.text(helperText), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+  }
+
+  /// เลือกเวลาที่ตั้งใจจะนอนจาก TimePicker แล้วกดยืนยัน
+  Future<void> choosePlannedBedtime(WidgetTester tester) async {
+    final helperText = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((text) => text.data)
+        .firstWhere(
+          (data) =>
+              data != null &&
+              !RegExp(r'^\d{2}:\d{2}$').hasMatch(data) &&
+              (data.contains('intend to go to bed') ||
+                  data.contains('ตั้งใจจะเข้านอน')),
+          orElse: () => null,
+        );
+    if (helperText == null) return;
+    await tester.tap(find.text(helperText), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+  }
+
+  /// ตรวจว่าข้อความเวลาทั้งหมดบนหน้าใช้รูปแบบ HH:mm ไม่มี AM/PM
+  List<String> allTimeStrings(WidgetTester tester) {
+    return tester
+        .widgetList<Text>(find.byType(Text))
+        .map((text) => text.data)
+        .whereType<String>()
+        .where((data) => RegExp(r'^\d{2}:\d{2}$').hasMatch(data))
+        .toList();
   }
 
   testWidgets('calculates bedtimes with no Firebase and no signed-in user', (
@@ -128,6 +177,83 @@ void main() {
       // Let the snackbar auto-dismiss timer finish.
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('all time displays use 24-hour format, no AM/PM', (tester) async {
+    final firestore = _ForbiddenFirestoreService();
+
+    await pumpPlanner(
+      tester,
+      auth: _OfflineAuthService(),
+      firestore: firestore,
+    );
+
+    // Wake-up time displays in HH:mm initially (default value)
+    final initialTimes = allTimeStrings(tester);
+    expect(initialTimes, isNotEmpty);
+    for (final t in initialTimes) {
+      expect(
+        RegExp(r'^\d{2}:\d{2}$').hasMatch(t),
+        isTrue,
+        reason: '$t is not HH:mm',
+      );
+    }
+
+    // No AM/PM format anywhere on the page
+    final allTexts = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((text) => text.data)
+        .whereType<String>()
+        .toList();
+    expect(
+      allTexts.any((t) => RegExp(r'\d{1,2}:\d{2} ?[AP]M').hasMatch(t)),
+      isFalse,
+      reason: 'AM/PM format found on sleep planner page',
+    );
+  });
+
+  testWidgets(
+    'ready-to-sleep and planned bedtime can be set and display in 24-hour format',
+    (tester) async {
+      final firestore = _ForbiddenFirestoreService();
+
+      await pumpPlanner(
+        tester,
+        auth: _OfflineAuthService(),
+        firestore: firestore,
+      );
+
+      // Set wake-up time first
+      await chooseWakeUpTime(tester);
+
+      // Set ready-to-sleep time
+      await chooseReadyToSleepTime(tester);
+
+      // Set planned bedtime
+      await choosePlannedBedtime(tester);
+
+      // All time displays on the page should be in HH:mm format
+      final times = allTimeStrings(tester);
+      expect(times, isNotEmpty, reason: 'expected at least one time display');
+      for (final t in times) {
+        expect(
+          RegExp(r'^\d{2}:\d{2}$').hasMatch(t),
+          isTrue,
+          reason: '$t is not HH:mm',
+        );
+      }
+
+      // Verify hour/minute ranges are valid
+      for (final t in times) {
+        final parts = t.split(':');
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        expect(hour, greaterThanOrEqualTo(0));
+        expect(hour, lessThanOrEqualTo(23));
+        expect(minute, greaterThanOrEqualTo(0));
+        expect(minute, lessThanOrEqualTo(59));
+      }
     },
   );
 }
