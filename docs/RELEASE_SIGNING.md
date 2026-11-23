@@ -93,7 +93,7 @@ export ANDROID_KEYSTORE_PASSWORD="$(pass show android/upload)"
 export ANDROID_KEY_PASSWORD="$ANDROID_KEYSTORE_PASSWORD"
 # Beta release build (targets sleep-optimizer-dev):
 flutter build apk --release --flavor dev --dart-define=APP_ENV=dev \
-  --build-name=1.0.0-beta.1 --build-number=10000
+  --build-name=1.0.0-beta.1 --build-number=999901
 ```
 
 When `ANDROID_KEY_PASSWORD` is unset it falls back to
@@ -119,16 +119,16 @@ build time that `--flavor` and `--dart-define=APP_ENV` always match:
 - **Beta Release Build (`dev` -> `sleep-optimizer-dev`, applicationId `com.snoozefriend.snoozemate.dev`):**
   ```bash
   flutter build apk --release --flavor dev --dart-define=APP_ENV=dev \
-    --build-name=1.0.0-beta.1 --build-number=10000
+    --build-name=1.0.0-beta.1 --build-number=999901
   flutter build appbundle --release --flavor dev --dart-define=APP_ENV=dev \
-    --build-name=1.0.0-beta.1 --build-number=10000
+    --build-name=1.0.0-beta.1 --build-number=999901
   ```
 - **Production Release Build (`prod` -> `sleep-optimizer-59c83`, applicationId `com.snoozefriend.snoozemate`):**
   ```bash
   flutter build appbundle --release --flavor prod --dart-define=APP_ENV=prod \
-    --build-name=1.0.0 --build-number=10000
+    --build-name=1.0.0 --build-number=1000000
   flutter build apk --release --flavor prod --dart-define=APP_ENV=prod \
-    --build-name=1.0.0 --build-number=10000
+    --build-name=1.0.0 --build-number=1000000
   ```
 
 ### Build-Time Mismatch Protection
@@ -191,14 +191,18 @@ channel fields:
 
 | Tag | Mode | versionName | base_version_name | versionCode | Channel / Env |
 |---|---|---|---|---|---|
-| `v1.0.0` | standard / `--allow-beta` | `1.0.0` | `1.0.0` | `10000` | `prod` / `prod` |
-| `v1.0.0-beta.1` | `--allow-beta` | `1.0.0-beta.1` | `1.0.0` | `10000` | `beta` / `dev` |
-| `v1.2.3-beta.12` | `--allow-beta` | `1.2.3-beta.12` | `1.2.3` | `10203` | `beta` / `dev` |
-| `v2.4.99` | standard / `--allow-beta` | `2.4.99` | `2.4.99` | `20499` | `prod` / `prod` |
+| `v1.0.0-beta.1` | `--allow-beta` | `1.0.0-beta.1` | `1.0.0` | `999901` | `beta` / `dev` |
+| `v1.0.0-beta.2` | `--allow-beta` | `1.0.0-beta.2` | `1.0.0` | `999902` | `beta` / `dev` |
+| `v1.0.0` | standard / `--allow-beta` | `1.0.0` | `1.0.0` | `1000000` | `prod` / `prod` |
+| `v1.2.3-beta.12` | `--allow-beta` | `1.2.3-beta.12` | `1.2.3` | `1020212` | `beta` / `dev` |
+| `v2.4.99` | standard / `--allow-beta` | `2.4.99` | `2.4.99` | `2049900` | `prod` / `prod` |
 
-`versionCode = MAJOR * 10000 + MINOR * 100 + PATCH`, so a higher semver is always a
-higher code. Standard mode (`sh scripts/android-release-version.sh <tag>`) accepts
-only `vMAJOR.MINOR.PATCH`. Extended mode (`--allow-beta`) also accepts
+With `baseCode = MAJOR * 10000 + MINOR * 100 + PATCH`, stable tags map to
+`baseCode * 100` and beta tags (`-beta.N`, `1 <= N <= 99`) map to
+`(baseCode - 1) * 100 + N`. Two releases therefore never share a version code,
+and every beta and stable release increases monotonically (`v1.0.0-beta.1 <
+v1.0.0-beta.2 < v1.0.0`). Standard mode (`sh scripts/android-release-version.sh <tag>`)
+accepts only `vMAJOR.MINOR.PATCH`. Extended mode (`--allow-beta`) also accepts
 `vMAJOR.MINOR.PATCH-beta.N` (`1 <= N <= 99`), routing beta tags strictly to the
 `dev` flavor (`sleep-optimizer-dev`).
 

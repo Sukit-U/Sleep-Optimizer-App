@@ -22,7 +22,7 @@ Run these checks on the built `app-dev-release.apk` before sharing the APK with 
 
 ### 2.1 Build Command
 ```powershell
-flutter build apk --release --flavor dev --dart-define=APP_ENV=dev --build-name=1.0.0-beta.1 --build-number=10000
+flutter build apk --release --flavor dev --dart-define=APP_ENV=dev --build-name=1.0.0-beta.1 --build-number=999901
 ```
 
 ### 2.2 Package Name & Version Badging (`aapt2`)
@@ -30,7 +30,7 @@ flutter build apk --release --flavor dev --dart-define=APP_ENV=dev --build-name=
 & "$env:LOCALAPPDATA\Android\Sdk\build-tools\35.0.0\aapt2.exe" dump badging build\app\outputs\flutter-apk\app-dev-release.apk | Select-String "package:"
 ```
 - [ ] `package: name='com.snoozefriend.snoozemate.dev'` (MUST end with `.dev`)
-- [ ] `versionCode='10000'` (or expected monotonic build number)
+- [ ] `versionCode='999901'` (or expected monotonic build number)
 - [ ] `versionName='1.0.0-beta.1'`
 
 ### 2.3 Signature Verification (`apksigner`)

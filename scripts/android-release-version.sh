@@ -9,7 +9,7 @@
 # valid GITHUB_OUTPUT entries:
 #
 #   version_name=1.2.3
-#   version_code=10203
+#   version_code=1020300
 #
 # In `--allow-beta` mode, it accepts either `vMAJOR.MINOR.PATCH` (prod channel)
 # or `vMAJOR.MINOR.PATCH-beta.N` (beta channel targeting dev, with 1 <= N <= 99)
@@ -17,7 +17,7 @@
 #
 #   version_name=1.0.0-beta.1
 #   base_version_name=1.0.0
-#   version_code=10000
+#   version_code=999901
 #   release_channel=beta
 #   target_env=dev
 #
@@ -28,11 +28,14 @@
 #   - a missing or different prefix, an unsupported suffix (`-rc1`, `+2`), two
 #     or four parts, non-numeric parts and leading zeros all fail.
 #   - MINOR and PATCH must stay below 100 so that
-#     versionCode = MAJOR * 10000 + MINOR * 100 + PATCH sorts the same way the
-#     version names do. Two releases therefore never share a version code, and a
-#     higher semver is always a higher code.
+#     baseCode = MAJOR * 10000 + MINOR * 100 + PATCH preserves semver order.
+#   - Stable releases map to `baseCode * 100` (e.g. v1.0.0 -> 1000000) and
+#     beta tags (`-beta.N`, 1 <= N <= 99) map to `(baseCode - 1) * 100 + N`
+#     (e.g. v1.0.0-beta.1 -> 999901, v1.0.0-beta.2 -> 999902), so every beta
+#     and stable release receives a strictly monotonic, non-colliding
+#     versionCode.
 #   - Google Play caps versionCode at 2100000000, so MAJOR must stay below
-#     210000.
+#     2100.
 #
 # Re-tagging the same version reuses the same version code on purpose: Play
 # rejects a second upload with a code it already has, so a fix ships as a new
@@ -83,11 +86,12 @@ parse_core_semver() {
 
     [ "$minor" -lt 100 ] || fail "tag '$tag_ctx' has MINOR=$minor; keep MINOR below 100 so the version code keeps semver order"
     [ "$patch" -lt 100 ] || fail "tag '$tag_ctx' has PATCH=$patch; keep PATCH below 100 so the version code keeps semver order"
-    [ "$major" -lt 210000 ] || fail "tag '$tag_ctx' has MAJOR=$major; Google Play caps versionCode at 2100000000"
+    [ "$major" -lt 2100 ] || fail "tag '$tag_ctx' has MAJOR=$major; Google Play caps versionCode at 2100000000"
 
     base_version_name="$major.$minor.$patch"
-    version_code=$((major * 10000 + minor * 100 + patch))
-    [ "$version_code" -ge 1 ] || fail "tag '$tag_ctx' maps to versionCode 0, which Android does not accept"
+    base_code=$((major * 10000 + minor * 100 + patch))
+    [ "$base_code" -ge 1 ] || fail "tag '$tag_ctx' maps to base version 0.0.0, which Android does not accept"
+    version_code=$((base_code * 100))
 }
 
 derive() {
@@ -118,6 +122,7 @@ derive_allow_beta() {
             fi
             [ "$beta_num" -ge 1 ] && [ "$beta_num" -le 99 ] || fail "tag '$tag' has beta number $beta_num; keep N in 1..99"
             parse_core_semver "$tag" "$core"
+            version_code=$(((base_code - 1) * 100 + beta_num))
             version_name="$base_version_name-beta.$beta_num"
             release_channel="beta"
             target_env="dev"
@@ -189,15 +194,15 @@ self_test() {
     }
 
     check_ok "version_name=1.0.0
-version_code=10000" v1.0.0
+version_code=1000000" v1.0.0
     check_ok "version_name=1.2.3
-version_code=10203" v1.2.3
+version_code=1020300" v1.2.3
     check_ok "version_name=0.9.9
-version_code=909" v0.9.9
+version_code=90900" v0.9.9
     check_ok "version_name=2.10.0
-version_code=21000" v2.10.0
+version_code=2100000" v2.10.0
     check_ok "version_name=2.4.99
-version_code=20499" v2.4.99
+version_code=2049900" v2.4.99
 
     # semver order must equal code order around the minor/patch carry
     lower=$(derive v2.4.99 | sed -n 's/^version_code=//p')
@@ -218,34 +223,73 @@ version_code=20499" v2.4.99
     check_rejected "v01.2.3"
     check_rejected "v1.100.0"
     check_rejected "v1.2.100"
-    check_rejected "v210000.0.0"
+    check_rejected "v2100.0.0"
     check_rejected "vrelease"
     check_rejected ""
 
+    check_beta_ok "version_name=0.0.1-beta.1
+base_version_name=0.0.1
+version_code=1
+release_channel=beta
+target_env=dev" v0.0.1-beta.1
+
     check_beta_ok "version_name=1.0.0-beta.1
 base_version_name=1.0.0
-version_code=10000
+version_code=999901
 release_channel=beta
 target_env=dev" v1.0.0-beta.1
 
+    check_beta_ok "version_name=1.0.0-beta.2
+base_version_name=1.0.0
+version_code=999902
+release_channel=beta
+target_env=dev" v1.0.0-beta.2
+
+    check_beta_ok "version_name=1.0.0-beta.99
+base_version_name=1.0.0
+version_code=999999
+release_channel=beta
+target_env=dev" v1.0.0-beta.99
+
     check_beta_ok "version_name=1.2.3-beta.12
 base_version_name=1.2.3
-version_code=10203
+version_code=1020212
 release_channel=beta
 target_env=dev" v1.2.3-beta.12
 
     check_beta_ok "version_name=1.0.0
 base_version_name=1.0.0
-version_code=10000
+version_code=1000000
 release_channel=prod
 target_env=prod" v1.0.0
 
+    check_beta_ok "version_name=1.0.1-beta.1
+base_version_name=1.0.1
+version_code=1000001
+release_channel=beta
+target_env=dev" v1.0.1-beta.1
+
+    # Monotonic order across beta iterations, stable transition, and next patch beta.
+    prev_code=0
+    for mono_tag in v1.0.0-beta.1 v1.0.0-beta.2 v1.0.0-beta.99 v1.0.0 v1.0.1-beta.1 v1.0.1; do
+        cur_code=$(derive_allow_beta "$mono_tag" | sed -n 's/^version_code=//p')
+        if [ "$cur_code" -gt "$prev_code" ]; then
+            printf 'ok    monotonic %s (%s > %s)\n' "$mono_tag" "$cur_code" "$prev_code"
+        else
+            printf 'FAIL  %s (%s) is not > %s\n' "$mono_tag" "$cur_code" "$prev_code"
+            failures=$((failures + 1))
+        fi
+        prev_code=$cur_code
+    done
+
+    check_beta_rejected "v0.0.0-beta.1"
     check_beta_rejected "v1.0.0-beta.0"
     check_beta_rejected "v1.0.0-beta.01"
     check_beta_rejected "v1.0.0-beta.100"
     check_beta_rejected "v1.0.0-beta.1.2"
     check_beta_rejected "v1.0.0-rc1"
     check_beta_rejected "v0.0.1-test"
+    check_beta_rejected "v2100.0.0-beta.1"
     check_beta_rejected ""
 
     if [ "$failures" -ne 0 ]; then

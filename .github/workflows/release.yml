@@ -379,7 +379,7 @@ jobs:
           set -euo pipefail
           apk="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
           checksum_file="$RUNNER_TEMP/app-${FLAVOR}-release.apk.sha256"
-          sha256sum "$apk" > "$checksum_file"
+          (cd "$(dirname "$apk")" && sha256sum "$(basename "$apk")") > "$checksum_file"
           notes_file="$RUNNER_TEMP/beta-release-notes.md"
           cat > "$notes_file" <<NOTES
           ## Snoozemate Android Beta ($TAG_USED)

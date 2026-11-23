@@ -90,7 +90,7 @@ sh scripts/android-release-version.sh --allow-beta v1.0.0-beta.1
 # Outputs:
 # version_name=1.0.0-beta.1
 # base_version_name=1.0.0
-# version_code=10000
+# version_code=999901
 # release_channel=beta
 # target_env=dev
 ```
@@ -108,7 +108,7 @@ flutter build apk --release \
   --flavor dev \
   --dart-define=APP_ENV=dev \
   --build-name=1.0.0-beta.1 \
-  --build-number=10000
+  --build-number=999901
 ```
 
 > **Note:** If `android/key.properties` or `ANDROID_KEYSTORE_PASSWORD` is absent,
@@ -135,13 +135,13 @@ Before distributing `build/app/outputs/flutter-apk/app-dev-release.apk`, run all
      build/app/outputs/flutter-apk/app-dev-release.apk | head -n 1
    ```
    Expected output contains:
-   `package: name='com.snoozefriend.snoozemate.dev' versionCode='10000' versionName='1.0.0-beta.1'`
+   `package: name='com.snoozefriend.snoozemate.dev' versionCode='999901' versionName='1.0.0-beta.1'`
 
-3. **Generate SHA-256 checksum for testers:**
+3. **Generate filename-only SHA-256 checksum for testers:**
    ```bash
-   sha256sum build/app/outputs/flutter-apk/app-dev-release.apk \
-     > build/app/outputs/flutter-apk/app-dev-release.apk.sha256
+   (cd build/app/outputs/flutter-apk && sha256sum app-dev-release.apk > app-dev-release.apk.sha256)
    ```
+   *(Using a filename-only checksum lets testers run `sha256sum -c app-dev-release.apk.sha256` directly inside the download folder.)*
 
 ---
 
@@ -195,6 +195,9 @@ After running the physical-device checks in
 `app-dev-release.apk` (or `app-dev-release.aab`) using one of the following
 channels:
 
+> **Important (App Check Enforcement Must Stay OFF for Sideloaded / App Distribution Beta APKs):**
+> Release beta builds (`--release --flavor dev`) activate `AndroidPlayIntegrityProvider` (`lib/app/app_check.dart`). APKs sideloaded from GitHub Pre-Releases or distributed via Firebase App Distribution lack a Google Play Store installation/licensing verdict. Keep Firebase App Check **enforcement OFF** on `sleep-optimizer-dev` during APK beta testing so Play Integrity does not block tester requests (`docs/APP_CHECK.md`).
+
 1. **GitHub Pre-Release Draft (Default in `release.yml`):**
    - Review the draft pre-release created by `release.yml` for tag
      `v1.0.0-beta.1`.
@@ -209,7 +212,7 @@ channels:
      ```bash
      firebase appdistribution:distribute build/app/outputs/flutter-apk/app-dev-release.apk \
        --project=sleep-optimizer-dev \
-       --app=1:564363714331:android:cd0fb661bf15fb903f7dbe \
+       --app=1:564363714331:android:de49274c28e969753f7dbe \
        --release-notes="Snoozemate Android Beta v1.0.0-beta.1 (dev environment)"
      ```
 3. **Google Play Internal Testing Track (Optional via AAB):**

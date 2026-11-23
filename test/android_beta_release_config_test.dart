@@ -52,9 +52,14 @@ void main() {
       expect(versionScript, contains('base_version_name='));
     });
 
-    test('self-test covers valid and invalid beta tags', () {
+    test('self-test covers valid, invalid, and monotonic beta tags', () {
       expect(versionScript, contains('v1.0.0-beta.1'));
+      expect(versionScript, contains('v1.0.0-beta.2'));
       expect(versionScript, contains('v1.2.3-beta.12'));
+      expect(versionScript, contains('version_code=999901'));
+      expect(versionScript, contains('version_code=999902'));
+      expect(versionScript, contains('version_code=1000000'));
+      expect(versionScript, contains('check_beta_rejected "v0.0.0-beta.1"'));
       expect(versionScript, contains('check_beta_rejected "v1.0.0-beta.0"'));
       expect(versionScript, contains('check_beta_rejected "v1.0.0-beta.01"'));
       expect(versionScript, contains('check_beta_rejected "v1.0.0-beta.100"'));
@@ -97,6 +102,7 @@ void main() {
           releaseWorkflow,
           contains('rm -f android/upload-keystore.jks android/key.properties'),
         );
+        expect(releaseWorkflow, contains('sha256sum "\$(basename "\$apk")"'));
       },
     );
 
@@ -116,13 +122,23 @@ void main() {
   });
 
   group('Android beta and signing documentation', () {
-    test('documents canonical keystore path and beta build verification', () {
-      expect(signingDoc, contains('android/upload-keystore.jks'));
-      expect(signingDoc, contains('storeFile=upload-keystore.jks'));
-      expect(betaDoc, contains('com.snoozefriend.snoozemate.dev'));
-      expect(betaDoc, contains('sleep-optimizer-dev'));
-      expect(betaDoc, contains('apksigner'));
-      expect(betaDoc, contains('sha256sum'));
-    });
+    test(
+      'documents canonical keystore path, verified dev app ID, and App Check enforcement warning',
+      () {
+        expect(signingDoc, contains('android/upload-keystore.jks'));
+        expect(signingDoc, contains('storeFile=upload-keystore.jks'));
+        expect(signingDoc, contains('999901'));
+        expect(betaDoc, contains('com.snoozefriend.snoozemate.dev'));
+        expect(betaDoc, contains('sleep-optimizer-dev'));
+        expect(
+          betaDoc,
+          contains('1:564363714331:android:de49274c28e969753f7dbe'),
+        );
+        expect(betaDoc, isNot(contains('cd0fb661bf15fb903f7dbe')));
+        expect(betaDoc, contains('enforcement OFF'));
+        expect(betaDoc, contains('apksigner'));
+        expect(betaDoc, contains('sha256sum'));
+      },
+    );
   });
 }

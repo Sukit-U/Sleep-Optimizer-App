@@ -160,15 +160,19 @@ void main() {
       );
       expect(iosWorkflow, contains('xcode-project use-profiles'));
 
-      // Target environment must be dev for beta safety.
+      // Target environment must be dev for beta safety, and vars must not
+      // shadow Codemagic UI APP_STORE_APPLE_ID with an empty string.
       expect(iosWorkflow, contains('APP_ENV: "dev"'));
-      expect(iosWorkflow, contains('APP_STORE_APPLE_ID:'));
+      expect(iosWorkflow, isNot(contains('APP_STORE_APPLE_ID: ""')));
+      expect(iosWorkflow, contains('APP_STORE_APPLE_ID'));
 
-      // Build name (numeric MAJOR.MINOR.PATCH) & monotonic build number.
+      // Build name (numeric MAJOR.MINOR.PATCH) & monotonic build number with
+      // fail-fast error handling on ASC CLI failures.
       expect(
         iosWorkflow,
         contains('app-store-connect get-latest-testflight-build-number'),
       );
+      expect(iosWorkflow, contains('ASC_STATUS=0'));
       expect(iosWorkflow, contains('--dart-define=APP_ENV=\$APP_ENV'));
       expect(iosWorkflow, contains('--build-name="\$BUILD_NAME"'));
       expect(iosWorkflow, contains('--build-number="\$BUILD_NUM"'));
@@ -198,9 +202,16 @@ void main() {
         androidWorkflow,
         contains('PACKAGE_NAME: "com.snoozefriend.snoozemate.dev"'),
       );
+      expect(
+        androidWorkflow,
+        contains('sh scripts/android-release-version.sh --allow-beta'),
+      );
       expect(androidWorkflow, contains('--flavor dev --release'));
       expect(androidWorkflow, contains('--build-name="\$BUILD_NAME"'));
-      expect(androidWorkflow, contains('--build-number="\$BUILD_NUMBER"'));
+      expect(
+        androidWorkflow,
+        contains('--build-number="\$ANDROID_VERSION_CODE"'),
+      );
     },
   );
 

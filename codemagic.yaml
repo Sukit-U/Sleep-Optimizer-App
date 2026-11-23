@@ -57,26 +57,30 @@ workflows:
           set -eu
           RAW_TAG="${CM_TAG:-}"
           if [ -n "$RAW_TAG" ]; then
-            BUILD_NAME="${RAW_TAG#v}"
+            VERSION_FIELDS=$(sh scripts/android-release-version.sh --allow-beta "$RAW_TAG")
+            BUILD_NAME=$(printf '%s\n' "$VERSION_FIELDS" | sed -n 's/^version_name=//p')
+            ANDROID_VERSION_CODE=$(printf '%s\n' "$VERSION_FIELDS" | sed -n 's/^version_code=//p')
           else
             BUILD_NAME=$(awk '/^version:/ { split($2, a, "+"); print a[1]; exit }' pubspec.yaml)
+            ANDROID_VERSION_CODE="${BUILD_NUMBER:-1}"
           fi
-          if [ -z "$BUILD_NAME" ]; then
-            echo "error: could not derive BUILD_NAME from CM_TAG or pubspec.yaml" >&2
+          if [ -z "$BUILD_NAME" ] || [ -z "$ANDROID_VERSION_CODE" ]; then
+            echo "error: could not derive Android BUILD_NAME or ANDROID_VERSION_CODE from CM_TAG or pubspec.yaml" >&2
             exit 1
           fi
-          echo "Derived Android BUILD_NAME=$BUILD_NAME BUILD_NUMBER=$BUILD_NUMBER APP_ENV=$APP_ENV"
+          echo "Derived Android BUILD_NAME=$BUILD_NAME ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE APP_ENV=$APP_ENV"
           echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+          echo "ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE" >> "$CM_ENV"
       - name: Build Android App Bundle and APK (dev beta)
         script: |
           flutter build appbundle --flavor dev --release \
             --dart-define=APP_ENV=$APP_ENV \
             --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
+            --build-number="$ANDROID_VERSION_CODE"
           flutter build apk --flavor dev --release \
             --dart-define=APP_ENV=$APP_ENV \
             --build-name="$BUILD_NAME" \
-            --build-number="$BUILD_NUMBER"
+            --build-number="$ANDROID_VERSION_CODE"
     artifacts:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/*.apk
@@ -113,13 +117,13 @@ workflows:
         # `com.snoozefriend.snoozemate` for both dev and prod Firebase projects.
         # Switch `APP_ENV` to `"prod"` only for App Store production releases
         # after Blaze + PITR + daily backups are enabled on production.
-        APP_ENV: "dev"
         # App Store Connect → Apps → Snoozemate → General → App Information →
-        # Apple ID (10-digit numeric ID). Set `APP_STORE_APPLE_ID` in Codemagic
-        # Environment variables (or replace the empty placeholder below) so
+        # Apple ID (10-digit numeric ID). Configure `APP_STORE_APPLE_ID` in
+        # Codemagic Environment variables (it is intentionally omitted here so
+        # `vars:` does not shadow a Codemagic UI variable group) so
         # `app-store-connect get-latest-testflight-build-number` can query the
         # latest uploaded build number and auto-increment beyond it.
-        APP_STORE_APPLE_ID: ""
+        APP_ENV: "dev"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
       xcode: latest
       cocoapods: default
@@ -170,18 +174,31 @@ workflows:
           # Codemagic's monotonically increasing $BUILD_NUMBER.
           BUILD_NUM="${BUILD_NUMBER:-1}"
           if [ -n "${APP_STORE_APPLE_ID:-}" ]; then
-            LATEST_TESTFLIGHT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || true)
-            case "$LATEST_TESTFLIGHT" in
-              ''|*[!0-9]*)
+            LATEST_TESTFLIGHT=""
+            ASC_STATUS=0
+            LATEST_TESTFLIGHT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>&1) || ASC_STATUS=$?
+            if [ "$ASC_STATUS" -ne 0 ]; then
+              if printf '%s' "$LATEST_TESTFLIGHT" | grep -qiE "no builds|not found"; then
                 echo "No existing TestFlight build found; using Codemagic BUILD_NUMBER=$BUILD_NUM"
-                ;;
-              *)
-                NEXT_TESTFLIGHT=$((LATEST_TESTFLIGHT + 1))
-                if [ "$NEXT_TESTFLIGHT" -gt "$BUILD_NUM" ]; then
-                  BUILD_NUM="$NEXT_TESTFLIGHT"
-                fi
-                ;;
-            esac
+              else
+                echo "error: app-store-connect get-latest-testflight-build-number failed (exit $ASC_STATUS): $LATEST_TESTFLIGHT" >&2
+                exit 1
+              fi
+            else
+              case "$LATEST_TESTFLIGHT" in
+                ''|*[!0-9]*)
+                  echo "No numeric TestFlight build returned ('$LATEST_TESTFLIGHT'); using Codemagic BUILD_NUMBER=$BUILD_NUM"
+                  ;;
+                *)
+                  NEXT_TESTFLIGHT=$((LATEST_TESTFLIGHT + 1))
+                  if [ "$NEXT_TESTFLIGHT" -gt "$BUILD_NUM" ]; then
+                    BUILD_NUM="$NEXT_TESTFLIGHT"
+                  fi
+                  ;;
+              esac
+            fi
+          else
+            echo "warning: APP_STORE_APPLE_ID is not set in Codemagic environment variables; skipping TestFlight lookup and using BUILD_NUMBER=$BUILD_NUM" >&2
           fi
 
           echo "Derived iOS BUILD_NAME=$BUILD_NAME BUILD_NUM=$BUILD_NUM APP_ENV=$APP_ENV"
