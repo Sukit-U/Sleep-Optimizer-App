@@ -40,6 +40,12 @@ void main() {
         expect(
           gradle,
           contains(
+            '^(?:assemble|bundle|compileFlutterBuild|process)(Dev|Prod)(Debug|Profile|Release)(?:GoogleServices)?\$',
+          ),
+        );
+        expect(
+          gradle,
+          contains(
             'Flavor \'\$flavorName\' does not match --dart-define=APP_ENV=\$dartAppEnv',
           ),
         );
