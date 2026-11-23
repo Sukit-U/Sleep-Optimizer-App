@@ -477,7 +477,7 @@ void main() {
             '--dart-define=UPDATE_FIXTURE=true',
       );
       expect(
-        file.readAsStringSync(),
+        file.readAsStringSync().replaceAll('\r\n', '\n'),
         actual,
         reason:
             'the emulator fixture no longer matches the payload the app '
