@@ -48,6 +48,10 @@ echo "" >&2
 echo "A release/profile iOS build has to name its Firebase project, otherwise" >&2
 echo "it falls back to the dev default. Before archiving, run:" >&2
 echo "" >&2
+echo "  # TestFlight beta (targets sleep-optimizer-dev):" >&2
+echo "  flutter build ios --config-only --release --dart-define=APP_ENV=dev" >&2
+echo "" >&2
+echo "  # App Store production (targets sleep-optimizer-59c83):" >&2
 echo "  flutter build ios --config-only --release --dart-define=APP_ENV=prod" >&2
 echo "" >&2
 echo "then archive from ios/Runner.xcworkspace. See docs/ENVIRONMENTS.md." >&2

@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Android Workflow
+    name: Android Workflow (Beta — sleep-optimizer-dev)
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -14,17 +14,18 @@ workflows:
       # groups:
       #   - google_play
       vars:
-        # Non-secret value, kept in repo per Codemagic guidance. Secrets
-        # (keystore) come from the uploaded Android keystore; Play service
-        # account is disabled temporarily (see above).
-        APP_ENV: "prod"
-        PACKAGE_NAME: "com.snoozefriend.snoozemate"
+        # Beta distribution targets `sleep-optimizer-dev` (`APP_ENV=dev`,
+        # flavor `dev`) so beta test data stays isolated from production
+        # (`sleep-optimizer-59c83`, which currently has PITR disabled and no
+        # automated backups). Switch to `APP_ENV: "prod"`, `--flavor prod`, and
+        # `PACKAGE_NAME: "com.snoozefriend.snoozemate"` only for production Play
+        # Store releases after Blaze + PITR + daily backups are enabled.
+        APP_ENV: "dev"
+        PACKAGE_NAME: "com.snoozefriend.snoozemate.dev"
         # GOOGLE_PLAY_TRACK: "internal"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
     triggering:
-      # This workflow publishes to Play, so it runs on release tags only, the
-      # same rule as .github/workflows/release.yml. A push or pull_request
-      # trigger would also publish, once per commit.
+      # Runs on release and beta tags (`v*`, including `v*-beta.*`).
       events:
         - tag
       tag_patterns:
@@ -51,9 +52,31 @@ workflows:
       - name: Flutter unit tests
         script: |
           flutter test
-      - name: Build Android App Bundle (prod)
+      - name: Derive Android build name and build number
         script: |
-          flutter build appbundle --flavor prod --release --dart-define=APP_ENV=$APP_ENV
+          set -eu
+          RAW_TAG="${CM_TAG:-}"
+          if [ -n "$RAW_TAG" ]; then
+            BUILD_NAME="${RAW_TAG#v}"
+          else
+            BUILD_NAME=$(awk '/^version:/ { split($2, a, "+"); print a[1]; exit }' pubspec.yaml)
+          fi
+          if [ -z "$BUILD_NAME" ]; then
+            echo "error: could not derive BUILD_NAME from CM_TAG or pubspec.yaml" >&2
+            exit 1
+          fi
+          echo "Derived Android BUILD_NAME=$BUILD_NAME BUILD_NUMBER=$BUILD_NUMBER APP_ENV=$APP_ENV"
+          echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+      - name: Build Android App Bundle and APK (dev beta)
+        script: |
+          flutter build appbundle --flavor dev --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER"
+          flutter build apk --flavor dev --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER"
     artifacts:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/*.apk
@@ -73,7 +96,7 @@ workflows:
       #   submit_as_draft: true
 
   ios-workflow:
-    name: iOS Workflow
+    name: iOS TestFlight Beta Workflow (sleep-optimizer-dev)
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -83,20 +106,26 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.snoozefriend.snoozemate
       vars:
-        # Non-secret value, kept in repo per Codemagic guidance. App Store
-        # Connect credentials come from the `codemagic` integration above,
-        # not from YAML.
-        APP_ENV: "prod"
-        # App Store Connect → App → General → App Information → Apple ID.
-        # Nothing in this workflow reads it yet (no build-number increment and
-        # submit_to_testflight/submit_to_app_store are false); uncomment with
-        # the real number before enabling submission.
-        # APP_STORE_APPLE_ID: <10-digit Apple ID>
+        # TestFlight beta targets `sleep-optimizer-dev` (`APP_ENV=dev`) because
+        # production (`sleep-optimizer-59c83`) is on Spark with PITR disabled
+        # and no backups (see docs/INCIDENT_sleepplans-delete.md and
+        # docs/ENVIRONMENTS.md). iOS uses the single bundle identifier
+        # `com.snoozefriend.snoozemate` for both dev and prod Firebase projects.
+        # Switch `APP_ENV` to `"prod"` only for App Store production releases
+        # after Blaze + PITR + daily backups are enabled on production.
+        APP_ENV: "dev"
+        # App Store Connect → Apps → Snoozemate → General → App Information →
+        # Apple ID (10-digit numeric ID). Set `APP_STORE_APPLE_ID` in Codemagic
+        # Environment variables (or replace the empty placeholder below) so
+        # `app-store-connect get-latest-testflight-build-number` can query the
+        # latest uploaded build number and auto-increment beyond it.
+        APP_STORE_APPLE_ID: ""
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
       xcode: latest
       cocoapods: default
     triggering:
-      # Publishes to App Store Connect, so release tags only.
+      # Publishes to App Store Connect / TestFlight on release and beta tags
+      # (`v*`, including `v1.0.0-beta.1`).
       events:
         - tag
       tag_patterns:
@@ -118,9 +147,52 @@ workflows:
       - name: Flutter unit tests
         script: |
           flutter test
+      - name: Derive iOS build name and build number
+        script: |
+          set -eu
+          # App Store Connect requires CFBundleShortVersionString (--build-name)
+          # to be strictly numeric MAJOR.MINOR.PATCH (no `-beta.N` suffix).
+          RAW_TAG="${CM_TAG:-}"
+          if [ -n "$RAW_TAG" ]; then
+            BUILD_NAME=$(printf '%s' "$RAW_TAG" | sed -E 's/^v//; s/-.*$//')
+          else
+            BUILD_NAME=$(awk '/^version:/ { split($2, a, "+"); print a[1]; exit }' pubspec.yaml | sed -E 's/-.*$//')
+          fi
+          if ! printf '%s' "$BUILD_NAME" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "error: derived iOS BUILD_NAME '$BUILD_NAME' is not numeric MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+
+          # Never reuse static 1.0.0+1 from pubspec.yaml. Query App Store
+          # Connect for the latest TestFlight build number when
+          # APP_STORE_APPLE_ID is configured, and ensure the new build number is
+          # strictly greater than both the latest TestFlight build and
+          # Codemagic's monotonically increasing $BUILD_NUMBER.
+          BUILD_NUM="${BUILD_NUMBER:-1}"
+          if [ -n "${APP_STORE_APPLE_ID:-}" ]; then
+            LATEST_TESTFLIGHT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || true)
+            case "$LATEST_TESTFLIGHT" in
+              ''|*[!0-9]*)
+                echo "No existing TestFlight build found; using Codemagic BUILD_NUMBER=$BUILD_NUM"
+                ;;
+              *)
+                NEXT_TESTFLIGHT=$((LATEST_TESTFLIGHT + 1))
+                if [ "$NEXT_TESTFLIGHT" -gt "$BUILD_NUM" ]; then
+                  BUILD_NUM="$NEXT_TESTFLIGHT"
+                fi
+                ;;
+            esac
+          fi
+
+          echo "Derived iOS BUILD_NAME=$BUILD_NAME BUILD_NUM=$BUILD_NUM APP_ENV=$APP_ENV"
+          echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+          echo "BUILD_NUM=$BUILD_NUM" >> "$CM_ENV"
       - name: Build iOS IPA
         script: |
-          flutter build ipa --release --dart-define=APP_ENV=$APP_ENV \
+          flutter build ipa --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUM" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
@@ -133,10 +205,15 @@ workflows:
         notify:
           success: true
           failure: false
+      # Requires the `codemagic` App Store Connect API Key integration (Developer
+      # Portal / App Store Connect → Users and Access → Integrations → Keys) and
+      # an active app record for `com.snoozefriend.snoozemate`. See
+      # docs/IOS_TESTFLIGHT_DISTRIBUTION.md for the full external setup checklist.
       app_store_connect:
         auth: integration
-        submit_to_testflight: false
+        submit_to_testflight: true
         submit_to_app_store: false
+
   # Proves the archive guard on real macOS/Xcode without signing or publishing:
   # `xcodebuild` runs shell build phases even with --no-codesign, so the
   # "Verify APP_ENV" phase is exercised without a keychain, a certificate or any
