@@ -116,12 +116,14 @@ void main() {
   );
 
   test(
-    'verify_app_env.sh documents both APP_ENV=dev (TestFlight beta) and APP_ENV=prod',
+    'verify_app_env.sh enforces exact last-wins APP_ENV and documents dev and prod',
     () {
       final script = read('ios/scripts/verify_app_env.sh');
       expect(script, contains('--dart-define=APP_ENV=dev'));
       expect(script, contains('--dart-define=APP_ENV=prod'));
       expect(script, contains('no --dart-define=APP_ENV'));
+      expect(script, contains('APP_ENV=*) last_app_env='));
+      expect(script, isNot(contains('*APP_ENV=dev*')));
     },
   );
 

@@ -44,7 +44,7 @@ fun resolveDartDefineAppEnv(): String? {
                 String(Base64.getDecoder().decode(trimmed), Charsets.UTF_8)
             }.getOrNull()
         }
-        .firstOrNull { it.startsWith("APP_ENV=") }
+        .lastOrNull { it.startsWith("APP_ENV=") }
         ?.removePrefix("APP_ENV=")
         ?.trim()
 }
@@ -65,9 +65,9 @@ gradle.taskGraph.whenReady {
                     "Always pair --flavor dev with --dart-define=APP_ENV=dev and --flavor prod with --dart-define=APP_ENV=prod."
             )
         }
-        if (flavorName == "prod" && buildTypeName == "release" && dartAppEnv != "prod") {
+        if (flavorName == "prod" && dartAppEnv != "prod") {
             throw GradleException(
-                "Production release build requires explicit --dart-define=APP_ENV=prod (task '${task.name}')."
+                "Production $buildTypeName build requires explicit --dart-define=APP_ENV=prod (task '${task.name}')."
             )
         }
     }

@@ -21,26 +21,40 @@ void main() {
   final betaDoc = File('docs/ANDROID_BETA_DISTRIBUTION.md').readAsStringSync();
 
   group('Gradle flavor vs APP_ENV build-time guard', () {
-    test('decodes dart-defines and extracts APP_ENV in build.gradle.kts', () {
-      expect(gradle, contains('findProperty("dart-defines")'));
-      expect(gradle, contains('Base64.getDecoder().decode'));
-      expect(gradle, contains('startsWith("APP_ENV=")'));
-    });
+    test(
+      'decodes dart-defines with last-wins semantics in build.gradle.kts',
+      () {
+        expect(gradle, contains('findProperty("dart-defines")'));
+        expect(gradle, contains('Base64.getDecoder().decode'));
+        expect(gradle, contains('.lastOrNull { it.startsWith("APP_ENV=") }'));
+        expect(
+          gradle,
+          isNot(contains('.firstOrNull { it.startsWith("APP_ENV=") }')),
+        );
+      },
+    );
 
-    test('fails build when flavor and APP_ENV disagree', () {
-      expect(
-        gradle,
-        contains(
-          'Flavor \'\$flavorName\' does not match --dart-define=APP_ENV=\$dartAppEnv',
-        ),
-      );
-      expect(
-        gradle,
-        contains(
-          'Production release build requires explicit --dart-define=APP_ENV=prod',
-        ),
-      );
-    });
+    test(
+      'fails build across all build types when flavor and APP_ENV disagree or prod omits APP_ENV',
+      () {
+        expect(
+          gradle,
+          contains(
+            'Flavor \'\$flavorName\' does not match --dart-define=APP_ENV=\$dartAppEnv',
+          ),
+        );
+        expect(
+          gradle,
+          contains('if (flavorName == "prod" && dartAppEnv != "prod")'),
+        );
+        expect(
+          gradle,
+          contains(
+            'Production \$buildTypeName build requires explicit --dart-define=APP_ENV=prod',
+          ),
+        );
+      },
+    );
   });
 
   group('Android release and beta version script', () {

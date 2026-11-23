@@ -138,9 +138,10 @@ build time that `--flavor` and `--dart-define=APP_ENV` always match:
   `--flavor dev --dart-define=APP_ENV=prod` or
   `--flavor prod --dart-define=APP_ENV=dev`) fails immediately in Gradle with:
   `Flavor '<flavor>' does not match --dart-define=APP_ENV=<env>`.
-- A `prod` release build without an explicit `--dart-define=APP_ENV=prod` fails
-  immediately in Gradle with:
-  `Production release build requires explicit --dart-define=APP_ENV=prod`.
+- Any `prod` build (`debug`, `profile`, or `release`) without an explicit
+  `--dart-define=APP_ENV=prod` fails immediately in Gradle with:
+  `Production <buildType> build requires explicit --dart-define=APP_ENV=prod`
+  (when duplicate `--dart-define=APP_ENV` entries exist, the last one wins to match Dart).
 
 If `android/key.properties` is missing, the local build still compiles so you
 can verify code/resource shrinking, but the output is **unsigned** (Gradle
