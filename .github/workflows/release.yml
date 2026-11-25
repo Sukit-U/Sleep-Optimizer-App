@@ -391,7 +391,26 @@ jobs:
 
           See \`docs/ANDROID_BETA_DISTRIBUTION.md\` and \`docs/testing/android-beta-smoke-checklist.md\` before sharing with testers.
           NOTES
-          if ! gh release view "$TAG_USED" > /dev/null 2>&1; then
+
+          # Check if release exists
+          if gh release view "$TAG_USED" > /dev/null 2>&1; then
+            echo "Release $TAG_USED exists. Checking for missing assets..."
+            # Check and upload APK if missing
+            if ! gh release view "$TAG_USED" --json assets --jq '.assets[].name' | grep -q "^app-${FLAVOR}-release\.apk$"; then
+              echo "Uploading missing APK asset..."
+              gh release upload "$TAG_USED" "$apk" --clobber
+            else
+              echo "APK asset already present."
+            fi
+            # Check and upload checksum if missing
+            if ! gh release view "$TAG_USED" --json assets --jq '.assets[].name' | grep -q "^app-${FLAVOR}-release\.apk\.sha256$"; then
+              echo "Uploading missing checksum asset..."
+              gh release upload "$TAG_USED" "$checksum_file" --clobber
+            else
+              echo "Checksum asset already present."
+            fi
+          else
+            echo "Creating new draft pre-release $TAG_USED..."
             gh release create "$TAG_USED" "$apk" "$checksum_file" \
               --draft \
               --prerelease \
