@@ -25,24 +25,16 @@ workflows:
         # GOOGLE_PLAY_TRACK: "internal"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
     triggering:
-      # Runs on release and beta tags (`v*`, including `v*-beta.*`).
+      # Runs only on beta tags (`v*-beta.*`).
       events:
         - tag
       tag_patterns:
-        - pattern: 'v*'
+        - pattern: 'v*-beta.*'
           include: true
     scripts:
       - name: Set up local.properties
         script: |
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
-      - name: Set up Android signing
-        script: |
-          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
-          storeFile=$CM_KEYSTORE_PATH
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          keyPassword=$CM_KEY_PASSWORD
-          EOF
       - name: Get Flutter packages
         script: |
           flutter pub get
@@ -73,6 +65,17 @@ workflows:
           echo "ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE" >> "$CM_ENV"
       - name: Build Android App Bundle and APK (dev beta)
         script: |
+          # Android signing (single step so env vars + key.properties persist for the build).
+          # Trap installed BEFORE key.properties is created so cleanup runs on any failure.
+          trap 'rm -f "$CM_BUILD_DIR/android/key.properties"' EXIT
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storeFile=$CM_KEYSTORE_PATH
+          keyAlias=$CM_KEY_ALIAS
+          EOF
+          # Export passwords as env vars (never write to key.properties). Gradle reads
+          # ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_PASSWORD as fallbacks.
+          export ANDROID_KEYSTORE_PASSWORD="$CM_KEYSTORE_PASSWORD"
+          export ANDROID_KEY_PASSWORD="$CM_KEY_PASSWORD"
           flutter build appbundle --flavor dev --release \
             --dart-define=APP_ENV=$APP_ENV \
             --build-name="$BUILD_NAME" \
@@ -128,12 +131,11 @@ workflows:
       xcode: latest
       cocoapods: default
     triggering:
-      # Publishes to App Store Connect / TestFlight on release and beta tags
-      # (`v*`, including `v1.0.0-beta.1`).
+      # Publishes to App Store Connect / TestFlight only on beta tags (`v*-beta.*`).
       events:
         - tag
       tag_patterns:
-        - pattern: 'v*'
+        - pattern: 'v*-beta.*'
           include: true
     scripts:
       - name: Set up code signing settings on Xcode project
