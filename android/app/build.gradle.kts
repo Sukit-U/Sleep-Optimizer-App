@@ -51,7 +51,7 @@ fun resolveDartDefineAppEnv(): String? {
 
 val dartAppEnv = resolveDartDefineAppEnv()
 val variantTaskPattern = Regex(
-    "^(?:assemble|bundle|compileFlutterBuild|process)(Dev|Prod)(Debug|Profile|Release)(?:GoogleServices)?$"
+    "^(?:assemble|bundle|compileFlutterBuild|process|generate|merge|lint|package)(Dev|Prod)(Debug|Profile|Release)(?:GoogleServices)?$"
 )
 
 gradle.taskGraph.whenReady {
