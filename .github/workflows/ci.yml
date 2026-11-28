@@ -72,7 +72,7 @@ jobs:
             echo "::error::/dev/kvm is not readable/writable by current user ($(id))"
             exit 1
           fi
-          "${ANDROID_HOME}/emulator/emulator" -accel-check
+          echo "KVM device /dev/kvm is present and accessible (readable + writable) by $(id)"
 
       - uses: actions/setup-java@v6
         with:
@@ -98,6 +98,8 @@ jobs:
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
             set -euo pipefail
+            echo "=== Verify KVM hardware acceleration via emulator -accel-check ==="
+            "${ANDROID_HOME}/emulator/emulator" -accel-check
             echo "=== Verify ADB device discovery ==="
             adb devices -l
             adb -s emulator-5554 wait-for-device
