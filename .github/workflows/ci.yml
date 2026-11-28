@@ -97,19 +97,10 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
-            set -euo pipefail
-            echo "=== Verify KVM hardware acceleration via emulator -accel-check ==="
             "${ANDROID_HOME}/emulator/emulator" -accel-check
-            echo "=== Verify ADB device discovery ==="
             adb devices -l
             adb -s emulator-5554 wait-for-device
-            boot_status="$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')"
-            echo "sys.boot_completed=${boot_status}"
-            if [ "${boot_status}" != "1" ]; then
-              echo "::error::Emulator did not finish booting (sys.boot_completed=${boot_status})"
-              exit 1
-            fi
-            echo "=== Execute integration_test/beta_smoke_test.dart ==="
+            test "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')" = "1"
             flutter test integration_test/beta_smoke_test.dart --flavor dev --dart-define=APP_ENV=dev -d emulator-5554 --reporter expanded
 
   # Fails the build when a real credential is committed — in the working tree
