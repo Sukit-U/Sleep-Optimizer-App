@@ -40,7 +40,7 @@ void main() {
         expect(
           gradle,
           contains(
-            '^(?:assemble|bundle|compileFlutterBuild|process)(Dev|Prod)(Debug|Profile|Release)(?:GoogleServices)?\$',
+            '^(?:assemble|bundle|compileFlutterBuild|process|generate|merge|lint|package)(Dev|Prod)(Debug|Profile|Release)(?:GoogleServices)?\$',
           ),
         );
         expect(
