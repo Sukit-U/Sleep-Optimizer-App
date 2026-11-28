@@ -40,7 +40,7 @@ jobs:
       # The whole Dart tree is formatted, so the gate checks all of it: any
       # file that comes back unformatted fails the build.
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
 
       - name: Analyze
         run: flutter analyze
@@ -52,6 +52,63 @@ jobs:
       # versionName/versionCode, so a broken one must fail before it ships.
       - name: Check the release version rules
         run: sh scripts/android-release-version.sh --self-test
+
+  integration-test:
+    name: Integration test (Android emulator)
+    needs: [analyze-and-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Enable and verify KVM hardware acceleration
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          # Wait briefly for /dev/kvm to become accessible in all runner environments
+          for i in $(seq 1 10); do
+            if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+              break
+            fi
+            sleep 1
+          done
+          ls -la /dev/kvm
+          if [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then
+            echo "::error::/dev/kvm is not readable/writable by current user ($(id)). Try re-running the workflow or use a larger runner."
+            exit 1
+          fi
+          echo "KVM device /dev/kvm is present and accessible (readable + writable) by $(id)"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Create and start Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: |
+            "${ANDROID_HOME}/emulator/emulator" -accel-check
+            adb devices -l
+            adb -s emulator-5554 wait-for-device
+            test "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')" = "1"
+            flutter test integration_test/beta_smoke_test.dart --flavor dev --dart-define=APP_ENV=dev -d emulator-5554 --reporter expanded
 
   # Fails the build when a real credential is committed — in the working tree
   # or in any commit the pull request adds. The scanner is pinned and checksum
@@ -183,9 +240,11 @@ jobs:
   # iOS compile check only. `--no-codesign` keeps signing material and every
   # credential out of CI, so this proves the Xcode project, the Podfile and the
   # Firebase options compile on a macOS host — not that a signed build is
-  # shippable. It builds APP_ENV=prod because that is the only iOS Firebase app
-  # this repository has config for; a dev iOS build stops at startup until the
-  # dev iOS app is registered (docs/ENVIRONMENTS.md).
+  # shippable. Both `dev` (`lib/firebase_options_dev.dart`, iOS app
+  # `1:564363714331:ios:e2ce6881627757da3f7dbe`) and `prod`
+  # (`lib/firebase_options.dart`) are registered in the repository; this job
+  # verifies the archive guard for both environments and compiles an unsigned
+  # Release build (docs/ENVIRONMENTS.md).
   build-ios:
     name: Build iOS (unsigned, prod config)
     needs: [analyze-and-test, rules]
@@ -203,14 +262,17 @@ jobs:
         run: flutter pub get
 
       # The Xcode phase cannot run here (no Xcode), but its check is plain
-      # shell: prove it fails an app-less Release build and passes Debug and
-      # an explicit APP_ENV=prod before trusting the behaviour above.
+      # shell: prove it fails an app-less Release build and passes Debug, an
+      # explicit APP_ENV=dev, and an explicit APP_ENV=prod before trusting the
+      # behaviour above.
       - name: Check the archive guard
         run: |
           if CONFIGURATION=Release sh ios/scripts/verify_app_env.sh; then
             echo "::error::the archive guard passed without --dart-define=APP_ENV"
             exit 1
           fi
+          CONFIGURATION=Release DART_DEFINES=QVBQX0VOVj1kZXY= \
+            sh ios/scripts/verify_app_env.sh
           CONFIGURATION=Release DART_DEFINES=QVBQX0VOVj1wcm9k \
             sh ios/scripts/verify_app_env.sh
           CONFIGURATION=Debug sh ios/scripts/verify_app_env.sh

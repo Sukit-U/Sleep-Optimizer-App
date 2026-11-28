@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Android Workflow
+    name: Android Workflow (Beta — sleep-optimizer-dev)
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -14,34 +14,27 @@ workflows:
       # groups:
       #   - google_play
       vars:
-        # Non-secret value, kept in repo per Codemagic guidance. Secrets
-        # (keystore) come from the uploaded Android keystore; Play service
-        # account is disabled temporarily (see above).
-        APP_ENV: "prod"
-        PACKAGE_NAME: "com.snoozefriend.snoozemate"
+        # Beta distribution targets `sleep-optimizer-dev` (`APP_ENV=dev`,
+        # flavor `dev`) so beta test data stays isolated from production
+        # (`sleep-optimizer-59c83`, which currently has PITR disabled and no
+        # automated backups). Switch to `APP_ENV: "prod"`, `--flavor prod`, and
+        # `PACKAGE_NAME: "com.snoozefriend.snoozemate"` only for production Play
+        # Store releases after Blaze + PITR + daily backups are enabled.
+        APP_ENV: "dev"
+        PACKAGE_NAME: "com.snoozefriend.snoozemate.dev"
         # GOOGLE_PLAY_TRACK: "internal"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
     triggering:
-      # This workflow publishes to Play, so it runs on release tags only, the
-      # same rule as .github/workflows/release.yml. A push or pull_request
-      # trigger would also publish, once per commit.
+      # Runs only on beta tags (`v*-beta.*`).
       events:
         - tag
       tag_patterns:
-        - pattern: 'v*'
+        - pattern: 'v*-beta.*'
           include: true
     scripts:
       - name: Set up local.properties
         script: |
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
-      - name: Set up Android signing
-        script: |
-          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
-          storeFile=$CM_KEYSTORE_PATH
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          keyPassword=$CM_KEY_PASSWORD
-          EOF
       - name: Get Flutter packages
         script: |
           flutter pub get
@@ -51,9 +44,114 @@ workflows:
       - name: Flutter unit tests
         script: |
           flutter test
-      - name: Build Android App Bundle (prod)
+      - name: Derive Android build name and build number
         script: |
-          flutter build appbundle --flavor prod --release --dart-define=APP_ENV=$APP_ENV
+          set -eu
+          RAW_TAG="${CM_TAG:-}"
+          if [ -n "$RAW_TAG" ]; then
+            VERSION_FIELDS=$(sh scripts/android-release-version.sh --allow-beta "$RAW_TAG")
+            BUILD_NAME=$(printf '%s\n' "$VERSION_FIELDS" | sed -n 's/^version_name=//p')
+            ANDROID_VERSION_CODE=$(printf '%s\n' "$VERSION_FIELDS" | sed -n 's/^version_code=//p')
+          else
+            BUILD_NAME=$(awk '/^version:/ { split($2, a, "+"); print a[1]; exit }' pubspec.yaml)
+            ANDROID_VERSION_CODE="${BUILD_NUMBER:-1}"
+          fi
+          if [ -z "$BUILD_NAME" ] || [ -z "$ANDROID_VERSION_CODE" ]; then
+            echo "error: could not derive Android BUILD_NAME or ANDROID_VERSION_CODE from CM_TAG or pubspec.yaml" >&2
+            exit 1
+          fi
+          echo "Derived Android BUILD_NAME=$BUILD_NAME ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE APP_ENV=$APP_ENV"
+          echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+          echo "ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE" >> "$CM_ENV"
+      - name: Build Android App Bundle and APK (dev beta)
+        script: |
+          # Android signing (single step so env vars + key.properties persist for the build).
+          # Trap installed BEFORE key.properties is created so cleanup runs on any failure.
+          trap 'rm -f "$CM_BUILD_DIR/android/key.properties"' EXIT
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storeFile=$CM_KEYSTORE_PATH
+          keyAlias=$CM_KEY_ALIAS
+          EOF
+          # Export passwords as env vars (never write to key.properties). Gradle reads
+          # ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_PASSWORD as fallbacks.
+          export ANDROID_KEYSTORE_PASSWORD="$CM_KEYSTORE_PASSWORD"
+          export ANDROID_KEY_PASSWORD="$CM_KEY_PASSWORD"
+          flutter build appbundle --flavor dev --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$ANDROID_VERSION_CODE"
+          flutter build apk --flavor dev --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$ANDROID_VERSION_CODE"
+      - name: Verify Android artifacts (signature, package, version)
+        script: |
+          set -eu
+          FLAVOR="dev"
+          EXPECTED_PACKAGE="com.snoozefriend.snoozemate.dev"
+          EXPECTED_NAME="$BUILD_NAME"
+          EXPECTED_CODE="$ANDROID_VERSION_CODE"
+          aab="build/app/outputs/bundle/${FLAVOR}Release/app-${FLAVOR}-release.aab"
+          apk="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
+          logs="$CM_BUILD_DIR/signing-check"
+          mkdir -p "$logs"
+
+          # Check for unsigned APKs
+          if ls build/app/outputs/flutter-apk/*unsigned* > /dev/null 2>&1; then
+            echo "error: Gradle produced an unsigned APK, so the signing configuration was not applied." >&2
+            exit 1
+          fi
+          for artifact in "$aab" "$apk"; do
+            if [ ! -f "$artifact" ]; then
+              echo "error: expected artifact $artifact is missing." >&2
+              exit 1
+            fi
+          done
+
+          # Verify AAB signature
+          if ! jarsigner -verify "$aab" > "$logs/aab.txt" 2>&1 || ! grep -q "jar verified" "$logs/aab.txt"; then
+            echo "error: the AAB is not signed (jarsigner -verify did not report 'jar verified')." >&2
+            tail -20 "$logs/aab.txt" >&2
+            exit 1
+          fi
+
+          # Verify APK signature with apksigner
+          sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          build_tools=$(ls -d "$sdk"/build-tools/*/ 2>/dev/null | sort -V | tail -1)
+          if [ -z "$build_tools" ]; then
+            echo "error: no Android build-tools found under '$sdk'; cannot verify the APK signature." >&2
+            exit 1
+          fi
+          if ! "${build_tools}apksigner" verify --print-certs "$apk" > "$logs/apk.txt" 2>&1; then
+            echo "error: apksigner rejected the APK signature." >&2
+            tail -20 "$logs/apk.txt" >&2
+            exit 1
+          fi
+
+          # Verify certificate matches the upload keystore
+          # Note: In Codemagic, the keystore is uploaded and CM_KEYSTORE_PATH points to it.
+          # We can't easily verify against the uploaded keystore without the password in the script,
+          # but apksigner verify already validates the signature is valid.
+          # The certificate check would require the keystore password which we avoid in logs.
+
+          # Verify package name, versionCode, versionName from APK
+          "${build_tools}aapt2" dump badging "$apk" > "$logs/badging.txt" 2>/dev/null \
+            || "${build_tools}aapt" dump badging "$apk" > "$logs/badging.txt"
+          first=$(head -1 "$logs/badging.txt")
+          case $first in
+            *"name='$EXPECTED_PACKAGE'"*) ;;
+            *) echo "error: APK package name is not $EXPECTED_PACKAGE: $first" >&2; exit 1 ;;
+          esac
+          case $first in
+            *"versionCode='$EXPECTED_CODE'"*) ;;
+            *) echo "error: APK versionCode is not $EXPECTED_CODE: $first" >&2; exit 1 ;;
+          esac
+          case $first in
+            *"versionName='$EXPECTED_NAME'"*) ;;
+            *) echo "error: APK versionName is not $EXPECTED_NAME: $first" >&2; exit 1 ;;
+          esac
+
+          echo "Android artifacts verified: package $EXPECTED_PACKAGE, version $EXPECTED_NAME ($EXPECTED_CODE)"
     artifacts:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/*.apk
@@ -73,7 +171,7 @@ workflows:
       #   submit_as_draft: true
 
   ios-workflow:
-    name: iOS Workflow
+    name: iOS TestFlight Beta Workflow (sleep-optimizer-dev)
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -83,24 +181,29 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.snoozefriend.snoozemate
       vars:
-        # Non-secret value, kept in repo per Codemagic guidance. App Store
-        # Connect credentials come from the `codemagic` integration above,
-        # not from YAML.
-        APP_ENV: "prod"
-        # App Store Connect → App → General → App Information → Apple ID.
-        # Nothing in this workflow reads it yet (no build-number increment and
-        # submit_to_testflight/submit_to_app_store are false); uncomment with
-        # the real number before enabling submission.
-        # APP_STORE_APPLE_ID: <10-digit Apple ID>
+        # TestFlight beta targets `sleep-optimizer-dev` (`APP_ENV=dev`) because
+        # production (`sleep-optimizer-59c83`) is on Spark with PITR disabled
+        # and no backups (see docs/INCIDENT_sleepplans-delete.md and
+        # docs/ENVIRONMENTS.md). iOS uses the single bundle identifier
+        # `com.snoozefriend.snoozemate` for both dev and prod Firebase projects.
+        # Switch `APP_ENV` to `"prod"` only for App Store production releases
+        # after Blaze + PITR + daily backups are enabled on production.
+        # App Store Connect → Apps → Snoozemate → General → App Information →
+        # Apple ID (10-digit numeric ID). Configure `APP_STORE_APPLE_ID` in
+        # Codemagic Environment variables (it is intentionally omitted here so
+        # `vars:` does not shadow a Codemagic UI variable group) so
+        # `app-store-connect get-latest-testflight-build-number` can query the
+        # latest uploaded build number and auto-increment beyond it.
+        APP_ENV: "dev"
       flutter: 3.44.8 # keep in step with .github/workflows/ci.yml
       xcode: latest
       cocoapods: default
     triggering:
-      # Publishes to App Store Connect, so release tags only.
+      # Publishes to App Store Connect / TestFlight only on beta tags (`v*-beta.*`).
       events:
         - tag
       tag_patterns:
-        - pattern: 'v*'
+        - pattern: 'v*-beta.*'
           include: true
     scripts:
       - name: Set up code signing settings on Xcode project
@@ -118,9 +221,66 @@ workflows:
       - name: Flutter unit tests
         script: |
           flutter test
+      - name: Derive iOS build name and build number
+        script: |
+          set -eu
+          # App Store Connect requires CFBundleShortVersionString (--build-name)
+          # to be strictly numeric MAJOR.MINOR.PATCH (no `-beta.N` suffix).
+          RAW_TAG="${CM_TAG:-}"
+          if [ -n "$RAW_TAG" ]; then
+            BUILD_NAME=$(printf '%s' "$RAW_TAG" | sed -E 's/^v//; s/-.*$//')
+          else
+            BUILD_NAME=$(awk '/^version:/ { split($2, a, "+"); print a[1]; exit }' pubspec.yaml | sed -E 's/-.*$//')
+          fi
+          if ! printf '%s' "$BUILD_NAME" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "error: derived iOS BUILD_NAME '$BUILD_NAME' is not numeric MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+
+          # Never reuse static 1.0.0+1 from pubspec.yaml. Query App Store
+          # Connect for the latest TestFlight build number when
+          # APP_STORE_APPLE_ID is configured, and ensure the new build number is
+          # strictly greater than both the latest TestFlight build and
+          # Codemagic's monotonically increasing $BUILD_NUMBER.
+          BUILD_NUM="${BUILD_NUMBER:-1}"
+          if [ -n "${APP_STORE_APPLE_ID:-}" ]; then
+            LATEST_TESTFLIGHT=""
+            ASC_STATUS=0
+            LATEST_TESTFLIGHT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>&1) || ASC_STATUS=$?
+            if [ "$ASC_STATUS" -ne 0 ]; then
+              if printf '%s' "$LATEST_TESTFLIGHT" | grep -qiE "no builds|not found"; then
+                echo "No existing TestFlight build found; using Codemagic BUILD_NUMBER=$BUILD_NUM"
+              else
+                echo "error: app-store-connect get-latest-testflight-build-number failed (exit $ASC_STATUS): $LATEST_TESTFLIGHT" >&2
+                exit 1
+              fi
+            else
+              case "$LATEST_TESTFLIGHT" in
+                ''|*[!0-9]*)
+                  echo "No numeric TestFlight build returned ('$LATEST_TESTFLIGHT'); using Codemagic BUILD_NUMBER=$BUILD_NUM"
+                  ;;
+                *)
+                  NEXT_TESTFLIGHT=$((LATEST_TESTFLIGHT + 1))
+                  if [ "$NEXT_TESTFLIGHT" -gt "$BUILD_NUM" ]; then
+                    BUILD_NUM="$NEXT_TESTFLIGHT"
+                  fi
+                  ;;
+              esac
+            fi
+          else
+            echo "error: APP_STORE_APPLE_ID is not set in Codemagic environment variables. TestFlight beta builds require APP_STORE_APPLE_ID to guarantee a unique build number." >&2
+            exit 1
+          fi
+
+          echo "Derived iOS BUILD_NAME=$BUILD_NAME BUILD_NUM=$BUILD_NUM APP_ENV=$APP_ENV"
+          echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+          echo "BUILD_NUM=$BUILD_NUM" >> "$CM_ENV"
       - name: Build iOS IPA
         script: |
-          flutter build ipa --release --dart-define=APP_ENV=$APP_ENV \
+          flutter build ipa --release \
+            --dart-define=APP_ENV=$APP_ENV \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUM" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
@@ -133,10 +293,15 @@ workflows:
         notify:
           success: true
           failure: false
+      # Requires the `codemagic` App Store Connect API Key integration (Developer
+      # Portal / App Store Connect → Users and Access → Integrations → Keys) and
+      # an active app record for `com.snoozefriend.snoozemate`. See
+      # docs/IOS_TESTFLIGHT_DISTRIBUTION.md for the full external setup checklist.
       app_store_connect:
         auth: integration
-        submit_to_testflight: false
+        submit_to_testflight: true
         submit_to_app_store: false
+
   # Proves the archive guard on real macOS/Xcode without signing or publishing:
   # `xcodebuild` runs shell build phases even with --no-codesign, so the
   # "Verify APP_ENV" phase is exercised without a keychain, a certificate or any

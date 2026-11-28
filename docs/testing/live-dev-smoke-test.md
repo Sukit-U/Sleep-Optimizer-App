@@ -2,8 +2,15 @@
 
 This runbook documents how to run the **Live Dev** smoke test against the
 `sleep-optimizer-dev` Firebase project from an Android emulator. It complements
-(but does not replace) the emulator-based Firestore Rules suite in
-`firestore-rules-test/`.
+(but does not replace):
+
+- the committed deterministic integration smoke test in
+  `integration_test/beta_smoke_test.dart` (which runs offline with fakes and
+  never contacts live Firebase),
+- the emulator-based Firestore Rules suite in `firestore-rules-test/`, and
+- the physical-device beta smoke checklists in
+  `docs/testing/android-beta-smoke-checklist.md` and
+  `docs/testing/ios-testflight-smoke-checklist.md`.
 
 > **Safety boundary.** Dev (`sleep-optimizer-dev`) only. Production
 > (`sleep-optimizer-59c83`) is never accessed, queried, deployed to, or modified.
@@ -118,20 +125,20 @@ Expected: `64 passed, 0 failed` (as of the Phase D run).
 
 ### 6.3 Live Dev smoke test (temporary harness)
 
-The Live Dev smoke test is run through a **temporary** integration-test harness
-that is created for the run and removed afterwards. It is not committed.
+> **Note:** `integration_test` is now a committed `dev_dependencies` entry in
+> `pubspec.yaml`, and `integration_test/beta_smoke_test.dart` is the committed
+> deterministic (offline) integration test. The **Live Dev** harness below
+> (`integration_test/live_dev_smoke_test.dart`) remains a **temporary** harness
+> that is created for a live-dev emulator run and removed afterwards so CI never
+> contacts live Firebase.
 
 Steps:
 
-1. Add the SDK dependency temporarily to `pubspec.yaml` (dev_dependencies):
+1. Ensure dependencies are installed:
 
-   ```yaml
-   dev_dependencies:
-     integration_test:
-       sdk: flutter
+   ```powershell
+   flutter pub get
    ```
-
-   Then `flutter pub get`.
 
 2. Create `integration_test/live_dev_smoke_test.dart` following the contract in
    `docs/ENVIRONMENTS.md` and the repository methods in
@@ -168,11 +175,11 @@ Steps:
 
    Expected: `All tests passed!` and `LIVED_TEST|RESULT=ALL_ASSERTIONS_PASSED`.
 
-4. Remove the temporary harness and restore `pubspec.yaml` / `pubspec.lock`:
+4. Remove the temporary live-dev harness (keep the committed
+   `integration_test/beta_smoke_test.dart` and `pubspec.yaml` untouched):
 
    ```powershell
    Remove-Item -LiteralPath "integration_test\live_dev_smoke_test.dart" -Force
-   git checkout -- pubspec.yaml pubspec.lock
    ```
 
    Confirm `git status` matches the pre-run baseline (no stray changes).
@@ -208,4 +215,3 @@ Steps:
   case and stop; do not claim PASS).
 - **BLOCKED** - a precondition was not met (device unavailable, UID not
   attributable, environment mismatch); no writes performed.
-EOF

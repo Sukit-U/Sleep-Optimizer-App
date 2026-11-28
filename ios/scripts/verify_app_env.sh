@@ -22,25 +22,25 @@ esac
 # Each define is base64 on its own and the encoded defines are comma separated.
 # Two decoder spellings are tried (GNU `--decode`, BSD/macOS `-D`) and the raw
 # text is kept as a fallback, so a macOS runner cannot fail this check merely
-# because of a base64 flag difference.
-decoded=""
+# because of a base64 flag difference. Dart uses last-wins semantics when
+# duplicate `--dart-define=APP_ENV=...` arguments are passed, so track the last
+# decoded `APP_ENV=*` entry and reject unanchored substrings or invalid values.
+last_app_env=""
 old_ifs=$IFS
 IFS=,
 for define in ${DART_DEFINES:-}; do
+  [ -n "$define" ] || continue
   entry=$(printf '%s' "$define" | base64 --decode 2>/dev/null ||
     printf '%s' "$define" | base64 -D 2>/dev/null ||
     printf '%s' "$define")
-  decoded="$decoded,$entry"
+  case "$entry" in
+    APP_ENV=*) last_app_env=${entry#APP_ENV=} ;;
+  esac
 done
 IFS=$old_ifs
 
-# base64 of "APP_ENV=dev" and "APP_ENV=prod" (standard and url-safe alphabet).
-case ",${DART_DEFINES:-}," in
-  *,QVBQX0VOVj1kZXY=,* | *,QVBQX0VOVj1wcm9k,*) exit 0 ;;
-esac
-
-case "$decoded" in
-  *APP_ENV=dev* | *APP_ENV=prod*) exit 0 ;;
+case "$last_app_env" in
+  dev | prod) exit 0 ;;
 esac
 
 echo "error: this iOS ${CONFIGURATION} build has no --dart-define=APP_ENV." >&2
@@ -48,6 +48,10 @@ echo "" >&2
 echo "A release/profile iOS build has to name its Firebase project, otherwise" >&2
 echo "it falls back to the dev default. Before archiving, run:" >&2
 echo "" >&2
+echo "  # TestFlight beta (targets sleep-optimizer-dev):" >&2
+echo "  flutter build ios --config-only --release --dart-define=APP_ENV=dev" >&2
+echo "" >&2
+echo "  # App Store production (targets sleep-optimizer-59c83):" >&2
 echo "  flutter build ios --config-only --release --dart-define=APP_ENV=prod" >&2
 echo "" >&2
 echo "then archive from ios/Runner.xcworkspace. See docs/ENVIRONMENTS.md." >&2
