@@ -86,7 +86,10 @@ parse_core_semver() {
 
     [ "$minor" -lt 100 ] || fail "tag '$tag_ctx' has MINOR=$minor; keep MINOR below 100 so the version code keeps semver order"
     [ "$patch" -lt 100 ] || fail "tag '$tag_ctx' has PATCH=$patch; keep PATCH below 100 so the version code keeps semver order"
-    [ "$major" -lt 2100 ] || fail "tag '$tag_ctx' has MAJOR=$major; Google Play caps versionCode at 2100000000"
+    [ "$major" -le 2100 ] || fail "tag '$tag_ctx' has MAJOR=$major; Google Play caps versionCode at 2100000000"
+    if [ "$major" -eq 2100 ]; then
+        [ "$minor" -eq 0 ] && [ "$patch" -eq 0 ] || fail "tag '$tag_ctx' has MAJOR=2100 with MINOR=$minor PATCH=$patch; only v2100.0.0 is allowed (versionCode cap 2100000000)"
+    fi
 
     base_version_name="$major.$minor.$patch"
     base_code=$((major * 10000 + minor * 100 + patch))
